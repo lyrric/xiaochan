@@ -7,9 +7,11 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
 import io.github.xiaochan.core.BusinessException;
+import io.github.xiaochan.enums.LocationEnum;
 import io.github.xiaochan.model.StoreInfo;
 import org.springframework.beans.BeanUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +21,7 @@ public class XiaochanHttp {
 
 
     @JSONField(name = "")
-    private static final String BASE_URL = "https://api.xiaochan.top/api/";
+    private static final String BASE_URL = "https://gw.xiaocantech.com/rpc";
     private static final String SERVER_NAME = "SilkwormRec";
     private static final String METHOD_NAME = "RecService.GetStorePromotionList";
 
@@ -29,6 +31,8 @@ public class XiaochanHttp {
      * 城市编码
      */
     private static final int CITY_CODE = 510116;
+
+    private static final int PAGE_SIZE = 30;
 
 
     /**
@@ -41,12 +45,25 @@ public class XiaochanHttp {
         return MD5.create().digestHex(x + timeMillis + NAMI);
     }
 
-    public List<StoreInfo> getList(String latitude, String longitude){
+    public List<StoreInfo> getList(LocationEnum locationEnum){
+        int offset = 0;
+        List<StoreInfo> result = new ArrayList<>();
+        while (true) {
+            List<StoreInfo> list = getList(locationEnum, offset);
+            result.addAll(list);
+            if (list.get(list.size() - 1).getDistance() > 3000) {
+                break;
+            }
+            offset += PAGE_SIZE;
+        }
+        return result;
+    }
+    private List<StoreInfo> getList(LocationEnum locationEnum, int offset){
         Long timeMillis = System.currentTimeMillis();
         String ashe = getAshe(timeMillis);
         HttpResponse response = HttpUtil.createPost(BASE_URL)
                 .headerMap(getHeaders(timeMillis, ashe), true)
-                .body(getBody(latitude, longitude))
+                .body(getBody(locationEnum, offset))
                 .execute();
         if (!response.isOk()) {
             throw new BusinessException("状态码错误:" + response.getStatus());
@@ -55,14 +72,14 @@ public class XiaochanHttp {
         return parseBody(body);
     }
 
-    private static String getBody(String latitude, String longitude){
+    private static String getBody(LocationEnum locationEnum, int offset){
         Map<String, Object> body = new HashMap<>();
-        body.put("latitude", latitude);
-        body.put("longitude", longitude);
+        body.put("latitude", new BigDecimal(locationEnum.latitude));
+        body.put("longitude", new BigDecimal(locationEnum.longitude));
         body.put("promotion_sort", 3);
         body.put("store_type", 0);
-        body.put("offset", 0);
-        body.put("number", 100);
+        body.put("offset", offset);
+        body.put("number", PAGE_SIZE);
         body.put("silk_id", 89715435);
         body.put("promotion_filter", 0);
         body.put("promotion_category", 0);
@@ -76,12 +93,14 @@ public class XiaochanHttp {
 
     private Map<String, String> getHeaders(Long timeMillis, String ashe){
         Map<String, String> headers = new HashMap<>();
-        headers.put("x-City", String.valueOf(timeMillis));
+        headers.put("x-City", String.valueOf(CITY_CODE));
+        headers.put("X-Garen", String.valueOf(timeMillis));
         headers.put("X-Nami", NAMI);
         headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090c33)XWEB/13487");
         headers.put("servername", SERVER_NAME);
         headers.put("methodname", METHOD_NAME);
         headers.put("X-Ashe", ashe);
+        headers.put("Content-Type", "application/json");
         return headers;
     }
 
@@ -101,6 +120,7 @@ public class XiaochanHttp {
             storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
             storeInfo.setStartTime(jsonObject.getString("start_time_hour") + ":" + jsonObject.getString("start_time_minute"));
             storeInfo.setEndTime(jsonObject.getString("end_time_hour") + ":" + jsonObject.getString("end_time_minute"));
+            storeInfo.setDistance(jsonObject.getInteger("distance") );
             if (jsonObject.getInteger("meituan_status") == 1) {
                 StoreInfo meituanStoreInfo = new StoreInfo();
                 BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
