@@ -3,9 +3,7 @@ server:
 spring:
   data:
     redis:
-      password: 123456
       host: 127.0.0.1
-      port: 6379
 config:
   locations:
     - name: work
