@@ -30,7 +30,8 @@ public class AppService {
     @Resource
     private RedissonClient redissonClient;
 
-    @Scheduled(cron = "0 0/10 9,10,11,12,13,14,15,16,17,18,19 * * ? ")
+    //@Scheduled(cron = "0 0/10 9,10,11,12,13,14,15,16,17,18,19 * * ? ")
+    @PostConstruct
     public void run(){
         List<Location> locations = locationConfig.getLocations();
         for (Location location : locations) {
@@ -78,7 +79,7 @@ public class AppService {
                 .append("店铺：").append(storeInfo.getName()).append("\r\n")
                 .append("距离：").append(storeInfo.getDistance()).append("米").append("\r\n")
                 .append("规则：满").append(storeInfo.getPrice()).append("返").append(storeInfo.getRebatePrice()).append("\r\n")
-                .append("是否需要评价:").append(storeInfo.getRebateCondition() != 99 ? "是" : "否").append("\r\n");
+                .append("是否需要评价:").append(storeInfo.getRebateCondition() == null ? "未知" : (storeInfo.getRebateCondition() != 99 ? "是" : "否")).append("\r\n");
         return sb.toString();
     }
 
