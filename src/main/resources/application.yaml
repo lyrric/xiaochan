@@ -1,0 +1,19 @@
+server:
+  port: 8083
+spring:
+  data:
+    redis:
+      password: 123456
+      host: 127.0.0.1
+      port: 6379
+config:
+  locations:
+    - name: work
+      city-code: 510116
+      latitude: 20.123456
+      longitude: 10.123456
+      price: 10
+      rebate-price: 7
+      dif-price: 5
+
+

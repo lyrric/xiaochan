@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- 控制台Appender -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread][%X{traceId}] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+
+        <!-- 为特定包配置过滤器 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+    </appender>
+
+    <!-- 每天滚动的INFO日志文件Appender -->
+    <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每天滚动日志文件，保留3天的日志 -->
+            <fileNamePattern>logs/info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>3</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread][%X{traceId}] %-5level [%class:%line] - %msg%n</pattern>
+        </encoder>
+
+        <!-- 只输出INFO级别及以上的日志 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+    </appender>
+
+    <!-- ERROR日志文件Appender -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- 每天滚动日志文件，保留3天的日志 -->
+            <fileNamePattern>logs/error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>3</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread][%X{traceId}] %-5level [%class:%line] - %msg%n</pattern>
+        </encoder>
+        <!-- 只输出INFO级别及以上的日志 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+
+    </appender>
+
+    <!-- 设置根日志记录器的级别和Appender -->
+    <root level="DEBUG">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="INFO_FILE" />
+        <appender-ref ref="ERROR_FILE" />
+    </root>
+</configuration>

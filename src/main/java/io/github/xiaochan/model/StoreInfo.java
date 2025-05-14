@@ -18,10 +18,6 @@ public class StoreInfo {
      */
     private String name;
     /**
-     * 门店id
-     */
-    private String storeId;
-    /**
      * 营业时间
      */
     private String openHours;
