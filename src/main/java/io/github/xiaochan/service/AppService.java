@@ -61,6 +61,7 @@ public class AppService {
         String msg = buildMessage(storeInfo, location);
         String header = buildHeader(storeInfo);
         try {
+            log.info("发送消息:{}", msg);
             MessageHttp.sendMessage(location.getSpt(), msg, header);
         }catch (Exception e){
             log.error("发送消息失败", e);

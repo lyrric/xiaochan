@@ -18,8 +18,16 @@ public class MessageHttp {
         bodyMap.put("summary", summary);
         bodyMap.put("contentType", 2);
         bodyMap.put("spt", spt);
-        String resBody = HttpUtil.post("https://wxpusher.zjiecode.com/api/send/message/simple-push", JSONObject.toJSONString(bodyMap));
-        log.info("发型消息结果: {}", resBody);
+        try {
+            String resBody = HttpUtil.post("https://wxpusher.zjiecode.com/api/send/message/simple-push", JSONObject.toJSONString(bodyMap));
+            JSONObject jsonObject = JSONObject.parseObject(resBody);
+            if (jsonObject.getInteger("code") != 1000) {
+                log.error("发送消息失败: {}", resBody);
+            }
+        }catch (Exception e){
+            log.error("发送消息失败: {}", e.getMessage());
+        }
+
     }
 
 }
