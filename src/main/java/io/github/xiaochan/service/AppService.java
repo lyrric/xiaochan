@@ -30,7 +30,7 @@ public class AppService {
     @Resource
     private RedissonClient redissonClient;
 
-    //@Scheduled(cron = "0 0/10 9,10,11,12,13,14,15,16,17,18,19 * * ? ")
+    @Scheduled(cron = "0 0/10 9,10,11,12,13,14,15,16,17,18,19 * * ? ")
     @PostConstruct
     public void run(){
         List<Location> locations = locationConfig.getLocations();
