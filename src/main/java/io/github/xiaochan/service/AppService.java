@@ -75,7 +75,7 @@ public class AppService {
     }
     private String buildMessage(StoreInfo storeInfo, Location location) {
         StringBuilder sb = new StringBuilder();
-        sb.append("地点：").append(storeInfo.getName()).append("\r\n");
+        sb.append("地点：").append(location.getName()).append("\r\n");
         sb.append("平台：").append(storeInfo.getType() == 1 ? "美团" : "饿了么").append("\r\n")
                 .append("店铺：").append(storeInfo.getName()).append("\r\n")
                 .append("距离：").append(storeInfo.getDistance()).append("米").append("\r\n")
