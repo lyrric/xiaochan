@@ -6,7 +6,6 @@ import io.github.xiaochan.http.MessageHttp;
 import io.github.xiaochan.http.XiaochanHttp;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
@@ -31,7 +30,6 @@ public class AppService {
     private RedissonClient redissonClient;
 
     @Scheduled(cron = "0 0/10 9,10,11,12,13,14,15,16,17,18,19 * * ? ")
-    @PostConstruct
     public void run(){
         List<Location> locations = locationConfig.getLocations();
         for (Location location : locations) {
@@ -78,6 +76,7 @@ public class AppService {
         sb.append("地点：").append(location.getName()).append("\r\n");
         sb.append("平台：").append(storeInfo.getType() == 1 ? "美团" : "饿了么").append("\r\n")
                 .append("店铺：").append(storeInfo.getName()).append("\r\n")
+                .append("时间范围：").append(storeInfo.getStartTime()).append("-").append(storeInfo.getEndTime()).append("\r\n")
                 .append("距离：").append(storeInfo.getDistance()).append("米").append("\r\n")
                 .append("规则：满").append(storeInfo.getPrice()).append("返").append(storeInfo.getRebatePrice()).append("\r\n")
                 .append("是否需要评价:").append(storeInfo.getRebateCondition() == null ? "未知" : (storeInfo.getRebateCondition() != 99 ? "是" : "否")).append("\r\n");
