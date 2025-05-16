@@ -21,7 +21,6 @@ import java.util.Map;
 public class XiaochanHttp {
 
 
-    @JSONField(name = "")
     private static final String BASE_URL = "https://gw.xiaocantech.com/rpc";
     private static final String SERVER_NAME = "SilkwormRec";
     private static final String METHOD_NAME = "RecService.GetStorePromotionList";
@@ -56,6 +55,12 @@ public class XiaochanHttp {
         return result;
     }
     private List<StoreInfo> getList(Location location, int offset){
+        try {
+            //延迟一下
+            Thread.sleep(1000*5);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         Long timeMillis = System.currentTimeMillis();
         String ashe = getAshe(timeMillis);
         HttpResponse response = HttpUtil.createPost(BASE_URL)
