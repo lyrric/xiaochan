@@ -57,7 +57,7 @@ public class AppService {
         }
         bucket.set(String.valueOf(System.currentTimeMillis()), Duration.ofDays(10));
         String msg = buildMessage(storeInfo, location);
-        String header = buildHeader(storeInfo);
+        String header = buildHeader(storeInfo, location);
         try {
             log.info("发送消息:{}", msg);
             MessageHttp.sendMessage(location.getSpt(), msg, header);
@@ -66,10 +66,8 @@ public class AppService {
         }
     }
 
-    private String buildHeader(StoreInfo storeInfo){
-        StringBuilder sb = new StringBuilder();
-        sb.append(storeInfo.getName()).append(" 满").append(storeInfo.getPrice()).append("返").append(storeInfo.getRebatePrice());
-        return sb.toString();
+    private String buildHeader(StoreInfo storeInfo,Location location){
+        return location.getName() + ":" + storeInfo.getName() + " 满" + storeInfo.getPrice() + "返" + storeInfo.getRebatePrice();
     }
     private String buildMessage(StoreInfo storeInfo, Location location) {
         StringBuilder sb = new StringBuilder();

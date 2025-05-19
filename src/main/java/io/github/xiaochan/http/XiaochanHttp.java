@@ -47,7 +47,7 @@ public class XiaochanHttp {
         while (true) {
             List<StoreInfo> list = getList(location, offset);
             result.addAll(list);
-            if (list.get(list.size() - 1).getDistance() > 3000) {
+            if (list.get(list.size() - 1).getDistance() > 2500) {
                 break;
             }
             offset += PAGE_SIZE;
