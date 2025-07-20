@@ -7,6 +7,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.alibaba.fastjson2.annotation.JSONField;
 import io.github.xiaochan.core.BusinessException;
+import io.github.xiaochan.model.HttpProxyInfo;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
 import org.springframework.beans.BeanUtils;
@@ -41,36 +42,20 @@ public class XiaochanHttp {
         return MD5.create().digestHex(x + timeMillis + NAMI);
     }
 
-    public List<StoreInfo> getList(Location location){
-        int offset = 0;
-        List<StoreInfo> result = new ArrayList<>();
-        while (true) {
-            List<StoreInfo> list = getList(location, offset);
-            result.addAll(list);
-            if (list.get(list.size() - 1).getDistance() > 2500) {
-                break;
-            }
-            offset += PAGE_SIZE;
-        }
-        return result;
-    }
-    private List<StoreInfo> getList(Location location, int offset){
-        try {
-            //延迟一下
-            Thread.sleep(1000*5);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+    public List<StoreInfo> getList(Location location, int offset, HttpProxyInfo httpProxyInfo){
         Long timeMillis = System.currentTimeMillis();
         String ashe = getAshe(timeMillis);
         HttpResponse response = HttpUtil.createPost(BASE_URL)
                 .headerMap(getHeaders(timeMillis, ashe, location.getCityCode()), true)
+                .timeout(3000)
+                .setHttpProxy(httpProxyInfo.getIp(), httpProxyInfo.getPort())
                 .body(getBody(location, offset))
                 .execute();
         if (!response.isOk()) {
             throw new BusinessException("状态码错误:" + response.getStatus());
         }
         String body = response.body();
+        response.close();
         return parseBody(body);
     }
 
@@ -128,8 +113,8 @@ public class XiaochanHttp {
                 BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
                 meituanStoreInfo.setType(1);
                 meituanStoreInfo.setLeftNumber(jsonObject.getInteger("meituan_left_number"));
-                meituanStoreInfo.setPrice(jsonObject.getBigDecimal("meituan_order_money").divide(BigDecimal.valueOf(100),2, RoundingMode.DOWN));
-                meituanStoreInfo.setRebatePrice(jsonObject.getBigDecimal("meituan_user_rebate").divide(BigDecimal.valueOf(100),2, RoundingMode.DOWN));
+                meituanStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("meituan_order_money"), BigDecimal.valueOf(100)));
+                meituanStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("meituan_user_rebate"), BigDecimal.valueOf(100)));
                 result.add(meituanStoreInfo);
             }
             if (jsonObject.getInteger("eleme_status") == 1) {
@@ -137,20 +122,22 @@ public class XiaochanHttp {
                 BeanUtils.copyProperties(storeInfo, eleStoreInfo);
                 eleStoreInfo.setType(2);
                 eleStoreInfo.setLeftNumber(jsonObject.getInteger("eleme_left_number"));
-                eleStoreInfo.setPrice(jsonObject.getBigDecimal("eleme_order_money").divide(BigDecimal.valueOf(100),2, RoundingMode.DOWN));
-                eleStoreInfo.setRebatePrice(jsonObject.getBigDecimal("eleme_user_rebate").divide(BigDecimal.valueOf(100),2, RoundingMode.DOWN));
+                eleStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("eleme_order_money"), BigDecimal.valueOf(100)));
+                eleStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("eleme_user_rebate"),BigDecimal.valueOf(100)));
                 result.add(eleStoreInfo);
             }
         }
         return result;
     }
 
-    public static void main(String[] args) {
-        long l = System.currentTimeMillis();
-        System.out.println(l);
-        System.out.println(new XiaochanHttp().getAshe(l));
+    private BigDecimal safeDivide(BigDecimal b1, BigDecimal b2){
+        if (b1 == null || b2 == null) {
+            return BigDecimal.ZERO;
+        }
+        if (b2.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
+        }
+        return b1.divide(b2, 2, RoundingMode.DOWN);
     }
-
-
 
 }

@@ -4,6 +4,12 @@ spring:
   data:
     redis:
       host: 127.0.0.1
+
+xiequ:
+  key: A
+  refresh:
+    key: B
+
 config:
   locations:
     - name: work
