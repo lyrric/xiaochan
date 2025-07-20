@@ -36,7 +36,7 @@ public class XiaoChanService {
         for (int i = 0; i < 100; i++) {
             List<StoreInfo> list = getList(location, offset);
             result.addAll(list);
-            if (list.get(list.size() - 1).getDistance() > 2500) {
+            if (result.size() > 150) {
                 break;
             }
             offset += PAGE_SIZE;
