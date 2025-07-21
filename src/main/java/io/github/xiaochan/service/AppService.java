@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -41,46 +43,52 @@ public class AppService {
     }
 
     public void run(Location location){
-        List<StoreInfo> storeInfos = xiaoChanService.getList(location);
-        log.info("当前位置:{}，门店数量:{}", location.getName(), storeInfos.size());
-        for (StoreInfo storeInfo : storeInfos) {
-            if (check(storeInfo, location)) {
-                //发送通知
-                sendMessage(storeInfo, location);
-            }
+        try {
+            List<StoreInfo> storeInfos = xiaoChanService.getList(location);
+            log.info("当前位置:{}，门店数量:{}", location.getName(), storeInfos.size());
+            //发送通知
+            sendMessage(storeInfos, location);
+            log.info("当前位置:{}，结束", location.getName());
+        }catch (Exception e){
+            log.error("发生异常", e);
         }
-        log.info("当前位置:{}，结束", location.getName());
+
     }
 
 
-    private void sendMessage(StoreInfo storeInfo, Location location) {
-        RBucket<String> bucket = redissonClient.getBucket(RedisConstant.PROMOTION_ID + storeInfo.getName());
-        if (bucket.isExists()) {
-            return;
-        }
-        bucket.set(String.valueOf(System.currentTimeMillis()), Duration.ofHours(12));
-        String msg = buildMessage(storeInfo, location);
-        String header = buildHeader(storeInfo, location);
+    private void sendMessage(List<StoreInfo> storeInfos, Location location) {
+        Set<StoreInfo> collect = storeInfos.stream()
+                .filter(storeInfo -> check(storeInfo, location))
+                .filter(storeInfo->{
+                    RBucket<String> bucket = redissonClient.getBucket(RedisConstant.PROMOTION_ID + storeInfo.getName() + storeInfo.getType());
+                    if (bucket.isExists()) {
+                        return false;
+                    }
+                    bucket.set(String.valueOf(System.currentTimeMillis()), Duration.ofHours(12));
+                    return true;
+                })
+                .collect(Collectors.toSet());
+        String body = collect.stream()
+                .map(storeInfo -> buildMessage(storeInfo, location))
+                .collect(Collectors.joining("<br/><br/>"));
+        String header = "有新的返现活动啦，共" + collect.size() + "个";
         try {
-            log.info("发送消息:{}", msg);
-            MessageHttp.sendMessage(location.getSpt(), msg, header);
+            log.info("发送消息:{}", body);
+            MessageHttp.sendMessage(location.getSpt(), body, header);
         }catch (Exception e){
             log.error("发送消息失败", e);
         }
     }
 
-    private String buildHeader(StoreInfo storeInfo,Location location){
-        return location.getName() + ":" + storeInfo.getName() + " 满" + storeInfo.getPrice() + "返" + storeInfo.getRebatePrice();
-    }
     private String buildMessage(StoreInfo storeInfo, Location location) {
         StringBuilder sb = new StringBuilder();
-        sb.append("地点：").append(location.getName()).append("\r\n");
-        sb.append("平台：").append(storeInfo.getType() == 1 ? "美团" : "饿了么").append("\r\n")
-                .append("店铺：").append(storeInfo.getName()).append("\r\n")
-                .append("时间范围：").append(storeInfo.getStartTime()).append("-").append(storeInfo.getEndTime()).append("\r\n")
-                .append("距离：").append(storeInfo.getDistance()).append("米").append("\r\n")
-                .append("库存：").append(storeInfo.getLeftNumber()).append("\r\n")
-                .append("规则：满").append(storeInfo.getPrice()).append("返").append(storeInfo.getRebatePrice()).append("\r\n")
+        sb.append("地点：").append(location.getName()).append("<br/>");
+        sb.append("平台：").append(storeInfo.getType() == 1 ? "美团" : "饿了么").append("<br/>")
+                .append("店铺：").append(storeInfo.getName()).append("<br/>")
+                .append("时间范围：").append(storeInfo.getStartTime()).append("-").append(storeInfo.getEndTime()).append("<br/>")
+                .append("距离：").append(storeInfo.getDistance()).append("米").append("<br/>")
+                .append("库存：").append(storeInfo.getLeftNumber()).append("<br/>")
+                .append("规则：满").append(storeInfo.getPrice()).append("返").append(storeInfo.getRebatePrice()).append("<br/>")
                 .append("是否需要评价:").append(storeInfo.getRebateCondition() == null ? "未知" : (storeInfo.getRebateCondition() != 99 ? "是" : "否")).append("\r\n");
         return sb.toString();
     }
