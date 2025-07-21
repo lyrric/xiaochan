@@ -59,8 +59,8 @@ public class AppService {
     private void sendMessage(List<StoreInfo> storeInfos, Location location) {
         Set<StoreInfo> collect = storeInfos.stream()
                 .filter(storeInfo -> check(storeInfo, location))
-                .filter(storeInfo->storeInfo.getDistance() < 3000)
-                .filter(storeInfo->{
+                .filter(storeInfo -> storeInfo.getDistance() != null && storeInfo.getDistance() < 3000)
+                .filter(storeInfo -> {
                     RBucket<String> bucket = redissonClient.getBucket(RedisConstant.PROMOTION_ID + storeInfo.getName() + storeInfo.getType());
                     if (bucket.isExists()) {
                         return false;
