@@ -69,6 +69,9 @@ public class AppService {
                     return true;
                 })
                 .collect(Collectors.toSet());
+        if (collect.isEmpty()) {
+            return;
+        }
         String body = collect.stream()
                 .map(storeInfo -> buildMessage(storeInfo, location))
                 .collect(Collectors.joining("<br/><br/>"));

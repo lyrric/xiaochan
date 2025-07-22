@@ -53,12 +53,10 @@ public class XiaoChanService {
             try {
                 return xiaochanHttp.getList(location, offset, httpProxyInfo);
             } catch (Exception e) {
-                if (e.getMessage().contains("timed out") && i < 9) {
+                log.error("请求小产列表时发生错误 {}",e.getMessage());
+                if (i < 9) {
                     httpProxyInfo = xieQuHttpProxy.getOne();
-                }else{
-                    log.error("",e);
                 }
-
             }
         }
         return Collections.emptyList();
