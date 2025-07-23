@@ -114,7 +114,7 @@ public class AppService {
             return false;
         }
         if (location.getDifPrice() != null &&
-                price.subtract(rebatePrice).compareTo(location.getDifPrice()) >= 0) {
+                price.subtract(rebatePrice).compareTo(location.getDifPrice()) > 0) {
             //金额差大于指定值
             return false;
         }
