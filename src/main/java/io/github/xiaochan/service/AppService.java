@@ -65,7 +65,7 @@ public class AppService {
                     if (bucket.isExists()) {
                         return false;
                     }
-                    bucket.set(String.valueOf(System.currentTimeMillis()), Duration.ofHours(12));
+                    bucket.set("1", Duration.ofDays(10));
                     return true;
                 })
                 .collect(Collectors.toSet());
