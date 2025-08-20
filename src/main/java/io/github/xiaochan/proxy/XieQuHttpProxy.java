@@ -162,16 +162,29 @@ public class XieQuHttpProxy implements HttpProxy {
     }
 
     public void refreshIp() {
-        deleteAllIp();
-        String ip = IPUtil.getIp();
-        addIp(ip);
+        try {
+            log.info("addIp");
+            String ip = IPUtil.getIp();
+            String json = getAllIp();
+            if (json.contains(ip)) {
+                return;
+            }
+            log.info("addIp {}", ip);
+            addIp(ip);
+        } catch (Exception e) {
+            log.error("addIp异常", e);
+        }
+    }
+    public String getAllIp(){
+        try {
+            return HttpUtil.createGet("http://op.xiequ.cn/IpWhiteList.aspx?uid=49226&ukey=" + refreshKey + "&act=get")
+                    .execute().body();
+        }catch (Exception e){
+            log.warn(e.getMessage());
+        }
+        return "";
     }
 
-    private void deleteAllIp(){
-        HttpUtil.createGet("http://op.xiequ.cn/IpWhiteList.aspx?uid=49226&ukey=" + refreshKey + "&act=del&ip=all")
-                .execute();
-
-    }
     private void addIp(String ip){
         HttpUtil.createGet("http://op.xiequ.cn/IpWhiteList.aspx?uid=49226&ukey=" + refreshKey + "&act=add&ip=" + ip)
                 .execute();
