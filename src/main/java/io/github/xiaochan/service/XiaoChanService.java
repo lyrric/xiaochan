@@ -29,8 +29,7 @@ public class XiaoChanService {
 
 
     public List<StoreInfo> getList(Location location){
-        xieQuHttpProxy.refreshIp();
-
+        preCall(location.getCityCode());
         int offset = 0;
         List<StoreInfo> result = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
@@ -45,13 +44,17 @@ public class XiaoChanService {
         return result;
     }
 
-    private List<StoreInfo> getList(Location location, int offset){
+    private List<StoreInfo> getListProxy(Location location, int offset){
         if (httpProxyInfo == null) {
             httpProxyInfo = xieQuHttpProxy.getOne();
         }
         for (int i = 0; i < 10; i++) {
             try {
-                return xiaochanHttp.getList(location, offset, httpProxyInfo);
+                List<StoreInfo> list = xiaochanHttp.getList(location, offset, httpProxyInfo);
+                xiaochanHttp.meituanShangjinGetPoiList(location.getLatitude(), location.getLongitude(), location.getCityCode());
+                xiaochanHttp.getClientUnionPromotions1(location.getCityCode());
+                xiaochanHttp.getClientUnionPromotions2(location.getCityCode());
+                return list;
             } catch (Exception e) {
                 log.error("请求小产列表时发生错误 {}",e.getMessage());
                 if (i < 9) {
@@ -60,6 +63,38 @@ public class XiaoChanService {
             }
         }
         return Collections.emptyList();
+    }
+
+    private List<StoreInfo> getList(Location location, int offset){
+        try {
+            List<StoreInfo> list = xiaochanHttp.getList(location, offset, httpProxyInfo);
+            xiaochanHttp.meituanShangjinGetPoiList(location.getLatitude(), location.getLongitude(), location.getCityCode());
+            xiaochanHttp.getClientUnionPromotions1(location.getCityCode());
+            xiaochanHttp.getClientUnionPromotions2(location.getCityCode());
+            return list;
+        } catch (Exception e) {
+            log.error("请求小产列表时发生错误 ",e);
+        }
+        return Collections.emptyList();
+    }
+
+    private void preCall(Integer cityCode){
+        try {
+            xiaochanHttp.getTabTag();
+            xiaochanHttp.getClientCfg();
+            xiaochanHttp.getClientCfg();
+            xiaochanHttp.batchMatchPlacement1(cityCode);
+            xiaochanHttp.batchMatchPlacement2(cityCode);
+            xiaochanHttp.getFullRewardBanner();
+            xiaochanHttp.KfAccountList();
+            xiaochanHttp.geocoder();
+            xiaochanHttp.geocoder();
+            xiaochanHttp.getGlobalConfig2(cityCode);
+            xiaochanHttp.batchMatchPlacement3(cityCode);
+        }catch (Exception e){
+            log.error("请求小产列表时发生错误 ",e);
+        }
+
 
     }
 }

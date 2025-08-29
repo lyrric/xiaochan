@@ -9,7 +9,9 @@ import io.github.xiaochan.model.StoreInfo;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RBucket;
+import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -39,6 +41,7 @@ public class AppService {
         List<Location> locations = locationConfig.getLocations();
         for (Location location : locations) {
             run(location);
+            log.info("执行完成 {}",location);
         }
     }
 
@@ -61,11 +64,11 @@ public class AppService {
                 .filter(storeInfo -> check(storeInfo, location))
                 .filter(storeInfo -> storeInfo.getDistance() != null && storeInfo.getDistance() < 3000)
                 .filter(storeInfo -> {
-                    RBucket<String> bucket = redissonClient.getBucket(RedisConstant.PROMOTION_ID + storeInfo.getName() + storeInfo.getType());
-                    if (bucket.isExists()) {
+                    List<String> storeNames = redissonClient.getList(RedisConstant.STORE_NAMES, StringCodec.INSTANCE);
+                    if (storeNames.contains(storeInfo.getName() + storeInfo.getType())) {
                         return false;
                     }
-                    bucket.set("1", Duration.ofDays(10));
+                    storeNames.add(storeInfo.getName() + storeInfo.getType());
                     return true;
                 })
                 .collect(Collectors.toSet());

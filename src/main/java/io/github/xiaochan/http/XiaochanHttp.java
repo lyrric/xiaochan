@@ -38,19 +38,19 @@ public class XiaochanHttp {
      * @param timeMillis X-Garen
      * @return
      */
-    private String getAshe(Long timeMillis) {
-        String x = MD5.create().digestHex((SERVER_NAME + "." + METHOD_NAME).toLowerCase());
+    private String getAshe(Long timeMillis, String serverName, String methodName) {
+        String x = MD5.create().digestHex((serverName + "." + methodName).toLowerCase());
         return MD5.create().digestHex(x + timeMillis + NAMI);
     }
 
 
     public List<StoreInfo> getList(Location location, int offset, HttpProxyInfo httpProxyInfo){
         Long timeMillis = System.currentTimeMillis();
-        String ashe = getAshe(timeMillis);
+        String ashe = getAshe(timeMillis, SERVER_NAME, METHOD_NAME);
         HttpResponse response = HttpUtil.createPost(BASE_URL)
-                .headerMap(getHeaders(timeMillis, ashe, location.getCityCode(),SERVER_NAME,METHOD_NAME), true)
+                .headerMap(getHeaders(timeMillis, ashe, location.getCityCode(), SERVER_NAME, METHOD_NAME), true)
                 .timeout(3000)
-                .setHttpProxy(httpProxyInfo.getIp(), httpProxyInfo.getPort())
+                //.setHttpProxy(httpProxyInfo.getIp(), httpProxyInfo.getPort())
                 .body(getBody(location, offset))
                 .execute();
         if (!response.isOk()) {
@@ -122,16 +122,7 @@ public class XiaochanHttp {
         sendWithoutRes(body, cityCode,"Placement", "PlacementMatchService.BatchMatchPlacement");
     }
 
-    /**
-     * 返回信息格式：{"status":{"code":0},"global_config":{"eleme_mini_app_id":"wxece3a9a4c82f58c9","eleme_mini_gh_id":"gh_6506303a12bb","eleme_mini_path":"commercialize/pages/taoke-guide/index?scene=86feb8730cb64f749b58f9ce8bb2b918","eleme_mini_order_path":"pages/orderlist/pages/index/index","eleme_mini_evaluation_path":"ele-evaluate-order/pages/ele-evaluate-center/ele-evaluate-center.html","eleme_password":"0f/u枝这个 666:/＄WkkW83U＄~.👉饿了么App👈【打开饿了么APP 扫红包】","meituan_mini_app_id":"wxde8ac0a21135c07d","meituan_mini_gh_id":"gh_870576f3c6f9","meituan_mini_wm_gh_id":"gh_72a4eb2d4324","meituan_mini_order_path":"pages/orders/orders","meituan_mini_evaluation_path":"sub_inner_pages/evaluate-list/evaluate-list.html","kf_phone":"057122931820","upload_order_voucher_time":21600,"if_open_eleme":true,"xc_eleme_mini_app_id":"wxece3a9a4c82f58c9","xc_eleme_mini_gh_id":"gh_6506303a12bb","xc_eleme_mini_path":"commercialize/pages/compose-reduce-guide/index?scene=86feb8730cb64f749b58f9ce8bb2b918\u0026configKey=BAWANGCAN_ELE_ENR_COUPON_GUIDE","withdraw_channels":["wepay","alipay"],"if_open_card_logic":true,"eleme_mini_store_path":"ele-istore/ele-takeout-index/ele-takeout-index?id=#ID#","meituan_mini_store_path":"packages/restaurant/restaurant/restaurant?poi_id=#ID#","m_rp_time":5,"e_rp_time":3,"open_rp_btn":true,"xc_mini_group_path":"subpack/home/pages/groupQr/index","mt_store_schema":"imeituan://www.meituan.com/takeout/foods?poi_id=#ID#\u0026spu_id=0","mt_waimai_store_schema":"meituanwaimai://waimai.meituan.com/menu?restaurant_id=#ID#","theme":"https://web2.realtech-inc.com/oss/xc-app-assets/configs/common/theme.json?v=170531370896623111","mt_up_mode":1,"ele_up_mode":1,"s":"XC0i","index_sorts":["rec","distance"],"if_open_mt_bwc":true,"if_go":true,"reject_timeout":"13:00","if_open_fill_order_id":true,"meituan_mini_store_path_v2":"packages/restaurant/restaurant/restaurant?poi_id=#ID#\u0026poi_id_str=#ID_STR#","mt_store_schema_v2":"imeituan://www.meituan.com/takeout/foods?poi_id=#ID#\u0026spu_id=0\u0026poi_id_str=#ID_STR#","mt_waimai_store_schema_v2":"meituanwaimai://waimai.meituan.com/menu?restaurant_id=#ID#\u0026poi_id_str=#ID_STR#","jd_mini_app_id":"wx91d27dbf599dff74","jd_mini_gh_id":"gh_45b306365c3d","jd_mini_order_path":"pages/order_taro/pages/list/index.html","jd_mini_store_path":"pages/mendianStore/pages/index/index.html?#ID_STR#"}}
-     * 返回数据暂时无用
-     */
-    public void getGlobalConfig(){
-        String body = """
-                {"silk_id":0,"city_code":0,"app_id":20}
-                """;
-        sendWithoutRes(body, null, "WechatOpenapi", "WechatOpenapiService.ProjectApp");
-    }
+
     /**
      * 返回信息格式：{"status":{"code":0},"users":[{"timestamp":1754809528},{"avatar":"https://thirdwx.qlogo.cn/mmopen/vi_32/ejYCwJUWUp8jdx6rEa1FoQWt5wQ0ybPicks6JbqDELNWtHwXuhDUsTBkEq1p2HyZqtaLJwj9tuZ6zcZdnKbzPj0EBNY4Ujos5FWGJVzvOXm8/132","name":"。","timestamp":1754809528},{"avatar":"https://thirdwx.qlogo.cn/mmopen/vi_32/jkiaT5jkzauFybVL6c4tEPibQyUFFM0S91e5WTNLkHAtgQceGXdEo1GFLPG3WcJYb8rw2YGaQT3tJCxib6AkmibnHbCuXqzbSUsbU7rvOkg9ibV4/132","name":"20","timestamp":1754809527},{"timestamp":1754809526},{"timestamp":1754809526},{"timestamp":1754809522},{"timestamp":1754809515},{"timestamp":1754809513},{"timestamp":1754809512},{"timestamp":1754809509},{"timestamp":1754809508},{"avatar":"https://thirdwx.qlogo.cn/mmopen/vi_32/PiajxSqBRaEIJzMPwSR6c30nOvBjHqmrWLqN87qLNSiauGmLWzPvXQ4ZkpEYNtvu2IH1sK8uzlLhTu4lhgMqSyEMlVs8qCNJfArJp5kH9Q47mb5LFeLo7D8w/132","name":"情**身","timestamp":1754809505},{"timestamp":1754809501},{"avatar":"https://thirdwx.qlogo.cn/mmopen/vi_32/qjibUAkRwUKRPmO8bvLYJtgTuy2kgGhZy8ot94Xh1adW9pIgtQojXWXbianXbRmfjO9T3vdzse5KwrwKSdv5SWQibiaQ0UXelGEhxS99Xh3xptk/132","name":"L","timestamp":1754809500},{"timestamp":1754809500},{"avatar":"https://thirdwx.qlogo.cn/mmopen/vi_32/PiajxSqBRaEIbsLnoENqlVV2FEKUVxTV83AsE0tR07UrBLmrG1XPnGosUK7PMDaics7o1JXiatOCrMozdZUdwZPT7uMghccnK9qP8RmTwQKMUJAfVsuCrlLNQ/132","name":"。","timestamp":1754809496},{"avatar":"https://thirdwx.qlogo.cn/mmopen/vi_32/aoIPib21LS9MicMwafbAveH3EQqP0iaQc4ibgSQ72IfVyib4D0A0UDMeQNgEVcAvL8lLVDibgr0yq8qzSoMS9NdfAUWrbklXW4hE2IRVOcuXQJEtQ/132","name":"早**树","timestamp":1754809492},{"timestamp":1754809490},{"timestamp":1754809487},{"timestamp":1754809480}],"left_quota":29.99}
      * 返回数据暂时无用
@@ -141,6 +132,13 @@ public class XiaochanHttp {
                 {"silk_id":0,"app_id":20}
                 """;
         sendWithoutRes(body, null, "SilkwormNewUser", "NewUserMobileService.GetFullRewardBanner");
+    }
+
+    public void KfAccountList(){
+        String body = """
+                {"app_id":20}
+                """;
+        sendWithoutRes(body, null, "SilkwormNewMsg", "NewMsgService.KfAccountList");
     }
 
     /**
@@ -173,8 +171,8 @@ public class XiaochanHttp {
      */
     public void meituanShangjinGetPoiList(String lat, String lng, Integer cityCode) {
         Map<String, Object> body = new HashMap<>();
-        body.put("lat", lat);
-        body.put("lng", lng);
+        body.put("lat", Double.valueOf(lat));
+        body.put("lng",  Double.valueOf(lng));
         body.put("silk_id", 0);
         body.put("page_pv_id", "");
         body.put("sort_type", 3);
@@ -186,7 +184,17 @@ public class XiaochanHttp {
      * {"promotions":[{"id":3406,"activity_id":0,"score":356,"platform":2,"type":2,"main_title":"爆款好价6.9元起","sub_title":"爆款好价6.9元起","activity_icon":"https://web.xinyifm.cn/oss/xc-backend/1737015058759c20ad4d76fe97759aa27a0c99bff6710.png","square_icon":"","cities":null,"begin":1736956800,"end":1756655999,"week_day":[0,1,2,3,4,5,6],"wechat_url":"ad-bdlm-sub/pages/daily-special-price-foods-guide/index?scene=393445eb81f8481cbdd3f4041661e5e1","status":1},{"id":3389,"activity_id":0,"score":355,"platform":2,"type":2,"main_title":"拼着买低至0.01元起","sub_title":"拼着买低至0.01元起","activity_icon":"https://web.xinyifm.cn/oss/xc-backend/1736832709588e626af7ccb88fe95772f16851989583f.png","square_icon":"","cities":null,"begin":1736784000,"end":1764518399,"week_day":[0,1,2,3,4,5,6],"wechat_url":"ad-bdlm-sub/pages/daily-special-price-foods-guide/index?scene=3fcfc8fa111e42f28bdf092fe9a58710","status":1},{"id":3282,"activity_id":0,"score":311,"platform":2,"type":2,"main_title":"饿了么大牌券秒杀","sub_title":"饿了么大牌券秒杀","activity_icon":"https://web.xinyifm.cn/oss/xc-backend/173511190710251b1e82773c08fa40426a2e71d9a2d91.png","square_icon":"","cities":null,"begin":1735056000,"end":1827676799,"week_day":[0,1,2,3,4,5,6],"wechat_url":"ad-bdlm-sub/pages/coupon-hoard-guide/index?scene=c2392117778d4624b103a27d72cdcfbe","status":1}],"status":{"code":0,"msg":""}}
      * 返回数据暂时无用
      */
-    public void getClientUnionPromotions(Integer cityCode) {
+    public void getClientUnionPromotions1(Integer cityCode) {
+        String jsonBody = """
+                {"silk_id":0,"page_num":1,"with_activity_icon":true,"platform":1,"page_size":5,"app_id":20}
+                """;
+        sendWithoutRes(jsonBody, cityCode, "Promotion", "PromotionService.GetClientUnionPromotions");
+    }
+    /**
+     * {"promotions":[{"id":3406,"activity_id":0,"score":356,"platform":2,"type":2,"main_title":"爆款好价6.9元起","sub_title":"爆款好价6.9元起","activity_icon":"https://web.xinyifm.cn/oss/xc-backend/1737015058759c20ad4d76fe97759aa27a0c99bff6710.png","square_icon":"","cities":null,"begin":1736956800,"end":1756655999,"week_day":[0,1,2,3,4,5,6],"wechat_url":"ad-bdlm-sub/pages/daily-special-price-foods-guide/index?scene=393445eb81f8481cbdd3f4041661e5e1","status":1},{"id":3389,"activity_id":0,"score":355,"platform":2,"type":2,"main_title":"拼着买低至0.01元起","sub_title":"拼着买低至0.01元起","activity_icon":"https://web.xinyifm.cn/oss/xc-backend/1736832709588e626af7ccb88fe95772f16851989583f.png","square_icon":"","cities":null,"begin":1736784000,"end":1764518399,"week_day":[0,1,2,3,4,5,6],"wechat_url":"ad-bdlm-sub/pages/daily-special-price-foods-guide/index?scene=3fcfc8fa111e42f28bdf092fe9a58710","status":1},{"id":3282,"activity_id":0,"score":311,"platform":2,"type":2,"main_title":"饿了么大牌券秒杀","sub_title":"饿了么大牌券秒杀","activity_icon":"https://web.xinyifm.cn/oss/xc-backend/173511190710251b1e82773c08fa40426a2e71d9a2d91.png","square_icon":"","cities":null,"begin":1735056000,"end":1827676799,"week_day":[0,1,2,3,4,5,6],"wechat_url":"ad-bdlm-sub/pages/coupon-hoard-guide/index?scene=c2392117778d4624b103a27d72cdcfbe","status":1}],"status":{"code":0,"msg":""}}
+     * 返回数据暂时无用
+     */
+    public void getClientUnionPromotions2(Integer cityCode) {
         String jsonBody = """
                 {"silk_id":0,"page_num":1,"with_activity_icon":true,"platform":2,"page_size":5,"app_id":20}
                 """;
@@ -201,7 +209,7 @@ public class XiaochanHttp {
     private void sendWithoutRes(String url, Integer cityCode, String body, String serverName, String methodName) {
         try {
             Long timeMillis = System.currentTimeMillis();
-            String ashe = getAshe(timeMillis);
+            String ashe = getAshe(timeMillis, serverName, methodName);
             HttpResponse response = HttpUtil.createPost(url)
                     .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName), true)
                     .timeout(3000)
