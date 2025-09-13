@@ -35,7 +35,7 @@ public class AppService {
     @Resource
     private XiaoChanService xiaoChanService;
 
-    @Scheduled(cron = "0 0 9,11,15,19 * * ? ")
+    @Scheduled(cron = "0 30 * * * ? ")
     @EventListener(ApplicationReadyEvent.class)
     public void run(){
         List<Location> locations = locationConfig.getLocations();
