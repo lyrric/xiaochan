@@ -3,13 +3,11 @@ package io.github.xiaochan.service;
 import io.github.xiaochan.config.LocationConfig;
 import io.github.xiaochan.constant.RedisConstant;
 import io.github.xiaochan.http.MessageHttp;
-import io.github.xiaochan.http.XiaochanHttp;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
+import io.github.xiaochan.service.impl.XiaoChanServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RBucket;
-import org.redisson.api.RSet;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -18,7 +16,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,8 +32,10 @@ public class AppService {
     @Resource
     private XiaoChanService xiaoChanService;
 
-    @Scheduled(cron = "0 30 * * * ? ")
-    @EventListener(ApplicationReadyEvent.class)
+    private static final int DFAULT_MAX_SIZE = 100;
+
+    //@Scheduled(cron = "0 30 * * * ? ")
+    //@EventListener(ApplicationReadyEvent.class)
     public void run(){
         List<Location> locations = locationConfig.getLocations();
         for (Location location : locations) {
@@ -47,7 +46,7 @@ public class AppService {
 
     public void run(Location location){
         try {
-            List<StoreInfo> storeInfos = xiaoChanService.getList(location);
+            List<StoreInfo> storeInfos = xiaoChanService.getList(location.getCityCode(), location.getLongitude(), location.getLatitude(), DFAULT_MAX_SIZE);
             log.info("当前位置:{}，门店数量:{}", location.getName(), storeInfos.size());
             //发送通知
             sendMessage(storeInfos, location);
@@ -106,7 +105,7 @@ public class AppService {
             return false;
         }
         //金额判断
-        BigDecimal price = storeInfo.getPrice();
+/*        BigDecimal price = storeInfo.getPrice();
         if (location.getPrice() != null && price.compareTo(location.getPrice()) < 0) {
             return false;
         }
@@ -120,8 +119,8 @@ public class AppService {
                 price.subtract(rebatePrice).compareTo(location.getDifPrice()) > 0) {
             //金额差大于指定值
             return false;
-        }
-        return true;
+        }*/
+        return false;
 
     }
 

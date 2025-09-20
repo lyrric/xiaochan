@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小蚕门店管理平台</title>
+    <!-- Element UI CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <!-- Vue.js -->
+    <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <!-- Element UI JS -->
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <!-- Axios for HTTP requests -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .header-title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .search-input {
+            min-width: 300px;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .sort-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .store-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #f0f0f0;
+        }
+        
+        .store-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .store-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .store-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            flex-shrink: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .store-image img {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .store-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .store-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .new-badge {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: normal;
+        }
+        
+        .platform-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+        
+        .platform-meituan {
+            background: #ffd93d;
+            color: #333;
+        }
+        
+        .platform-eleme {
+            background: #0078ff;
+            color: white;
+        }
+        
+        .platform-jd {
+            background: #e93323;
+            color: white;
+        }
+        
+        .store-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .detail-icon {
+            font-size: 16px;
+            width: 20px;
+        }
+        
+        .highlight {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .success {
+            color: #27ae60;
+            font-weight: 600;
+        }
+        
+        .store-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .action-button {
+            min-width: 80px;
+        }
+        
+        .loading-container {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header-title {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+            
+            .search-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-input {
+                min-width: auto;
+                max-width: none;
+            }
+            
+            .sort-buttons {
+                justify-content: center;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .store-item {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            
+            .store-image {
+                width: 60px;
+                height: 60px;
+                align-self: center;
+            }
+            
+            .store-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .store-actions {
+                flex-direction: row;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .action-button {
+                flex: 1;
+                min-width: 70px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .store-card {
+                padding: 15px;
+            }
+            
+            .store-name {
+                font-size: 16px;
+            }
+            
+            .store-details {
+                font-size: 13px;
+            }
+        }
+        
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            70% {
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="container">
+            <!-- 头部搜索区域 -->
+            <div class="header fade-in">
+                <h1 class="header-title">🐛 小蚕门店管理平台</h1>
+                <div class="search-section">
+                    <el-input
+                        v-model="searchForm.name"
+                        placeholder="请输入门店名称"
+                        class="search-input"
+                        clearable
+                        @keyup.enter.native="handleSearch"
+                    >
+                        <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
+                    </el-input>
+                    
+                    <div class="sort-buttons">
+                        <el-button-group>
+                            <el-button
+                                :type="searchForm.orderType === 1 ? 'primary' : 'default'"
+                                @click="handleSort(1)"
+                            >
+                                默认排序
+                            </el-button>
+                            <el-button
+                                :type="searchForm.orderType === 2 ? 'primary' : 'default'"
+                                @click="handleSort(2)"
+                            >
+                                返现金额
+                            </el-button>
+                            <el-button
+                                :type="searchForm.orderType === 3 ? 'primary' : 'default'"
+                                @click="handleSort(3)"
+                            >
+                                返现比例
+                            </el-button>
+                        </el-button-group>
+                        
+                        <el-button type="info" icon="el-icon-location" @click="goToAddressPage">
+                            地址选择
+                        </el-button>
+                        
+                        <el-button type="success" @click="handleSearch" :loading="loading">
+                            <i class="el-icon-refresh-right"></i> 搜索
+                        </el-button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 内容区域 -->
+            <div class="content">
+                <!-- 加载状态 -->
+                <div v-if="loading" class="loading-container">
+                    <el-loading-text>正在加载门店信息...</el-loading-text>
+                </div>
+                
+                <!-- 空状态 -->
+                <div v-else-if="storeList.length === 0" class="empty-state">
+                    <div class="empty-icon">🏪</div>
+                    <h3>暂无门店信息</h3>
+                    <p>请尝试调整搜索条件或稍后再试</p>
+                </div>
+                
+                <!-- 门店列表 -->
+                <div v-else>
+                    <div 
+                        v-for="(store, index) in storeList" 
+                        :key="store.storeId"
+                        class="store-card bounce-in"
+                        :style="{ animationDelay: (index * 0.1) + 's' }"
+                    >
+                        <div class="store-item">
+                            <!-- 门店图片 -->
+                            <div class="store-image">
+                                <img v-if="store.icon" :src="store.icon" :alt="store.name" />
+                                <span v-else>{{ store.name.charAt(0) }}</span>
+                            </div>
+                            
+                            <!-- 门店信息 -->
+                            <div class="store-info">
+                                <div class="store-name">
+                                    {{ store.name }}
+                                    <span v-if="store.ifNew" class="new-badge">新店</span>
+                                    <span :class="getPlatformClass(store.type)">{{ getPlatformName(store.type) }}</span>
+                                </div>
+                                
+                                <div class="store-details">
+                                    <div class="detail-item">
+                                        <i class="detail-icon el-icon-time"></i>
+                                        <span>营业时间：{{ store.openHours }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="detail-icon el-icon-money"></i>
+                                        <span>满{{ store.price }}返<span class="highlight">{{ store.rebatePrice }}</span></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="detail-icon el-icon-clock"></i>
+                                        <span>活动时间：{{ store.startTime }} - {{ store.endTime }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="detail-icon el-icon-goods"></i>
+                                        <span>剩余数量：<span :class="store.leftNumber > 0 ? 'success' : 'highlight'">{{ store.leftNumber }}</span></span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="detail-icon el-icon-star-on"></i>
+                                        <span>好评条件：{{ getRebateConditionText(store.rebateCondition) }}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="detail-icon el-icon-location-outline"></i>
+                                        <span>距离：{{ formatDistance(store.distance) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 操作按钮 -->
+                            <div class="store-actions">
+                                <el-button
+                                    v-if="canApply(store)"
+                                    type="primary"
+                                    size="small"
+                                    class="action-button"
+                                    @click="handleApply(store)"
+                                    :loading="actionLoading[store.promotionId + '_apply']"
+                                >
+                                    报名
+                                </el-button>
+                                <el-button
+                                    v-if="store.leftNumber > 0"
+                                    type="success"
+                                    size="small"
+                                    class="action-button"
+                                    @click="handleBook(store)"
+                                    :loading="actionLoading[store.promotionId + '_book']"
+                                >
+                                    预约
+                                </el-button>
+                                <el-button
+                                    type="warning"
+                                    size="small"
+                                    class="action-button"
+                                    @click="handleIgnore(store)"
+                                    :loading="actionLoading[store.storeId + '_ignore']"
+                                >
+                                    忽略
+                                </el-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    loading: false,
+                    actionLoading: {},
+                    searchForm: {
+                        name: '',
+                        orderType: 1,
+                        cityCode: null,
+                        latitude: '',
+                        longitude: ''
+                    },
+                    storeList: []
+                }
+            },
+            mounted() {
+                this.handleSearch();
+                this.getCurrentLocation();
+            },
+            methods: {
+                // 搜索门店
+                async handleSearch() {
+                    this.loading = true;
+                    try {
+                        const response = await axios.post('/api/xiaochan/query', this.searchForm);
+                        if (response.data.success) {
+                            this.storeList = response.data.data || [];
+                            this.$message.success('查询成功');
+                        } else {
+                            this.$message.error(response.data.msg || '查询失败');
+                        }
+                    } catch (error) {
+                        console.error('查询失败:', error);
+                        this.$message.error('网络错误，请稍后重试');
+                        // 模拟数据用于展示
+                        this.loadMockData();
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                // 排序处理
+                handleSort(orderType) {
+                    this.searchForm.orderType = orderType;
+                    this.handleSearch();
+                },
+                
+                // 报名
+                async handleApply(store) {
+                    const loadingKey = store.promotionId + '_apply';
+                    this.$set(this.actionLoading, loadingKey, true);
+                    
+                    try {
+                        const response = await axios.post(`/api/xiaochan/apply/${store.promotionId}`);
+                        if (response.data.success) {
+                            this.$message.success('报名成功！');
+                            this.handleSearch(); // 刷新列表
+                        } else {
+                            this.$message.error(response.data.msg || '报名失败');
+                        }
+                    } catch (error) {
+                        console.error('报名失败:', error);
+                        this.$message.error('网络错误，请稍后重试');
+                    } finally {
+                        this.$set(this.actionLoading, loadingKey, false);
+                    }
+                },
+                
+                // 预约
+                async handleBook(store) {
+                    const loadingKey = store.promotionId + '_book';
+                    this.$set(this.actionLoading, loadingKey, true);
+                    
+                    try {
+                        const bookData = {
+                            promotionId: store.promotionId,
+                            startTime: store.startTime
+                        };
+                        const response = await axios.post('/api/xiaochan/book', bookData);
+                        if (response.data.success) {
+                            this.$message.success('预约成功！');
+                            this.handleSearch(); // 刷新列表
+                        } else {
+                            this.$message.error(response.data.msg || '预约失败');
+                        }
+                    } catch (error) {
+                        console.error('预约失败:', error);
+                        this.$message.error('网络错误，请稍后重试');
+                    } finally {
+                        this.$set(this.actionLoading, loadingKey, false);
+                    }
+                },
+                
+                // 忽略
+                async handleIgnore(store) {
+                    const loadingKey = store.storeId + '_ignore';
+                    this.$set(this.actionLoading, loadingKey, true);
+                    
+                    try {
+                        const ignoreData = {
+                            storeId: store.storeId.toString(),
+                            storeName: store.name,
+                            type: store.type,
+                            price: store.price,
+                            rebatePrice: store.rebatePrice,
+                            rebateCondition: store.rebateCondition,
+                            icon: store.icon
+                        };
+                        const response = await axios.post('/api/xiaochan/ignore', ignoreData);
+                        if (response.data.success) {
+                            this.$message.success('已忽略该门店');
+                            this.handleSearch(); // 刷新列表
+                        } else {
+                            this.$message.error(response.data.msg || '操作失败');
+                        }
+                    } catch (error) {
+                        console.error('忽略失败:', error);
+                        this.$message.error('网络错误，请稍后重试');
+                    } finally {
+                        this.$set(this.actionLoading, loadingKey, false);
+                    }
+                },
+                
+                // 获取平台名称
+                getPlatformName(type) {
+                    const platforms = {
+                        1: '美团',
+                        2: '饿了么',
+                        3: '京东'
+                    };
+                    return platforms[type] || '未知';
+                },
+                
+                // 获取平台样式类
+                getPlatformClass(type) {
+                    const classes = {
+                        1: 'platform-tag platform-meituan',
+                        2: 'platform-tag platform-eleme',
+                        3: 'platform-tag platform-jd'
+                    };
+                    return classes[type] || 'platform-tag';
+                },
+                
+                // 获取好评条件文本
+                getRebateConditionText(condition) {
+                    const conditions = {
+                        99: '无需评价',
+                        2: '图文评价'
+                    };
+                    return conditions[condition] || '其他';
+                },
+                
+                // 格式化距离
+                formatDistance(distance) {
+                    if (distance < 1000) {
+                        return distance + 'm';
+                    } else {
+                        return (distance / 1000).toFixed(1) + 'km';
+                    }
+                },
+                
+                // 判断是否可以报名
+                canApply(store) {
+                    if (store.leftNumber <= 0) return false;
+                    
+                    // 检查当前时间是否在活动时间内
+                    const now = new Date();
+                    const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                                      now.getMinutes().toString().padStart(2, '0');
+                    
+                    return currentTime >= store.startTime && currentTime <= store.endTime;
+                },
+                
+                // 获取当前位置
+                getCurrentLocation() {
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                this.searchForm.latitude = position.coords.latitude.toString();
+                                this.searchForm.longitude = position.coords.longitude.toString();
+                            },
+                            (error) => {
+                                console.log('获取位置失败:', error);
+                            }
+                        );
+                    }
+                },
+                
+                // 模拟数据（用于演示）
+                loadMockData() {
+                    this.storeList = [
+                        {
+                            name: "麦当劳(王府井店)",
+                            storeId: 1001,
+                            ifNew: true,
+                            openHours: "10:00-22:00",
+                            promotionId: 2001,
+                            type: 1,
+                            startTime: "08:00",
+                            endTime: "21:00",
+                            leftNumber: 15,
+                            distance: 500,
+                            price: 30.00,
+                            rebatePrice: 5.00,
+                            rebateCondition: 99,
+                            icon: "https://via.placeholder.com/80/ff6b6b/ffffff?text=M"
+                        },
+                        {
+                            name: "肯德基(三里屯店)",
+                            storeId: 1002,
+                            ifNew: false,
+                            openHours: "09:00-23:00",
+                            promotionId: 2002,
+                            type: 2,
+                            startTime: "09:00",
+                            endTime: "20:00",
+                            leftNumber: 0,
+                            distance: 1200,
+                            price: 25.00,
+                            rebatePrice: 8.00,
+                            rebateCondition: 2,
+                            icon: "https://via.placeholder.com/80/0078ff/ffffff?text=K"
+                        },
+                        {
+                            name: "星巴克(CBD店)",
+                            storeId: 1003,
+                            ifNew: false,
+                            openHours: "07:00-22:00",
+                            promotionId: 2003,
+                            type: 3,
+                            startTime: "10:00",
+                            endTime: "18:00",
+                            leftNumber: 8,
+                            distance: 800,
+                            price: 50.00,
+                            rebatePrice: 12.00,
+                            rebateCondition: 99,
+                            icon: "https://via.placeholder.com/80/e93323/ffffff?text=S"
+                        }
+                    ];
+                },
+                
+                // 跳转到地址选择页面
+                goToAddressPage() {
+                    window.open('/address.html', '_blank');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

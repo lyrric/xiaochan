@@ -10,4 +10,8 @@ public class RedisConstant {
      * 已通知缓存
      */
     public static final String STORE_NAMES = "STORE_NAMES";
+    /**
+     * 地址
+     */
+    public static final String LOCATION = "LOCATION";
 }

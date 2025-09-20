@@ -1,27 +1,31 @@
 package io.github.xiaochan;
 
-import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaochan.http.XiaochanHttp;
-import io.github.xiaochan.model.HttpProxyInfo;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
-import io.github.xiaochan.proxy.XieQuHttpProxy;
+import io.github.xiaochan.service.impl.XiaoChanServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+@Slf4j
 public class XiaochanTest {
 
 
     @Test
     public void test() {
-        XieQuHttpProxy xieQuHttpProxy = new XieQuHttpProxy();
-        xieQuHttpProxy.refreshIp();
-        HttpProxyInfo httpProxyInfo = xieQuHttpProxy.getOne();
-        XiaochanHttp xiaochanHttp = new XiaochanHttp();
-        List<StoreInfo> list = xiaochanHttp.getList(Location.builder().cityCode(510116)
-                .longitude("104.00647")
-                .latitude("30.57862").build(), 0, httpProxyInfo);
-        System.out.println(JSONObject.toJSONString(list));
+        List<StoreInfo> list = new XiaoChanServiceImpl().getList(
+                510116,
+                "30.57862",
+                "104.00647",
+                150);
+        log.info("门店数量:{}", list.size());
+    }
+
+    @Test
+    public void test1() {
+        new XiaochanHttp().getClientCfg();
+        new XiaochanHttp().meituanShangjinGetPoiList("30.574471", "103.923767", 510116);
     }
 }

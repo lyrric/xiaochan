@@ -10,9 +10,11 @@ import io.github.xiaochan.core.BusinessException;
 import io.github.xiaochan.model.HttpProxyInfo;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
+import io.github.xiaochan.model.vo.AddressVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -44,14 +46,13 @@ public class XiaochanHttp {
     }
 
 
-    public List<StoreInfo> getList(Location location, int offset, HttpProxyInfo httpProxyInfo){
+    public List<StoreInfo> getList(String cityCode, String longitude, String latitude, int offset){
         Long timeMillis = System.currentTimeMillis();
         String ashe = getAshe(timeMillis, SERVER_NAME, METHOD_NAME);
         HttpResponse response = HttpUtil.createPost(BASE_URL)
-                .headerMap(getHeaders(timeMillis, ashe, location.getCityCode(), SERVER_NAME, METHOD_NAME), true)
+                .headerMap(getHeaders(timeMillis, ashe, Integer.valueOf(cityCode), SERVER_NAME, METHOD_NAME), true)
                 .timeout(3000)
-                //.setHttpProxy(httpProxyInfo.getIp(), httpProxyInfo.getPort())
-                .body(getBody(location, offset))
+                .body(getBody(cityCode, longitude, latitude, offset))
                 .execute();
         if (!response.isOk()) {
             throw new BusinessException("状态码错误:" + response.getStatus());
@@ -59,6 +60,59 @@ public class XiaochanHttp {
         String body = response.body();
         response.close();
         return parseBody(body);
+    }
+
+    /**
+     * 搜索地址
+     */
+    public List<AddressVO> searchAddress(Integer cityCode, String keyword){
+        final String serverName = "SilkwormLbs";
+        final String methodName = "SilkwormLbsService.Suggestion";
+        Map<String, Object> bodyMap = Map.of("silk_id", 897154359, "keyword", keyword,
+                "region", "", "page_size", 20, "page", 1, "app_id", 20);
+        try {
+            Long timeMillis = System.currentTimeMillis();
+            String ashe = getAshe(timeMillis, serverName, methodName);
+            HttpResponse response = HttpUtil.createPost(BASE_URL)
+                    .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName), true)
+                    .timeout(3000)
+                    .body(JSONObject.toJSONString(bodyMap))
+                    .execute();
+            if (!response.isOk()) {
+                throw new BusinessException("状态码错误:" + response.getStatus());
+            }
+            return parseBodyToAddress(response.body());
+        } catch (Exception e) {
+            log.error("{} error", methodName, e);
+            throw e;
+        }
+    }
+
+
+    private List<AddressVO> parseBodyToAddress(String body) {
+        JSONObject jsonObject = JSONObject.parseObject(body);
+        if (jsonObject.getJSONObject("status").getInteger("code") != 0) {
+            log.error("parseBodyToAddress error body: {} ", body);
+            throw new BusinessException("状态码错误:" + jsonObject.getJSONObject("status").getInteger("code"));
+        }
+        JSONArray jsonArray = jsonObject.getJSONArray("result");
+        List<AddressVO> result = new ArrayList<>();
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject obj = jsonArray.getJSONObject(i);
+            AddressVO addressVO = AddressVO.builder()
+                    .id(obj.getString("id"))
+                    .title(obj.getString("title"))
+                    .address(obj.getString("address"))
+                    .latitude(obj.getJSONObject("location").getString("lat"))
+                    .longitude(obj.getJSONObject("location").getString("lng"))
+                    .cityCode(obj.getString("adcode"))
+                    .province(obj.getString("province"))
+                    .city(obj.getString("city"))
+                    .district(obj.getString("district"))
+                    .build();
+            result.add(addressVO);
+        }
+        return result;
     }
 
     /**
@@ -222,10 +276,10 @@ public class XiaochanHttp {
             log.error("{} error", methodName, e);
         }
     }
-    private static String getBody(Location location, int offset){
+    private static String getBody(String cityCode, String longitude, String latitude, int offset){
         Map<String, Object> body = new HashMap<>();
-        body.put("latitude", new BigDecimal(location.getLatitude()));
-        body.put("longitude", new BigDecimal(location.getLongitude()));
+        body.put("latitude", new BigDecimal(latitude));
+        body.put("longitude", new BigDecimal(longitude));
         body.put("promotion_sort", 3);
         body.put("store_type", 0);
         body.put("offset", offset);
@@ -233,7 +287,7 @@ public class XiaochanHttp {
         body.put("silk_id", 89715435);
         body.put("promotion_filter", 0);
         body.put("promotion_category", 0);
-        body.put("city_code", location.getCityCode());
+        body.put("city_code", cityCode);
         body.put("store_category", 0);
         body.put("store_platform", 0);
         body.put("app_id", 20);
@@ -271,6 +325,9 @@ public class XiaochanHttp {
             storeInfo.setStartTime(jsonObject.getString("start_time_hour") + ":" + jsonObject.getString("start_time_minute"));
             storeInfo.setEndTime(jsonObject.getString("end_time_hour") + ":" + jsonObject.getString("end_time_minute"));
             storeInfo.setDistance(jsonObject.getInteger("distance") );
+            storeInfo.setIcon(jsonObject.getString("icon") );
+            storeInfo.setStoreId(jsonObject.getInteger("store_id") );
+            //美团
             if (jsonObject.getInteger("meituan_status") == 1) {
                 StoreInfo meituanStoreInfo = new StoreInfo();
                 BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
@@ -280,6 +337,7 @@ public class XiaochanHttp {
                 meituanStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("meituan_user_rebate"), BigDecimal.valueOf(100)));
                 result.add(meituanStoreInfo);
             }
+            //饿了么
             if (jsonObject.getInteger("eleme_status") == 1) {
                 StoreInfo eleStoreInfo = new StoreInfo();
                 BeanUtils.copyProperties(storeInfo, eleStoreInfo);
@@ -288,6 +346,20 @@ public class XiaochanHttp {
                 eleStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("eleme_order_money"), BigDecimal.valueOf(100)));
                 eleStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("eleme_user_rebate"),BigDecimal.valueOf(100)));
                 result.add(eleStoreInfo);
+            }
+            // 京东
+            if (jsonObject.containsKey("tp_promotion")) {
+                JSONObject tpPromotion = jsonObject.getJSONObject("tp_promotion");
+                if (tpPromotion.getInteger("tp_status") == 1) {
+                    StoreInfo eleStoreInfo = new StoreInfo();
+                    BeanUtils.copyProperties(storeInfo, eleStoreInfo);
+                    eleStoreInfo.setType(3);
+                    eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
+                    eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
+                    eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
+                    result.add(eleStoreInfo);
+                }
+
             }
         }
         return result;

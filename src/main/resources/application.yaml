@@ -1,14 +1,13 @@
 server:
-  port: 8083
+  port: 8084
 spring:
   data:
     redis:
       host: 127.0.0.1
+  cache:
+    redis:
+      time-to-live: 60s # 缓存过期时间
 
-xiequ:
-  key: A
-  refresh:
-    key: B
 
 config:
   locations:
