@@ -18,5 +18,7 @@
   - 字符串C + X-Garen + X-Nami得到字符串D。
   - 将字符串D进行MD5加密得到字符串E，E即为X-Ashe的值。
 ## 截图
+### 活动列表页
 ![image](https://github.com/lyrric/xiaochan/blob/main/images/index.png) 
+### 地址管理
 ![image](https://github.com/lyrric/xiaochan/blob/main/images/location.png)
