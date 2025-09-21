@@ -8,6 +8,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.client.codec.StringCodec;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -28,12 +29,15 @@ public class LocationServiceImpl implements LocationService {
         String id = String.valueOf(System.currentTimeMillis());
         location.setId(id);
         // 获取Redis Map
-        RMap<String, String> addressMap = redissonClient.getMap(RedisConstant.LOCATION);
+        RMap<String, String> addressMap = getAddressMap();
         // 将Location对象转为JSON字符串存储
         String locationJson = JSON.toJSONString(location);
         addressMap.put(id, locationJson);
         log.info("地址新增成功，ID: {}, 地址信息: {}", id, location.getName());
         return id;
+    }
+    private RMap<String, String> getAddressMap() {
+        return redissonClient.getMap(RedisConstant.LOCATION, StringCodec.INSTANCE);
     }
 
     @Override
@@ -41,7 +45,7 @@ public class LocationServiceImpl implements LocationService {
         if (!StringUtils.hasText(id)) {
             return false;
         }
-        RMap<String, String> addressMap = redissonClient.getMap(RedisConstant.LOCATION);
+        RMap<String, String> addressMap = getAddressMap();
         String removed = addressMap.remove(id);
         boolean success = removed != null;
         log.info("地址删除结果，ID: {}, 成功: {}", id, success);
@@ -53,7 +57,7 @@ public class LocationServiceImpl implements LocationService {
         if (!StringUtils.hasText(id)) {
             return false;
         }
-        RMap<String, String> addressMap = redissonClient.getMap(RedisConstant.LOCATION);
+        RMap<String, String> addressMap = getAddressMap();
         String locationJson = addressMap.get(id);
 
         if (locationJson == null) {
@@ -82,7 +86,7 @@ public class LocationServiceImpl implements LocationService {
 
     @Override
     public List<Location> getAll() {
-        RMap<String, String> addressMap = redissonClient.getMap(RedisConstant.LOCATION);
+        RMap<String, String> addressMap = getAddressMap();
         List<Location> locations = new ArrayList<>();
 
         for (Map.Entry<String, String> entry : addressMap.entrySet()) {
@@ -93,7 +97,19 @@ public class LocationServiceImpl implements LocationService {
                 log.warn("解析地址数据失败，ID: {}", entry.getKey(), e);
             }
         }
-        log.info("查询所有地址，总数: {}", locations.size());
+        
+        // 按照ID排序，确保返回顺序的一致性
+        locations.sort((a, b) -> {
+            try {
+                Long idA = Long.parseLong(a.getId());
+                Long idB = Long.parseLong(b.getId());
+                return idA.compareTo(idB);
+            } catch (NumberFormatException e) {
+                // 如果ID不是数字，则按字符串排序
+                return a.getId().compareTo(b.getId());
+            }
+        });
+        
         return locations;
     }
 }

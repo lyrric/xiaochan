@@ -34,7 +34,7 @@ public class AddressVO {
     /**
      * cityCode
      */
-    private String cityCode;
+    private Integer cityCode;
     /**
      * 省
      */

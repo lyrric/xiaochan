@@ -17,12 +17,4 @@ public class HomeController {
     public String home() {
         return "redirect:/index.html";
     }
-
-    /**
-     * 地址选择页面
-     */
-    @GetMapping("/address")
-    public String address() {
-        return "redirect:/address.html";
-    }
 }

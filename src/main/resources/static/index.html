@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小蚕门店管理平台</title>
+    <title>小蚕活动平台</title>
     <!-- Element UI CSS -->
     <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
     <!-- Vue.js -->
@@ -13,352 +13,77 @@
     <!-- Axios for HTTP requests -->
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-        
-        .header-title {
-            text-align: center;
-            color: #2c3e50;
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 30px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        
-        .search-section {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .search-input {
-            min-width: 300px;
-            flex: 1;
-            max-width: 400px;
-        }
-        
-        .sort-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .content {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-        
-        .store-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-            border: 1px solid #f0f0f0;
-        }
-        
-        .store-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
-        }
-        
-        .store-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        
-        .store-image {
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            background: linear-gradient(45deg, #ff6b6b, #feca57);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            flex-shrink: 0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .store-image img {
-            width: 100%;
-            height: 100%;
-            border-radius: 8px;
-            object-fit: cover;
-        }
-        
-        .store-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .store-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .new-badge {
-            background: linear-gradient(45deg, #ff6b6b, #ff8e53);
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: normal;
-        }
-        
-        .platform-tag {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-            margin-right: 8px;
-        }
-        
-        .platform-meituan {
-            background: #ffd93d;
-            color: #333;
-        }
-        
-        .platform-eleme {
-            background: #0078ff;
-            color: white;
-        }
-        
-        .platform-jd {
-            background: #e93323;
-            color: white;
-        }
-        
-        .store-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 8px;
-            margin-top: 12px;
-            font-size: 14px;
-            color: #666;
-        }
-        
-        .detail-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .detail-icon {
-            font-size: 16px;
-            width: 20px;
-        }
-        
-        .highlight {
-            color: #e74c3c;
-            font-weight: 600;
-        }
-        
-        .success {
-            color: #27ae60;
-            font-weight: 600;
-        }
-        
-        .store-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        
-        .action-button {
-            min-width: 80px;
-        }
-        
-        .loading-container {
-            text-align: center;
-            padding: 40px;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-        
-        .empty-icon {
-            font-size: 64px;
-            color: #ddd;
-            margin-bottom: 20px;
-        }
-        
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .header {
-                padding: 20px;
-            }
-            
-            .header-title {
-                font-size: 24px;
-                margin-bottom: 20px;
-            }
-            
-            .search-section {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .search-input {
-                min-width: auto;
-                max-width: none;
-            }
-            
-            .sort-buttons {
-                justify-content: center;
-            }
-            
-            .content {
-                padding: 20px;
-            }
-            
-            .store-item {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 15px;
-            }
-            
-            .store-image {
-                width: 60px;
-                height: 60px;
-                align-self: center;
-            }
-            
-            .store-details {
-                grid-template-columns: 1fr;
-            }
-            
-            .store-actions {
-                flex-direction: row;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-            
-            .action-button {
-                flex: 1;
-                min-width: 70px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .store-card {
-                padding: 15px;
-            }
-            
-            .store-name {
-                font-size: 16px;
-            }
-            
-            .store-details {
-                font-size: 13px;
-            }
-        }
-        
-        /* 动画效果 */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .bounce-in {
-            animation: bounceIn 0.6s ease-out;
-        }
-        
-        @keyframes bounceIn {
-            0% {
-                opacity: 0;
-                transform: scale(0.3);
-            }
-            50% {
-                opacity: 1;
-                transform: scale(1.05);
-            }
-            70% {
-                transform: scale(0.9);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-    </style>
+    <!-- 引入自定义样式 -->
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
     <div id="app">
         <div class="container">
+            <!-- 导航栏 -->
+            <nav class="navbar">
+                <a href="#" class="navbar-brand">
+                    🐛 小蚕活动平台
+                </a>
+                <div class="navbar-nav">
+                    <a href="#" class="nav-link active">
+                        🏠 首页
+                    </a>
+                    <a href="/location.html" class="nav-link">
+                        📍 地址管理
+                    </a>
+                </div>
+            </nav>
+            
             <!-- 头部搜索区域 -->
             <div class="header fade-in">
-                <h1 class="header-title">🐛 小蚕门店管理平台</h1>
+                <h1 class="header-title">🐛 门店查询</h1>
                 <div class="search-section">
-                    <el-input
-                        v-model="searchForm.name"
-                        placeholder="请输入门店名称"
-                        class="search-input"
-                        clearable
-                        @keyup.enter.native="handleSearch"
-                    >
-                        <el-button slot="append" icon="el-icon-search" @click="handleSearch"></el-button>
-                    </el-input>
+                    <!-- 地址选择器 -->
+                    <div class="address-selector">
+                        <el-select
+                            v-model="selectedAddressId"
+                            :placeholder="addressOptions.length === 0 ? '请输入关键词搜索地址' : '选择已保存的地址'"
+                            filterable
+                            remote
+                            reserve-keyword
+                            :remote-method="searchAddresses"
+                            :loading="addressLoading"
+                            clearable
+                            @change="handleAddressChange"
+                            @focus="loadLocalAddresses"
+                            style="width: 100%"
+                        >
+                            <el-option
+                                v-for="address in addressOptions"
+                                :key="address.id"
+                                :label="getAddressDisplayName(address)"
+                                :value="address.id"
+                            >
+                                <div class="address-item">
+                                    <div class="address-title">{{ getAddressDisplayName(address) }}</div>
+                                    <div class="address-detail">{{ address.address }}</div>
+                                </div>
+                            </el-option>
+                        </el-select>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; align-items: center;" class="search-input">
+                        <el-input
+                            v-model="searchForm.name"
+                            placeholder="请输入门店名称"
+                            clearable
+                            @keyup.enter.native="handleSearch"
+                            style="flex: 1;"
+                        ></el-input>
+                        <el-button 
+                            type="primary" 
+                            icon="el-icon-search"
+                            @click="handleSearch"
+                            :loading="loading"
+                        >
+                            搜索
+                        </el-button>
+                    </div>
                     
                     <div class="sort-buttons">
                         <el-button-group>
@@ -382,13 +107,13 @@
                             </el-button>
                         </el-button-group>
                         
-                        <el-button type="info" icon="el-icon-location" @click="goToAddressPage">
-                            地址选择
-                        </el-button>
-                        
-                        <el-button type="success" @click="handleSearch" :loading="loading">
-                            <i class="el-icon-refresh-right"></i> 搜索
-                        </el-button>
+                        <el-switch
+                            v-model="searchForm.onlyAvailable"
+                            active-text="只看可抢"
+                            inactive-text="显示全部"
+                            @change="handleSearch"
+                            style="margin-left: 15px;"
+                        ></el-switch>
                     </div>
                 </div>
             </div>
@@ -411,8 +136,9 @@
                 <div v-else>
                     <div 
                         v-for="(store, index) in storeList" 
-                        :key="store.storeId"
+                        :key="store.promotionId"
                         class="store-card bounce-in"
+                        :class="{ 'sold-out': store.leftNumber <= 0 }"
                         :style="{ animationDelay: (index * 0.1) + 's' }"
                     >
                         <div class="store-item">
@@ -445,7 +171,9 @@
                                     </div>
                                     <div class="detail-item">
                                         <i class="detail-icon el-icon-goods"></i>
-                                        <span>剩余数量：<span :class="store.leftNumber > 0 ? 'success' : 'highlight'">{{ store.leftNumber }}</span></span>
+                                        <span>剩余数量：<span :class="store.leftNumber > 0 ? 'success' : 'zero-stock'">
+                                            {{ store.leftNumber > 0 ? store.leftNumber : '已售罄' }}
+                                        </span></span>
                                     </div>
                                     <div class="detail-item">
                                         <i class="detail-icon el-icon-star-on"></i>
@@ -509,14 +237,31 @@
                         orderType: 1,
                         cityCode: null,
                         latitude: '',
-                        longitude: ''
+                        longitude: '',
+                        onlyAvailable: false
                     },
-                    storeList: []
+                    storeList: [],
+                    // 地址选择相关
+                    selectedAddress: null,
+                    selectedAddressId: null,
+                    addressOptions: [],
+                    addressLoading: false,
+                    addressSearchKeyword: '',
+                    defaultCityCode: 110100 // 默认北京市城市编码
                 }
             },
             mounted() {
-                this.handleSearch();
                 this.getCurrentLocation();
+                this.loadSavedAddress();
+                this.loadDefaultAddress();
+                
+                // 监听页面可见性变化，当从其他页面返回时刷新地址列表
+          /*      document.addEventListener('visibilitychange', () => {
+                    if (!document.hidden) {
+                        // 页面变为可见时，刷新地址列表
+                        this.refreshAddresses();
+                    }
+                });*/
             },
             methods: {
                 // 搜索门店
@@ -526,15 +271,13 @@
                         const response = await axios.post('/api/xiaochan/query', this.searchForm);
                         if (response.data.success) {
                             this.storeList = response.data.data || [];
-                            this.$message.success('查询成功');
                         } else {
                             this.$message.error(response.data.msg || '查询失败');
                         }
                     } catch (error) {
                         console.error('查询失败:', error);
                         this.$message.error('网络错误，请稍后重试');
-                        // 模拟数据用于展示
-                        this.loadMockData();
+                       
                     } finally {
                         this.loading = false;
                     }
@@ -687,63 +430,245 @@
                     }
                 },
                 
-                // 模拟数据（用于演示）
-                loadMockData() {
-                    this.storeList = [
-                        {
-                            name: "麦当劳(王府井店)",
-                            storeId: 1001,
-                            ifNew: true,
-                            openHours: "10:00-22:00",
-                            promotionId: 2001,
-                            type: 1,
-                            startTime: "08:00",
-                            endTime: "21:00",
-                            leftNumber: 15,
-                            distance: 500,
-                            price: 30.00,
-                            rebatePrice: 5.00,
-                            rebateCondition: 99,
-                            icon: "https://via.placeholder.com/80/ff6b6b/ffffff?text=M"
-                        },
-                        {
-                            name: "肯德基(三里屯店)",
-                            storeId: 1002,
-                            ifNew: false,
-                            openHours: "09:00-23:00",
-                            promotionId: 2002,
-                            type: 2,
-                            startTime: "09:00",
-                            endTime: "20:00",
-                            leftNumber: 0,
-                            distance: 1200,
-                            price: 25.00,
-                            rebatePrice: 8.00,
-                            rebateCondition: 2,
-                            icon: "https://via.placeholder.com/80/0078ff/ffffff?text=K"
-                        },
-                        {
-                            name: "星巴克(CBD店)",
-                            storeId: 1003,
-                            ifNew: false,
-                            openHours: "07:00-22:00",
-                            promotionId: 2003,
-                            type: 3,
-                            startTime: "10:00",
-                            endTime: "18:00",
-                            leftNumber: 8,
-                            distance: 800,
-                            price: 50.00,
-                            rebatePrice: 12.00,
-                            rebateCondition: 99,
-                            icon: "https://via.placeholder.com/80/e93323/ffffff?text=S"
-                        }
-                    ];
-                },
-                
+            
                 // 跳转到地址选择页面
                 goToAddressPage() {
-                    window.open('/address.html', '_blank');
+                    window.open('/location.html', '_blank');
+                },
+                
+                // 搜索地址 - 如果有关键字则搜索远程地址，否则加载本地保存的地址
+                async searchAddresses(keyword) {
+                    if (!keyword || keyword.trim().length < 2) {
+                        // 没有关键字时，重新加载本地保存的地址列表
+                        await this.loadLocalAddresses();
+                        return;
+                    }
+                    
+                    this.addressLoading = true;
+                    this.addressSearchKeyword = keyword;
+                    
+                    try {
+                        // 使用当前选中地址的cityCode，如果没有则使用默认城市编码
+                        const cityCode = this.selectedAddress?.cityCode || this.defaultCityCode;
+                        const response = await axios.get('/api/location/searchAddress', {
+                            params: {
+                                keyword: keyword.trim(),
+                                cityCode: cityCode
+                            }
+                        });
+                        
+                        if (response.data.success) {
+                            const searchResults = response.data.data || [];
+                            // 为搜索结果添加标记，便于区分本地地址和搜索结果
+                            searchResults.forEach(addr => {
+                                addr._isSearchResult = true;
+                                // 为AddressVO结构添加name字段，保证与本地地址的一致性
+                                if (!addr.name && addr.title) {
+                                    addr.name = addr.title;
+                                }
+                            });
+                            this.addressOptions = searchResults;
+                        } else {
+                            this.$message.error(response.data.msg || '地址搜索失败');
+                            this.addressOptions = [];
+                        }
+                    } catch (error) {
+                        console.error('地址搜索失败:', error);
+                        this.$message.error('网络错误，请稍后重试');
+                        this.addressOptions = [];
+                    } finally {
+                        this.addressLoading = false;
+                    }
+                },
+                
+                // 加载本地保存的地址列表
+                async loadLocalAddresses() {
+                    try {
+                        const response = await axios.get('/api/location');
+                        if (response.data.success && response.data.data) {
+                            // 为本地地址添加标记
+                            const localAddresses = response.data.data;
+                            localAddresses.forEach(addr => {
+                                addr._isLocalAddress = true;
+                            });
+                            this.addressOptions = localAddresses;
+                        }
+                    } catch (error) {
+                        console.error('加载本地地址失败:', error);
+                    }
+                },
+                
+                // 处理地址选择变化
+                handleAddressChange(selectedAddressId) {
+                    if (selectedAddressId) {
+                        // 根据ID找到对应的地址对象
+                        const selectedAddress = this.findAddressById(selectedAddressId);
+                        if (selectedAddress) {
+                            this.selectedAddress = selectedAddress;
+                            
+                            // 更新搜索表单中的地址相关参数
+                            this.searchForm.cityCode = parseInt(selectedAddress.cityCode);
+                            this.searchForm.latitude = selectedAddress.latitude;
+                            this.searchForm.longitude = selectedAddress.longitude;
+                            
+                            // 保存用户选择的地址ID到localStorage
+                            this.saveSelectedAddressId(selectedAddressId);
+                            
+                            const displayName = this.getAddressDisplayName(selectedAddress);
+                            this.$message.success(`已选择地址: ${displayName}`);
+                            
+                            // 自动触发搜索
+                            this.handleSearch();
+                        }
+                    } else {
+                        // 清空地址选择时，恢复默认值
+                        this.selectedAddress = null;
+                        this.searchForm.cityCode = null;
+                        this.searchForm.latitude = '';
+                        this.searchForm.longitude = '';
+                        
+                        // 清除保存的地址ID
+                        localStorage.removeItem('selectedAddressId');
+                    }
+                },
+                
+                // 加载默认地址（获取地址列表并选中第一个或上次选择的地址）
+                async loadDefaultAddress() {
+                    try {
+                        // 调用LocationController的getAll方法获取地址列表
+                        const response = await axios.get('/api/location');
+                        
+                        if (response.data.success && response.data.data && response.data.data.length > 0) {
+                            this.addressOptions = response.data.data;
+                            console.log('成功获取地址列表:', this.addressOptions.length, '个地址');
+                            
+                            // 输出地址列表的详细信息，便于调试
+                            this.addressOptions.forEach((addr, index) => {
+                                console.log(`地址 ${index + 1}: ID=${addr.id}, 名称=${addr.name}`);
+                            });
+                            
+                            // 检查是否有保存的地址ID
+                            const savedAddressId = this.getSavedAddressId();
+                            console.log('保存的地址ID:', savedAddressId);
+                            
+                            if (savedAddressId) {
+                                // 根据保存的ID在地址列表中查找对应的地址
+                                const foundAddress = this.findAddressById(savedAddressId);
+                                if (foundAddress) {
+                                    this.selectedAddressId = savedAddressId;
+                                    this.selectedAddress = foundAddress;
+                                    // 直接设置搜索表单参数，不触发change事件避免循环
+                                    this.searchForm.cityCode = parseInt(foundAddress.cityCode);
+                                    this.searchForm.latitude = foundAddress.latitude;
+                                    this.searchForm.longitude = foundAddress.longitude;
+                                    
+                                    const displayName = this.getAddressDisplayName(foundAddress);
+                                    console.log('成功恢复保存的地址:', displayName, ', ID:', foundAddress.id);
+                                    
+                                    // 重要：恢复地址后自动触发搜索，获取门店数据
+                                    this.handleSearch();
+                                    return;
+                                } else {
+                                    // 如果根据ID找不到地址，清除无效的保存数据
+                                    localStorage.removeItem('selectedAddressId');
+                                    console.log('保存的地址ID无效，已清除。保存的ID:', savedAddressId);
+                                }
+                            }
+                            
+                            // 如果没有保存的地址或找不到保存的地址，选择第一个地址
+                            const firstAddress = this.addressOptions[0];
+                            this.selectedAddressId = firstAddress.id;
+                            this.selectedAddress = firstAddress;
+                            // 直接设置搜索表单参数
+                            this.searchForm.cityCode = parseInt(firstAddress.cityCode);
+                            this.searchForm.latitude = firstAddress.latitude;
+                            this.searchForm.longitude = firstAddress.longitude;
+                            
+                            // 保存默认选择
+                            this.saveSelectedAddressId(firstAddress.id);
+                            
+                            const displayName = this.getAddressDisplayName(firstAddress);
+                            console.log('使用默认地址(第一个):', displayName, ', ID:', firstAddress.id);
+                            
+                            // 重要：使用默认地址后也要自动触发搜索，获取门店数据
+                            this.handleSearch();
+                        } else {
+                            console.log('地址列表为空，提示用户创建地址');
+                            // 地址列表为空，提示用户创建地址
+                            this.showCreateAddressPrompt();
+                        }
+                    } catch (error) {
+                        console.error('获取地址列表失败:', error);
+                        this.$message.error('获取地址列表失败: ' + (error.response?.data?.msg || error.message));
+                        // 网络错误时也提示用户创建地址
+                        this.showCreateAddressPrompt();
+                    }
+                },
+                
+                // 显示创建地址提示
+                showCreateAddressPrompt() {
+                    this.$confirm('暂无地址信息，是否前往创建地址？', '提示', {
+                        confirmButtonText: '创建地址',
+                        cancelButtonText: '取消',
+                        type: 'info'
+                    }).then(() => {
+                        this.goToAddressPage();
+                    }).catch(() => {
+                        // 用户取消，使用默认搜索参数
+                        this.searchForm.cityCode = this.defaultCityCode;
+                        // 用户取消创建地址后，也要触发搜索获取门店数据
+                        this.handleSearch();
+                    });
+                },
+                
+                // 刷新地址列表（在从地址管理页面返回时可以调用）
+                async refreshAddresses() {
+                    await this.loadDefaultAddress();
+                },
+                
+                // 保存用户选择的地址ID到localStorage
+                saveSelectedAddressId(addressId) {
+                    try {
+                        console.log('保存地址选择，ID:', addressId);
+                        localStorage.setItem('selectedAddressId', addressId);
+                        console.log('已保存地址ID到localStorage:', addressId);
+                    } catch (error) {
+                        console.error('保存地址ID失败:', error);
+                    }
+                },
+                
+                // 获取地址显示名称（兼容Location和AddressVO两种数据结构）
+                getAddressDisplayName(address) {
+                    // Location模型使用name字段，AddressVO模型使用title字段
+                    return address.name || address.title || '未知地址';
+                },
+                
+                // 从localStorage获取保存的地址ID
+                getSavedAddressId() {
+                    try {
+                        return localStorage.getItem('selectedAddressId');
+                    } catch (error) {
+                        console.error('获取保存的地址ID失败:', error);
+                        return null;
+                    }
+                },
+                
+                // 根据保存的地址ID从地址列表中找到对应的地址对象
+                findAddressById(addressId) {
+                    if (!addressId || !this.addressOptions.length) {
+                        return null;
+                    }
+                    return this.addressOptions.find(addr => addr.id === addressId);
+                },
+                
+                // 加载保存的地址（在页面初始化时调用）
+                loadSavedAddress() {
+                    // 注意：此方法在页面初始化时调用，此时地址列表可能还未加载
+                    // 实际的地址恢复逻辑在loadDefaultAddress方法中处理
+                    const savedAddressId = this.getSavedAddressId();
+                    if (savedAddressId) {
+                        console.log('发现保存的地址ID:', savedAddressId);
+                    }
                 }
             }
         });

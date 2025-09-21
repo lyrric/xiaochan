@@ -13,332 +13,25 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <!-- 引入Font Awesome图标 -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
-    <style>
-        /* 基础样式 */
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #f5f7fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        /* 地址卡片样式 */
-        .address-card {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border-radius: 12px;
-            border: none;
-            overflow: hidden;
-            position: relative;
-        }
-        .address-card:hover {
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08), 0 6px 6px rgba(0, 0, 0, 0.05);
-            transform: translateY(-4px);
-        }
-        .address-card .el-card__body {
-            padding: 20px;
-        }
-        .address-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-        .address-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .address-name i {
-            color: #36b37e;
-            font-size: 14px;
-        }
-        .address-main {
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 10px;
-            padding-left: 22px;
-            position: relative;
-        }
-        .address-main:before {
-            content: "\f041";
-            font-family: "FontAwesome";
-            position: absolute;
-            left: 0;
-            top: 2px;
-            color: #888;
-            font-size: 14px;
-        }
-        .spt-info {
-            font-size: 13px;
-            color: #888;
-            padding-left: 22px;
-            position: relative;
-            margin-bottom: 15px;
-        }
-        .spt-info:before {
-            content: "\f080";
-            font-family: "FontAwesome";
-            position: absolute;
-            left: 0;
-            top: 2px;
-            color: #888;
-            font-size: 12px;
-        }
-
-        /* 操作按钮样式 - 优化后 */
-        .operation-buttons {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-            align-items: center;
-            margin-top: 15px;
-        }
-        .edit-btn {
-            background-color: #f0f7ff !important;
-            color: #1890ff !important;
-            border-color: #bbd7ff !important;
-        }
-        .edit-btn:hover {
-            background-color: #e6f7ff !important;
-            transform: translateY(-2px);
-        }
-        .delete-btn {
-            background-color: #fff2f0 !important;
-            color: #ff4d4f !important;
-            border-color: #ffccc7 !important;
-        }
-        .delete-btn:hover {
-            background-color: #fff1f0 !important;
-            transform: translateY(-2px);
-        }
-
-        /* 标签样式优化 */
-        .el-tag {
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            transition: all 0.2s ease;
-        }
-        .el-tag--success {
-            background-color: #f0f9eb;
-            color: #52c41a;
-            border-color: #b7eb8f;
-        }
-        .el-tag--info {
-            background-color: #f0f2f5;
-            color: #1890ff;
-            border-color: #91d5ff;
-        }
-
-        /* 表单样式优化 */
-        .el-form {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        .el-form-item {
-            margin-bottom: 20px;
-        }
-        .el-form-item__label {
-            font-weight: 500;
-            color: #555;
-        }
-        .el-input__inner, .el-select__inner, .el-cascader__input-inner, .el-autocomplete__input {
-            border-radius: 6px;
-            padding: 10px 15px;
-            border-color: #e0e0e0;
-            transition: all 0.3s ease;
-        }
-        .el-input__inner:focus, .el-select__inner:focus, .el-cascader__input-inner:focus, .el-autocomplete__input:focus {
-            border-color: #36b37e;
-            box-shadow: 0 0 0 2px rgba(54, 179, 126, 0.2);
-        }
-
-        /* 按钮样式优化 */
-        .el-button {
-            border-radius: 6px;
-            padding: 8px 16px;
-            transition: all 0.2s ease;
-        }
-        /* 新增地址按钮样式 */
-        .add-address-btn {
-            background-color: #36b37e !important;
-            border-color: #36b37e !important;
-            color: #ffffff !important;
-        }
-        .add-address-btn:hover {
-            background-color: #2d9d6b !important;
-            border-color: #2d9d6b !important;
-            transform: translateY(-2px);
-        }
-        .el-button--primary {
-            background-color: #36b37e;
-            border-color: #36b37e;
-            color: #fff;
-        }
-        .el-button--primary:hover {
-            background-color: #2d9d6b;
-            border-color: #2d9d6b;
-            transform: translateY(-2px);
-        }
-
-        /* 空状态样式 */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            background-color: #fff;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        .empty-state .el-empty__image {
-            margin-bottom: 20px;
-        }
-        .empty-state .el-empty__description {
-            color: #888;
-            margin-bottom: 20px;
-        }
-
-        /* 已选地址样式 */
-        .selected-address {
-            margin-top: 10px;
-            padding: 12px 15px;
-            background-color: #f5f7fa;
-            border-radius: 6px;
-            border-left: 3px solid #36b37e;
-            transition: all 0.3s ease;
-        }
-        .selected-address:hover {
-            background-color: #f0f9eb;
-        }
-        .selected-address .title {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #333;
-        }
-        .selected-address .detail {
-            font-size: 13px;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        /* 页面头部样式 */
-        .el-page-header {
-            margin-bottom: 20px;
-            padding: 15px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .el-page-header__content {
-            font-size: 20px;
-            font-weight: 600;
-            color: #333;
-        }
-        .el-page-header__left .el-icon-back {
-            font-size: 18px;
-            color: #666;
-            transition: all 0.2s ease;
-        }
-        .el-page-header__left .el-icon-back:hover {
-            color: #36b37e;
-            transform: translateX(-3px);
-        }
-
-        /* 卡片头部样式 */
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .card-header span {
-            font-size: 16px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        /* 表单按钮区域样式 */
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 15px;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        /* 推送开关样式 */
-        .push-switch-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #666;
-        }
-
-        /* 响应式调整 */
-        @media screen and (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            .address-card .el-card__body {
-                padding: 15px;
-            }
-            .operation-buttons {
-                flex-direction: column;
-                gap: 5px;
-            }
-            .operation-buttons .el-button {
-                width: 100%;
-            }
-            .card-header {
-                padding: 12px 15px;
-            }
-            .el-form {
-                padding: 10px;
-            }
-            .el-form-item {
-                margin-bottom: 15px;
-            }
-            .form-actions {
-                flex-direction: column;
-            }
-            .form-actions .el-button {
-                width: 100%;
-                margin-right: 0 !important;
-            }
-        }
-
-        /* 动画效果 */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .address-card, .el-card {
-            animation: fadeIn 0.5s ease forwards;
-        }
-        .address-card:nth-child(2n) {
-            animation-delay: 0.1s;
-        }
-        .address-card:nth-child(3n) {
-            animation-delay: 0.2s;
-        }
-    </style>
+    <!-- 引入自定义样式 -->
+    <link rel="stylesheet" href="css/location.css">
 </head>
 <body>
 <div id="app" class="container">
-    <el-page-header
-            @back="handleBack"
-            content="收货地址管理">
-    </el-page-header>
-
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand">
+            🐛 小蚕活动平台
+        </a>
+        <div class="navbar-nav">
+            <a href="/index.html" class="nav-link">
+                🏠 首页
+            </a>
+            <a href="#" class="nav-link active">
+                📍 地址管理
+            </a>
+        </div>
+    </nav>
     <!-- 地址列表区域 -->
     <el-card v-if="!isAdding && !isEditing" class="mt-4" style="border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);" v-loading="loading">
         <div slot="header" class="card-header">
@@ -556,41 +249,7 @@
                 addressList: [],
 
                 // 地区数据
-                regionOptions: [
-                    {
-                        "name": "北京市",
-                        "code": "110000",
-                        "child": [
-                            {"name": "东城区", "code": "110101"},
-                            {"name": "西城区", "code": "110102", "child": []},
-                            {"name": "朝阳区", "code": "110105", "child": []},
-                            {"name": "海淀区", "code": "110108", "child": []}
-                        ]
-                    },
-                    {
-                        "name": "四川省",
-                        "code": "510000",
-                        "child": [
-                            {
-                                "name": "成都市",
-                                "code": "510100",
-                                "child": [
-                                    {"name": "锦江区", "code": "510104", "child": []},
-                                    {"name": "青羊区", "code": "510105", "child": []},
-                                    {"name": "武侯区", "code": "510107", "child": []}
-                                ]
-                            },
-                            {
-                                "name": "绵阳市",
-                                "code": "510700",
-                                "child": [
-                                    {"name": "涪城区", "code": "510703", "child": []},
-                                    {"name": "游仙区", "code": "510704", "child": []}
-                                ]
-                            }
-                        ]
-                    }
-                ],
+                regionOptions: [],
 
                 // 级联选择器配置
                 regionProps: {
@@ -630,6 +289,7 @@
         },
         mounted() {
             this.loadAddressList();
+            this.loadRegionOptions();
         },
         methods: {
             // 加载地址列表
@@ -649,9 +309,25 @@
                     this.loading = false;
                 }
             },
+            
+            // 加载地区选项数据
+            async loadRegionOptions() {
+                try {
+                    const response = await axios.get('/api/location/cityCode');
+                    if (response.data.success) {
+                        this.regionOptions = response.data.data || [];
+                    } else {
+                        console.error('获取地区数据失败:', response.data.msg);
+                        this.$message.error('获取地区数据失败');
+                    }
+                } catch (error) {
+                    console.error('获取地区数据失败:', error);
+                    this.$message.error('获取地区数据失败，请检查网络连接');
+                }
+            },
             // 返回按钮处理
             handleBack() {
-                this.$message.info('返回上一页');
+                window.location.href = '/index.html';
             },
 
             // 开始新增地址

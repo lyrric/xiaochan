@@ -46,15 +46,16 @@ public class XiaochanHttp {
     }
 
 
-    public List<StoreInfo> getList(String cityCode, String longitude, String latitude, int offset){
+    public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
         Long timeMillis = System.currentTimeMillis();
         String ashe = getAshe(timeMillis, SERVER_NAME, METHOD_NAME);
         HttpResponse response = HttpUtil.createPost(BASE_URL)
-                .headerMap(getHeaders(timeMillis, ashe, Integer.valueOf(cityCode), SERVER_NAME, METHOD_NAME), true)
+                .headerMap(getHeaders(timeMillis, ashe, cityCode, SERVER_NAME, METHOD_NAME), true)
                 .timeout(3000)
                 .body(getBody(cityCode, longitude, latitude, offset))
                 .execute();
         if (!response.isOk()) {
+            log.error("状态码错误: {}, body: {}", response.getStatus(), response.body());
             throw new BusinessException("状态码错误:" + response.getStatus());
         }
         String body = response.body();
@@ -105,7 +106,7 @@ public class XiaochanHttp {
                     .address(obj.getString("address"))
                     .latitude(obj.getJSONObject("location").getString("lat"))
                     .longitude(obj.getJSONObject("location").getString("lng"))
-                    .cityCode(obj.getString("adcode"))
+                    .cityCode(obj.getInteger("adcode"))
                     .province(obj.getString("province"))
                     .city(obj.getString("city"))
                     .district(obj.getString("district"))
@@ -276,7 +277,7 @@ public class XiaochanHttp {
             log.error("{} error", methodName, e);
         }
     }
-    private static String getBody(String cityCode, String longitude, String latitude, int offset){
+    private static String getBody(Integer cityCode, String longitude, String latitude, int offset){
         Map<String, Object> body = new HashMap<>();
         body.put("latitude", new BigDecimal(latitude));
         body.put("longitude", new BigDecimal(longitude));
@@ -315,6 +316,9 @@ public class XiaochanHttp {
         }
         List<StoreInfo> result = new ArrayList<>();
         JSONArray promotionList = jsonBody.getJSONArray("promotion_list");
+        if (promotionList == null) {
+            return result;
+        }
         for (int i = 0; i < promotionList.size(); i++) {
             JSONObject jsonObject =  promotionList.getJSONObject(i);
             StoreInfo storeInfo = new StoreInfo();
@@ -322,11 +326,11 @@ public class XiaochanHttp {
             storeInfo.setOpenHours(jsonObject.getJSONObject("store").getString("opening_hours"));
             storeInfo.setPromotionId(jsonObject.getInteger("promotion_id"));
             storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
-            storeInfo.setStartTime(jsonObject.getString("start_time_hour") + ":" + jsonObject.getString("start_time_minute"));
-            storeInfo.setEndTime(jsonObject.getString("end_time_hour") + ":" + jsonObject.getString("end_time_minute"));
+            storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
+            storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
             storeInfo.setDistance(jsonObject.getInteger("distance") );
-            storeInfo.setIcon(jsonObject.getString("icon") );
-            storeInfo.setStoreId(jsonObject.getInteger("store_id") );
+            storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
+            storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
             //美团
             if (jsonObject.getInteger("meituan_status") == 1) {
                 StoreInfo meituanStoreInfo = new StoreInfo();
@@ -363,6 +367,10 @@ public class XiaochanHttp {
             }
         }
         return result;
+    }
+
+    private String formatStartEndTime(Integer hour, Integer minute){
+        return String.format("%02d", hour) + ":" + String.format("%02d", minute);
     }
 
     private BigDecimal safeDivide(BigDecimal b1, BigDecimal b2){

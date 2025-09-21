@@ -1,21 +1,16 @@
 package io.github.xiaochan.service;
 
-import io.github.xiaochan.config.LocationConfig;
 import io.github.xiaochan.constant.RedisConstant;
 import io.github.xiaochan.http.MessageHttp;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
-import io.github.xiaochan.service.impl.XiaoChanServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,8 +21,6 @@ public class AppService {
 
 
     @Resource
-    private LocationConfig locationConfig;
-    @Resource
     private RedissonClient redissonClient;
     @Resource
     private XiaoChanService xiaoChanService;
@@ -37,7 +30,7 @@ public class AppService {
     //@Scheduled(cron = "0 30 * * * ? ")
     //@EventListener(ApplicationReadyEvent.class)
     public void run(){
-        List<Location> locations = locationConfig.getLocations();
+        List<Location> locations = Collections.emptyList();
         for (Location location : locations) {
             run(location);
             log.info("执行完成 {}",location);

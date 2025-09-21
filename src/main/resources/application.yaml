@@ -4,19 +4,4 @@ spring:
   data:
     redis:
       host: 127.0.0.1
-  cache:
-    redis:
-      time-to-live: 60s # 缓存过期时间
-
-
-config:
-  locations:
-    - name: work
-      city-code: 510116
-      latitude: 20.123456
-      longitude: 10.123456
-      price: 10
-      rebate-price: 7
-      dif-price: 5
-
-
+      database: 1

@@ -25,4 +25,8 @@ public class QueryListVO {
      * 经度
      */
     public String longitude;
+    /**
+     * 只看可抢（剩余数量大于0）
+     */
+    private Boolean onlyAvailable;
 }
