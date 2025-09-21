@@ -1,18 +1,13 @@
 package io.github.xiaochan.service.impl;
 
 import io.github.xiaochan.http.XiaochanHttp;
-import io.github.xiaochan.model.HttpProxyInfo;
-import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
 import io.github.xiaochan.model.vo.QueryListVO;
-import io.github.xiaochan.proxy.XieQuHttpProxy;
 import io.github.xiaochan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
