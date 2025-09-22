@@ -9,6 +9,7 @@ import io.github.xiaochan.model.vo.IgnoreStoreVO;
 import io.github.xiaochan.model.vo.QueryListVO;
 import io.github.xiaochan.service.XiaoChanService;
 import jakarta.annotation.Resource;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class XiaoChanController {
      * @return
      */
     @PostMapping(value = "/query")
-    public BaseResult<List<StoreInfo>> query(@RequestBody QueryListVO queryListVO){
+    public BaseResult<List<StoreInfo>> query(@RequestBody @Validated QueryListVO queryListVO){
         return BaseResult.ok(xiaoChanService.query(queryListVO));
     }
 

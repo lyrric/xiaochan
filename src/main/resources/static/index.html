@@ -220,6 +220,37 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- 滚动加载更多指示器 -->
+                    <div class="scroll-loading-container" v-if="storeList.length > 0">
+                        <div 
+                            v-if="pagination.isLoadingMore" 
+                            class="loading-more"
+                        >
+                            <i class="el-icon-loading"></i>
+                            <span>正在加载更多...</span>
+                        </div>
+                        
+                        <div 
+                            v-else-if="!pagination.hasNextPage" 
+                            class="no-more-data"
+                        >
+                            <i class="el-icon-circle-check"></i>
+                            <span>已加载全部数据</span>
+                        </div>
+                        
+                        <div 
+                            v-else 
+                            class="load-more-trigger"
+                            ref="loadMoreTrigger"
+                        >
+                            <span>向下滚动加载更多</span>
+                        </div>
+                        
+                        <div class="pagination-info">
+                            已加载 {{ storeList.length }} 条记录
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -238,8 +269,17 @@
                         cityCode: null,
                         latitude: '',
                         longitude: '',
-                        onlyAvailable: false
+                        onlyAvailable: false,
+                        pageNum: 1,
+                        pageSize: 30
                     },
+                    pagination: {
+                        currentPage: 1,
+                        hasNextPage: true,
+                        isLoadingMore: false
+                    },
+                    // 滚动监听相关
+                    scrollObserver: null,
                     storeList: [],
                     // 地址选择相关
                     selectedAddress: null,
@@ -255,6 +295,9 @@
                 this.loadSavedAddress();
                 this.loadDefaultAddress();
                 
+                // 初始化滚动监听
+                this.initScrollObserver();
+                
                 // 监听页面可见性变化，当从其他页面返回时刷新地址列表
           /*      document.addEventListener('visibilitychange', () => {
                     if (!document.hidden) {
@@ -263,23 +306,76 @@
                     }
                 });*/
             },
+            beforeDestroy() {
+                // 清理滚动监听器
+                if (this.scrollObserver) {
+                    this.scrollObserver.disconnect();
+                }
+            },
+            computed: {
+                // 计算当前已加载的页数
+                loadedPages() {
+                    return Math.ceil(this.storeList.length / this.searchForm.pageSize);
+                }
+            },
             methods: {
                 // 搜索门店
-                async handleSearch() {
-                    this.loading = true;
+                async handleSearch(resetPage = true) {
+                    if (resetPage) {
+                        // 重新搜索时重置分页（按规范pageNum从1开始）
+                        this.searchForm.pageNum = 1;
+                        this.pagination.currentPage = 1;
+                        this.pagination.hasNextPage = true;
+                    }
+                    
+                    this.loading = resetPage; // 只有重新搜索时才显示主加载状态
+                    
                     try {
                         const response = await axios.post('/api/xiaochan/query', this.searchForm);
                         if (response.data.success) {
-                            this.storeList = response.data.data || [];
+                            const newData = response.data.data || [];
+                            
+                            if (resetPage) {
+                                // 新搜索，替换数据
+                                this.storeList = newData;
+                                console.log(`新搜索完成，获取到 ${newData.length} 条数据`);
+                            } else {
+                                // 加载更多，将数据追加到现有列表末尾（无限滚动核心逻辑）
+                                this.storeList = [...this.storeList, ...newData];
+                                console.log(`加载第 ${this.pagination.currentPage} 页，新增 ${newData.length} 条数据，总计 ${this.storeList.length} 条`);
+                            }
+                            
+                            // 严格按照项目规范：返回数据量小于pageSize时判定无下一页
+                            this.pagination.hasNextPage = newData.length >= this.searchForm.pageSize;
+                            
+                            if (!this.pagination.hasNextPage && !resetPage) {
+                                console.log('已加载全部数据，无更多数据');
+                            }
+                            
                         } else {
                             this.$message.error(response.data.msg || '查询失败');
+                            if (!resetPage) {
+                                // 加载失败时回退页码
+                                this.pagination.currentPage--;
+                                this.searchForm.pageNum = this.pagination.currentPage;
+                            }
                         }
                     } catch (error) {
                         console.error('查询失败:', error);
                         this.$message.error('网络错误，请稍后重试');
-                       
+                        if (!resetPage) {
+                            // 加载失败时回退页码
+                            this.pagination.currentPage--;
+                            this.searchForm.pageNum = this.pagination.currentPage;
+                        }
                     } finally {
                         this.loading = false;
+                        this.pagination.isLoadingMore = false;
+                        
+                        // DOM更新后重新初始化滚动监听器
+                        this.$nextTick(() => {
+                            this.reinitScrollObserver();
+                        });
                     }
                 },
                 
@@ -287,6 +383,127 @@
                 handleSort(orderType) {
                     this.searchForm.orderType = orderType;
                     this.handleSearch();
+                },
+                
+                // 初始化滚动监听器（无限滚动的核心实现）
+                initScrollObserver() {
+                    this.$nextTick(() => {
+                        // 使用 Intersection Observer API 实现高性能滚动监听
+                        if (this.$refs.loadMoreTrigger) {
+                            this.scrollObserver = new IntersectionObserver(
+                                (entries) => {
+                                    entries.forEach(entry => {
+                                        if (entry.isIntersecting && 
+                                            this.pagination.hasNextPage && 
+                                            !this.pagination.isLoadingMore && 
+                                            !this.loading) {
+                                            
+                                            console.log('触发无限滚动加载');
+                                            // 触发元素进入可视区域，自动加载下一页
+                                            this.loadNextPage();
+                                        }
+                                    });
+                                },
+                                {
+                                    // 提前300px触发加载，提升用户体验
+                                    rootMargin: '300px',
+                                    // 设置阈值，确保触发的准确性
+                                    threshold: 0.1
+                                }
+                            );
+                            
+                            this.scrollObserver.observe(this.$refs.loadMoreTrigger);
+                            console.log('无限滚动监听器已初始化');
+                        }
+                    });
+                },
+                
+                // 重新初始化滚动监听器（在数据更新后调用）
+                reinitScrollObserver() {
+                    if (this.scrollObserver) {
+                        this.scrollObserver.disconnect();
+                    }
+                    this.initScrollObserver();
+                },
+                
+                // 加载下一页（无限滚动核心方法）
+                async loadNextPage() {
+                    if (!this.pagination.hasNextPage || this.pagination.isLoadingMore || this.loading) {
+                        console.log('跳过加载：', {
+                            hasNextPage: this.pagination.hasNextPage,
+                            isLoadingMore: this.pagination.isLoadingMore,
+                            loading: this.loading
+                        });
+                        return;
+                    }
+                    
+                    console.log(`开始加载第 ${this.pagination.currentPage + 1} 页`);
+                    this.pagination.isLoadingMore = true;
+                    
+                    // 按照项目规范更新页码（从1开始）
+                    this.pagination.currentPage++;
+                    this.searchForm.pageNum = this.pagination.currentPage;
+                    
+                    // 关键：传入false确保数据追加而不是替换
+                    await this.handleSearch(false);
+                },
+                
+                // 刷新已加载数据（保持无限滚动状态）
+                async refreshCurrentPageData() {
+                    // 保存当前的分页状态和列表长度
+                    const originalPageNum = this.searchForm.pageNum;
+                    const originalCurrentPage = this.pagination.currentPage;
+                    const currentDataLength = this.storeList.length;
+                    
+                    console.log(`开始刷新数据，当前已加载 ${originalCurrentPage} 页，共 ${currentDataLength} 条数据`);
+                    
+                    try {
+                        let allData = [];
+                        
+                        // 重新加载所有已加载页面的数据，保持无限滚动的连续性
+                        for (let page = 1; page <= originalCurrentPage; page++) {
+                            this.searchForm.pageNum = page;
+                            const pageResponse = await axios.post('/api/xiaochan/query', this.searchForm);
+                            
+                            if (pageResponse.data.success && pageResponse.data.data) {
+                                const pageData = pageResponse.data.data;
+                                // 将每页数据追加到总数据中
+                                allData = [...allData, ...pageData];
+                                
+                                console.log(`刷新第 ${page} 页完成，获取 ${pageData.length} 条数据`);
+                                
+                                // 按照项目规范判断是否还有下一页
+                                if (page === originalCurrentPage) {
+                                    this.pagination.hasNextPage = pageData.length >= this.searchForm.pageSize;
+                                }
+                                
+                                if (pageData.length < this.searchForm.pageSize) {
+                                    this.pagination.hasNextPage = false;
+                                    break;
+                                }
+                            } else {
+                                console.error(`刷新第 ${page} 页失败`);
+                                break;
+                            }
+                        }
+                        
+                        // 更新列表数据，保持原有的滚动状态
+                        this.storeList = allData;
+                        console.log(`数据刷新完成，总计 ${allData.length} 条数据`);
+                        
+                        // 重新初始化滚动监听器
+                        this.$nextTick(() => {
+                            this.reinitScrollObserver();
+                        });
+                        
+                    } catch (error) {
+                        console.error('刷新数据失败:', error);
+                        this.$message.error('刷新数据失败，请稍后重试');
+                    } finally {
+                        // 恢复原有的分页状态
+                        this.searchForm.pageNum = originalPageNum;
+                        this.pagination.currentPage = originalCurrentPage;
+                    }
                 },
                 
                 // 报名
@@ -298,7 +515,8 @@
                         const response = await axios.post(`/api/xiaochan/apply/${store.promotionId}`);
                         if (response.data.success) {
                             this.$message.success('报名成功！');
-                            this.handleSearch(); // 刷新列表
+                            // 只更新当前页数据，不重置整个列表
+                            this.refreshCurrentPageData();
                         } else {
                             this.$message.error(response.data.msg || '报名失败');
                         }
@@ -323,7 +541,8 @@
                         const response = await axios.post('/api/xiaochan/book', bookData);
                         if (response.data.success) {
                             this.$message.success('预约成功！');
-                            this.handleSearch(); // 刷新列表
+                            // 只更新当前页数据，不重置整个列表
+                            this.refreshCurrentPageData();
                         } else {
                             this.$message.error(response.data.msg || '预约失败');
                         }
@@ -353,7 +572,8 @@
                         const response = await axios.post('/api/xiaochan/ignore', ignoreData);
                         if (response.data.success) {
                             this.$message.success('已忽略该门店');
-                            this.handleSearch(); // 刷新列表
+                            // 只更新当前页数据，不重置整个列表
+                            this.refreshCurrentPageData();
                         } else {
                             this.$message.error(response.data.msg || '操作失败');
                         }

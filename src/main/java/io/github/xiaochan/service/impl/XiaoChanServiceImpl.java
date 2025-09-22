@@ -26,7 +26,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     private final XiaochanHttp xiaochanHttp = new XiaochanHttp();
 
-    private static final int PAGE_SIZE = 30;
+    private static final int DEFAULT_PAGE_SIZE = 30;
     /**
      * 门店最大距离
      */
@@ -42,10 +42,52 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> query(QueryListVO queryListVO) {
-        List<StoreInfo> result = xiaoChanService.getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), MAX_SIZE);
-        sortStoreList(result, queryListVO.getOrderType());
-        result = filter(result, queryListVO);
+        List<StoreInfo> result;
+        Integer pageNum = queryListVO.getPageNum();
+        pageNum = pageNum == null ? 0 : pageNum - 1;
+
+        if (StringUtils.isNotBlank(queryListVO.getName())) {
+            //搜索走专门的接口
+            if (pageNum > 0) {
+                return Collections.emptyList();
+            }
+            result = xiaoChanService.searchList(queryListVO.getName(), queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude());
+        }else{
+            if (queryListVO.getOrderType() != null && queryListVO.getOrderType() != 1) {
+                //排序不为空，则获取所有活动再排序过滤
+                if (pageNum > 0) {
+                    return Collections.emptyList();
+                }
+                result = xiaoChanService.getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), MAX_SIZE);
+                sortStoreList(result, queryListVO.getOrderType());
+                result = filter(result, queryListVO);
+            }else{
+                //排序为空，则走官方分页接口
+                result = xiaoChanService.getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
+            }
+        }
         return result;
+    }
+
+    @Override
+    public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude) {
+        preCallBeforeSearch(cityCode, latitude, longitude);
+        return xiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
+    }
+
+    private void preCallBeforeSearch(Integer cityCode, String latitude, String longitude) {
+        try {
+            xiaochanHttp.UploadBuriedPoints(cityCode);
+            xiaochanHttp.ListSearchWord(cityCode);
+            xiaochanHttp.ListSilkRecommendation(cityCode);
+            xiaochanHttp.GetInviteWordPatterns(cityCode);
+            xiaochanHttp.meituanShangjinGetPoiList(latitude, longitude, cityCode);
+            xiaochanHttp.getClientUnionPromotions2(cityCode);
+            xiaochanHttp.getClientUnionPromotions1(cityCode);
+            xiaochanHttp.getClientUnionPromotions2(cityCode);
+        }catch (Exception e){
+            log.error("调用preCallBeforeSearch发生错误 ",e);
+        }
     }
 
     @Override
@@ -64,13 +106,18 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (!hasNext(list)) {
                 break;
             }
-            offset += PAGE_SIZE;
+            offset += DEFAULT_PAGE_SIZE;
         }
         return result;
     }
 
+    @Override
+    public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
+        preCall(cityCode);
+        return doGetList(cityCode, longitude, latitude, offset);
+    }
     private boolean hasNext(List<StoreInfo> list){
-        if (list.size() < PAGE_SIZE) {
+        if (list.size() < DEFAULT_PAGE_SIZE) {
             return false;
         }
         long overDistanceCount = list.stream()
@@ -81,10 +128,12 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         return overDistanceCount <= (size / 2);
 
     }
+
+
+
     private List<StoreInfo> doGetList(Integer cityCode, String longitude, String latitude, int offset){
         try {
             List<StoreInfo> list = xiaochanHttp.getList(cityCode, longitude, latitude, offset);
-            Thread.sleep(100);
             xiaochanHttp.meituanShangjinGetPoiList(latitude, longitude, cityCode);
             xiaochanHttp.getClientUnionPromotions1(cityCode);
             xiaochanHttp.getClientUnionPromotions2(cityCode);
@@ -112,6 +161,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             log.error("请求小产列表时发生错误 ",e);
         }
     }
+
 
     /**
      * 根据排序类型对门店列表进行排序
@@ -141,7 +191,6 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             list = list.stream().filter(storeInfo -> {
                 // 检查剩余数量
                 boolean hasStock = storeInfo.getLeftNumber() != null && storeInfo.getLeftNumber() > 0;
-                
                 // 检查活动时间
                 boolean inActiveTime = isInActiveTime(storeInfo);
                 

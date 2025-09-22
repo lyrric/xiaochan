@@ -47,21 +47,74 @@ public class XiaochanHttp {
 
 
     public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
+        String reqBody = getBody(cityCode, longitude, latitude, offset);
+        String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME);
+        return parseBody(resBody);
+    }
+
+    /**
+     * 埋点
+     */
+    public void UploadBuriedPoints(Integer cityCode) {
+        //埋点的数据每次都不一样，暂时不清楚逻辑，这里先忽略
+    }
+
+    /**
+     * 搜索关键字 列表
+     * @param cityCode
+     */
+    public void ListSearchWord(Integer cityCode) {
+        Map<String, Integer> bodyMap = Map.of("silk_id", 897154359, "city_code", cityCode, "channel", 3, "page_num", 1, "app_id", 20);
+        sendWithoutRes(JSONObject.toJSONString(bodyMap), cityCode, "SilkwormSearch", "SearchMobile.ListSearchWord");
+    }
+
+
+    public void ListSilkRecommendation(Integer cityCode) {
+        Map<String, Integer> bodyMap = Map.of("silk_id", 897154359, "city_code", cityCode, "channel", 3, "page_num", 1, "app_id", 20);
+        sendWithoutRes(JSONObject.toJSONString(bodyMap), cityCode, "SilkwormSearch", "SearchMobile.ListSilkRecommendation");
+    }
+
+    public void GetInviteWordPatterns(Integer cityCode) {
+        Map<String, Integer> bodyMap = Map.of("app_id", 20);
+        sendWithoutRes(JSONObject.toJSONString(bodyMap), cityCode, "InviteWord", "InviteWordService.GetInviteWordPatterns");
+    }
+
+
+    public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude, int offset, Integer number) {
+        HashMap<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("silk_id", 897154359);
+        bodyMap.put("latitude", new BigDecimal(latitude));
+        bodyMap.put("longitude", new BigDecimal(longitude));
+        bodyMap.put("promotion_sort", 1);
+        bodyMap.put("store_platform", 0);
+        bodyMap.put("store_type", 99);
+        bodyMap.put("offset",offset);
+        bodyMap.put("number",number);
+        bodyMap.put("keyword", keyword);
+        bodyMap.put("promotion_category", 0);
+        bodyMap.put("app_id",20);
+        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(bodyMap), cityCode, "SilkwormRec", "RecService.SearchStorePromotionList");
+        return parseBody(resBody);
+
+    }
+
+    private String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName) {
         Long timeMillis = System.currentTimeMillis();
-        String ashe = getAshe(timeMillis, SERVER_NAME, METHOD_NAME);
-        HttpResponse response = HttpUtil.createPost(BASE_URL)
-                .headerMap(getHeaders(timeMillis, ashe, cityCode, SERVER_NAME, METHOD_NAME), true)
+        String ashe = getAshe(timeMillis, serverName, methodName);
+        HttpResponse response = HttpUtil.createPost(url)
+                .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName), true)
                 .timeout(3000)
-                .body(getBody(cityCode, longitude, latitude, offset))
+                .body(body)
                 .execute();
         if (!response.isOk()) {
             log.error("状态码错误: {}, body: {}", response.getStatus(), response.body());
             throw new BusinessException("状态码错误:" + response.getStatus());
         }
-        String body = response.body();
+        String resBody = response.body();
         response.close();
-        return parseBody(body);
+        return resBody;
     }
+
 
     /**
      * 搜索地址
@@ -312,7 +365,9 @@ public class XiaochanHttp {
     private List<StoreInfo> parseBody(String body){
         JSONObject jsonBody = JSONObject.parseObject(body);
         if (jsonBody.getJSONObject("status").getInteger("code") != 0) {
-            throw new BusinessException("请求失败:" + body);
+            String msg = jsonBody.getJSONObject("status").getString("msg");
+            log.error("请求失败: {}", body);
+            throw new BusinessException("请求失败:" + msg);
         }
         List<StoreInfo> result = new ArrayList<>();
         JSONArray promotionList = jsonBody.getJSONArray("promotion_list");

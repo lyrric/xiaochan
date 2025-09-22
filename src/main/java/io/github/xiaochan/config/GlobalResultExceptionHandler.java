@@ -30,7 +30,7 @@ public class GlobalResultExceptionHandler {
     public BaseResult<?> handleBusinessException(HttpServletResponse response, BusinessException e) {
         setResponseStatus(response);
         log.warn(e.getMessage(), e);
-        return buildError( e.getMessage());
+        return buildError(e.getMessage());
     }
     
     /**
