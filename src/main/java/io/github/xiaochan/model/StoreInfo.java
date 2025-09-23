@@ -31,6 +31,7 @@ public class StoreInfo {
     private String openHours;
     /**
      * 活动id
+     * 同一个门店，这个活动id每天都是不一样的
      */
     private Integer promotionId;
     /**

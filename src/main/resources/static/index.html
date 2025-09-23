@@ -31,6 +31,9 @@
                     <a href="/location.html" class="nav-link">
                         📍 地址管理
                     </a>
+                    <a href="/notify.html" class="nav-link">
+                        🔔 通知管理
+                    </a>
                 </div>
             </nav>
             
@@ -122,7 +125,10 @@
             <div class="content">
                 <!-- 加载状态 -->
                 <div v-if="loading" class="loading-container">
-                    <el-loading-text>正在加载门店信息...</el-loading-text>
+                    <div class="loading-content">
+                        <i class="el-icon-loading"></i>
+                        <span>正在加载门店信息...</span>
+                    </div>
                 </div>
                 
                 <!-- 空状态 -->
@@ -199,14 +205,14 @@
                                     报名
                                 </el-button>
                                 <el-button
-                                    v-if="store.leftNumber > 0"
+                                    v-if="store.leftNumber <= 0"
                                     type="success"
                                     size="small"
                                     class="action-button"
                                     @click="handleBook(store)"
                                     :loading="actionLoading[store.promotionId + '_book']"
                                 >
-                                    预约
+                                   可抢通知
                                 </el-button>
                                 <el-button
                                     type="warning"
@@ -215,11 +221,93 @@
                                     @click="handleIgnore(store)"
                                     :loading="actionLoading[store.storeId + '_ignore']"
                                 >
-                                    忽略
+                                    不再显示
                                 </el-button>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- 通知配置对话框 -->
+                    <el-dialog
+                        title="🔔 可抢通知配置"
+                        :visible.sync="notifyConfigVisible"
+                        width="420px"
+                        :close-on-click-modal="false"
+                        :modal-append-to-body="true"
+                        :append-to-body="true"
+                        custom-class="notify-config-dialog"
+                        :before-close="handleDialogClose"
+                    >
+                        <div class="dialog-content">
+                            <!-- 门店信息展示 -->
+                            <div v-if="currentNotifyStore" class="store-preview">
+                                <div class="store-preview-icon">
+                                    <img v-if="currentNotifyStore.icon" :src="currentNotifyStore.icon" :alt="currentNotifyStore.name" />
+                                    <span v-else>{{ currentNotifyStore.name.charAt(0) }}</span>
+                                </div>
+                                <div class="store-preview-info">
+                                    <div class="store-preview-name">{{ currentNotifyStore.name }}</div>
+                                    <div class="store-preview-detail">满{{ currentNotifyStore.price }}返{{ currentNotifyStore.rebatePrice }}元</div>
+                                </div>
+                            </div>
+                            
+                            <el-form :model="notifyConfigForm" :rules="notifyConfigRules" ref="notifyConfigForm" label-width="100px" class="config-form">
+                                <el-form-item label="通知方式" prop="onlyOne">
+                                    <el-radio-group v-model="notifyConfigForm.onlyOne" @change="handleRadioChange">
+                                        <el-radio :label="true" class="radio-option" :class="{ 'selected': notifyConfigForm.onlyOne === true }">
+                                            <div class="radio-content">
+                                                <div class="radio-title">🎯 只通知一次</div>
+                                                <div class="radio-desc">有库存时立即通知，通知后自动取消</div>
+                                            </div>
+                                        </el-radio>
+                                        <el-radio :label="false" class="radio-option" :class="{ 'selected': notifyConfigForm.onlyOne === false }">
+                                            <div class="radio-content">
+                                                <div class="radio-title">🔄 持续通知</div>
+                                                <div class="radio-desc">每次有库存时都会通知，直到手动取消</div>
+                                            </div>
+                                        </el-radio>
+                                    </el-radio-group>
+                                </el-form-item>
+                                
+                                <el-form-item label="有效期" prop="expireDay">
+                                    <div class="expire-setting">
+                                        <el-input-number
+                                            v-model="notifyConfigForm.expireDay"
+                                            :min="1"
+                                            :max="365"
+                                            controls-position="right"
+                                            placeholder="永久有效"
+                                            style="width: 140px"
+                                        ></el-input-number>
+                                        <span class="expire-unit">天</span>
+                                        <el-button 
+                                            v-if="notifyConfigForm.expireDay" 
+                                            size="mini" 
+                                            type="text" 
+                                            @click="notifyConfigForm.expireDay = null"
+                                            class="clear-expire"
+                                        >
+                                            清除
+                                        </el-button>
+                                    </div>
+                                    <div class="expire-tip">
+                                        💡 不设置有效期则永久有效，建议设置7-30天
+                                    </div>
+                                </el-form-item>
+                            </el-form>
+                        </div>
+                        
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="handleDialogClose" class="cancel-btn">
+                                <i class="el-icon-close"></i>
+                                取消
+                            </el-button>
+                            <el-button type="primary" @click="handleNotifyConfigSave" :loading="notifyConfigSaving" class="confirm-btn">
+                                <i class="el-icon-check"></i>
+                                {{ notifyConfigSaving ? '保存中...' : '确定配置' }}
+                            </el-button>
+                        </div>
+                    </el-dialog>
                     
                     <!-- 滚动加载更多指示器 -->
                     <div class="scroll-loading-container" v-if="storeList.length > 0">
@@ -286,11 +374,32 @@
                     selectedAddressId: null,
                     addressOptions: [],
                     addressLoading: false,
-                    addressSearchKeyword: '',
+                    // 通知配置相关
+                    notifyConfigVisible: false,
+                    notifyConfigSaving: false,
+                    notifyConfigForm: {
+                        onlyOne: false,
+                        expireDay: null
+                    },
+                    notifyConfigRules: {
+                        onlyOne: [
+                            { required: true, message: '请选择是否只通知一次', trigger: 'change' }
+                        ]
+                    },
+                    currentNotifyStore: null, // 当前配置通知的门店
                     defaultCityCode: 110100 // 默认北京市城市编码
                 }
             },
             mounted() {
+                // 添加全局错误处理来忽略浏览器扩展相关错误
+                window.addEventListener('error', function(e) {
+                    if (e.message && e.message.includes('message port closed')) {
+                        // 静默忽略浏览器扩展相关错误
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
                 this.getCurrentLocation();
                 this.loadSavedAddress();
                 this.loadDefaultAddress();
@@ -530,28 +639,17 @@
                 
                 // 预约
                 async handleBook(store) {
-                    const loadingKey = store.promotionId + '_book';
-                    this.$set(this.actionLoading, loadingKey, true);
+                    // 设置当前配置的门店信息
+                    this.currentNotifyStore = store;
                     
-                    try {
-                        const bookData = {
-                            promotionId: store.promotionId,
-                            startTime: store.startTime
-                        };
-                        const response = await axios.post('/api/xiaochan/book', bookData);
-                        if (response.data.success) {
-                            this.$message.success('预约成功！');
-                            // 只更新当前页数据，不重置整个列表
-                            this.refreshCurrentPageData();
-                        } else {
-                            this.$message.error(response.data.msg || '预约失败');
-                        }
-                    } catch (error) {
-                        console.error('预约失败:', error);
-                        this.$message.error('网络错误，请稍后重试');
-                    } finally {
-                        this.$set(this.actionLoading, loadingKey, false);
-                    }
+                    // 重置表单
+                    this.notifyConfigForm = {
+                        onlyOne: false,
+                        expireDay: null
+                    };
+                    
+                    // 显示配置对话框
+                    this.notifyConfigVisible = true;
                 },
                 
                 // 忽略
@@ -881,6 +979,61 @@
                     return this.addressOptions.find(addr => addr.id === addressId);
                 },
                 
+                // 处理对话框关闭
+                handleDialogClose() {
+                    this.notifyConfigVisible = false;
+                    // 重置表单和当前门店信息
+                    this.currentNotifyStore = null;
+                    if (this.$refs.notifyConfigForm) {
+                        this.$refs.notifyConfigForm.resetFields();
+                    }
+                },
+                
+                // 保存通知配置
+                async handleNotifyConfigSave() {
+                    // 表单校验
+                    try {
+                        await this.$refs.notifyConfigForm.validate();
+                    } catch (error) {
+                        return;
+                    }
+                    
+                    if (!this.currentNotifyStore) {
+                        this.$message.error('门店信息丢失，请重新操作');
+                        return;
+                    }
+                    
+                    this.notifyConfigSaving = true;
+                    
+                    try {
+                        const configData = {
+                            type: 1, // 1：指定门店活动提醒
+                            onlyOne: this.notifyConfigForm.onlyOne,
+                            expireDay: this.notifyConfigForm.expireDay,
+                            location: this.selectedAddress, // 当前选中的地址
+                            storeInfo: this.currentNotifyStore
+                        };
+                        
+                        const response = await axios.post('/api/notify/config', configData);
+                        if (response.data.success) {
+                            this.$message({
+                                message: '🎉 通知配置保存成功！',
+                                type: 'success',
+                                duration: 3000,
+                                showClose: true
+                            });
+                            this.handleDialogClose();
+                        } else {
+                            this.$message.error(response.data.msg || '保存失败');
+                        }
+                    } catch (error) {
+                        console.error('保存通知配置失败:', error);
+                        this.$message.error('网络错误，请稍后重试');
+                    } finally {
+                        this.notifyConfigSaving = false;
+                    }
+                },
+                
                 // 加载保存的地址（在页面初始化时调用）
                 loadSavedAddress() {
                     // 注意：此方法在页面初始化时调用，此时地址列表可能还未加载
@@ -889,6 +1042,14 @@
                     if (savedAddressId) {
                         console.log('发现保存的地址ID:', savedAddressId);
                     }
+                },
+                
+                // 处理radio按钮改变事件
+                handleRadioChange(value) {
+                    // 确保界面更新
+                    this.$nextTick(() => {
+                        console.log('Radio选择变更为:', value);
+                    });
                 }
             }
         });

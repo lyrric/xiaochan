@@ -5,16 +5,12 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import com.alibaba.fastjson2.annotation.JSONField;
 import io.github.xiaochan.core.BusinessException;
-import io.github.xiaochan.model.HttpProxyInfo;
-import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.StoreInfo;
 import io.github.xiaochan.model.vo.AddressVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -49,8 +45,9 @@ public class XiaochanHttp {
     public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
         String reqBody = getBody(cityCode, longitude, latitude, offset);
         String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME);
-        return parseBody(resBody);
+        return parseListBody(resBody);
     }
+
 
     /**
      * 埋点
@@ -94,7 +91,7 @@ public class XiaochanHttp {
         bodyMap.put("promotion_category", 0);
         bodyMap.put("app_id",20);
         String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(bodyMap), cityCode, "SilkwormRec", "RecService.SearchStorePromotionList");
-        return parseBody(resBody);
+        return parseListBody(resBody);
 
     }
 
@@ -143,6 +140,22 @@ public class XiaochanHttp {
     }
 
 
+    /**
+     * 获取活动详情
+     * 内容比较丰富，可按需索取
+     * 返回数据格式：{"status":{"code":0},"promotion_detail":{"store":{"store_id":259158,"name":"烤来屋(烧烤·生蚝·双流店)","meituan_id":"https://oss.simian-scrm.com/qrcode/silkworm_tool/531_qr_1755824398_hXa3C5tjY8M2Ox9w.png","eleme_id":"https://oss.simian-scrm.com/qrcode/silkworm_tool/531_qr_1733999462_vTFs4zieY1kfNEkm.png","icon":"https://img10.360buyimg.com/imagetools/jfs/t1/256581/8/19429/110476/67b61b2cF4b8cfb82/baf72511b2c2d93f.jpg","contact_name":"1","contact_phone":"180****4429","longitude":103.911615,"latitude":30.575397,"province":"四川省","city":"成都市","district":"双流区","address":"双流区一杆旗小区(五洞桥南路一段东)","address_detail":"四川省成都市双流区东升街道五洞桥南路一段27","city_code":510116,"mini_meituan_id":"18746192","mini_eleme_id":"E17272805750223283875","opening_hours":"00:00-23:59","if_auth":true,"sl":{"seven_days_limit":1,"days_limit":3},"jd_id":"https://oss.simian-scrm.com/qrcode/silkworm_tool/531_qr_1755824409_c74VVtSt4DCRnfsa.png","mini_jd_id":"venderId=19130190&storeId=1017907745","dishes":[{"name":"烤土豆片1串","icon":"https://p1.meituan.net/xianfu/0c3435ad9c401ef233d84629952f4b3b382324.jpg@200w","op":"4","p":"4"},{"name":"坨坨牛肉串","icon":"https://p1.meituan.net/wmproduct/81f0a66226e59c4bc7a8a7abe6e5b91a999321.jpg@200w","op":"4","p":"4"},{"name":"烤苕皮","icon":"https://p1.meituan.net/wmproduct/457be57b3d71ce9feab45edec3edcd3d733419.jpg@200w","op":"6","p":"6"},{"name":"烤鱿鱼板1串","icon":"https://p1.meituan.net/xianfu/4f56b612ae79c77f74cc1a357277c0f5513003.jpg@200w","op":"6","p":"6"},{"name":"招牌卤耙鸡爪2个","icon":"https://p1.meituan.net/xianfu/9f7a44ca395248e2a2981ce0414edb17370474.jpg@200w","op":"11","p":"11"}]},"promotion_id":74213510,"meituan_status":1,"meituan_order_money":2000,"meituan_left_number":2,"meituan_user_rebate":1500,"eleme_status":0,"eleme_left_number":0,"start_date":"2025-09-22","end_date":"2025-09-22","start_time_hour":0,"start_time_minute":0,"end_time_hour":23,"end_time_minute":59,"start_date_timestamp":1758470400,"end_date_timestamp":1758556740,"rebate_condition":2,"rebate_condition_str":"用餐反馈（需含字含图）","promotion_status":1,"detail_list":["https://oss.guojiangmedia.com/freelunch/new-detail-3.png"],"promotion_pay_status":0,"promotion_type":0,"if_can_advance_order":true,"tags":["宝子们，要3图15字哈"],"red_pack_dt":7200}}
+     * @param promotionId
+     * @return
+     */
+    public StoreInfo GetStorePromotionDetail(Integer promotionId){
+        Map<String, Integer> reqMap = Map.of("silk_id", 897154359,
+                "promotion_id", promotionId,
+                "app_id", 20);
+        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(reqMap), null, "Silkworm", "SilkwormService.GetStorePromotionDetail");
+        JSONObject jsonObject = checkResult(resBody);
+        List<StoreInfo> storeInfos = parsePromotion(jsonObject.getJSONObject("promotion_detail"));
+        return storeInfos.get(0);
+    }
     private List<AddressVO> parseBodyToAddress(String body) {
         JSONObject jsonObject = JSONObject.parseObject(body);
         if (jsonObject.getJSONObject("status").getInteger("code") != 0) {
@@ -362,13 +375,65 @@ public class XiaochanHttp {
         return headers;
     }
 
-    private List<StoreInfo> parseBody(String body){
+    private List<StoreInfo> parsePromotion(JSONObject jsonObject){
+        List<StoreInfo> result = new ArrayList<>();
+        StoreInfo storeInfo = new StoreInfo();
+        storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
+        storeInfo.setOpenHours(jsonObject.getJSONObject("store").getString("opening_hours"));
+        storeInfo.setPromotionId(jsonObject.getInteger("promotion_id"));
+        storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
+        storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
+        storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
+        storeInfo.setDistance(jsonObject.getInteger("distance") );
+        storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
+        storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
+        //美团
+        if (jsonObject.getInteger("meituan_status") == 1) {
+            StoreInfo meituanStoreInfo = new StoreInfo();
+            BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
+            meituanStoreInfo.setType(1);
+            meituanStoreInfo.setLeftNumber(jsonObject.getInteger("meituan_left_number"));
+            meituanStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("meituan_order_money"), BigDecimal.valueOf(100)));
+            meituanStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("meituan_user_rebate"), BigDecimal.valueOf(100)));
+            result.add(meituanStoreInfo);
+        }
+        //饿了么
+        if (jsonObject.getInteger("eleme_status") == 1) {
+            StoreInfo eleStoreInfo = new StoreInfo();
+            BeanUtils.copyProperties(storeInfo, eleStoreInfo);
+            eleStoreInfo.setType(2);
+            eleStoreInfo.setLeftNumber(jsonObject.getInteger("eleme_left_number"));
+            eleStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("eleme_order_money"), BigDecimal.valueOf(100)));
+            eleStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("eleme_user_rebate"),BigDecimal.valueOf(100)));
+            result.add(eleStoreInfo);
+        }
+        // 京东
+        if (jsonObject.containsKey("tp_promotion")) {
+            JSONObject tpPromotion = jsonObject.getJSONObject("tp_promotion");
+            if (tpPromotion.getInteger("tp_status") == 1) {
+                StoreInfo eleStoreInfo = new StoreInfo();
+                BeanUtils.copyProperties(storeInfo, eleStoreInfo);
+                eleStoreInfo.setType(3);
+                eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
+                eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
+                eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
+                result.add(eleStoreInfo);
+            }
+        }
+        return result;
+    }
+
+    private JSONObject checkResult(String body){
         JSONObject jsonBody = JSONObject.parseObject(body);
         if (jsonBody.getJSONObject("status").getInteger("code") != 0) {
             String msg = jsonBody.getJSONObject("status").getString("msg");
             log.error("请求失败: {}", body);
             throw new BusinessException("请求失败:" + msg);
         }
+        return jsonBody;
+    }
+    private List<StoreInfo> parseListBody(String body){
+        JSONObject jsonBody = checkResult(body);
         List<StoreInfo> result = new ArrayList<>();
         JSONArray promotionList = jsonBody.getJSONArray("promotion_list");
         if (promotionList == null) {
@@ -376,50 +441,8 @@ public class XiaochanHttp {
         }
         for (int i = 0; i < promotionList.size(); i++) {
             JSONObject jsonObject =  promotionList.getJSONObject(i);
-            StoreInfo storeInfo = new StoreInfo();
-            storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
-            storeInfo.setOpenHours(jsonObject.getJSONObject("store").getString("opening_hours"));
-            storeInfo.setPromotionId(jsonObject.getInteger("promotion_id"));
-            storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
-            storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
-            storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
-            storeInfo.setDistance(jsonObject.getInteger("distance") );
-            storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
-            storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
-            //美团
-            if (jsonObject.getInteger("meituan_status") == 1) {
-                StoreInfo meituanStoreInfo = new StoreInfo();
-                BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
-                meituanStoreInfo.setType(1);
-                meituanStoreInfo.setLeftNumber(jsonObject.getInteger("meituan_left_number"));
-                meituanStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("meituan_order_money"), BigDecimal.valueOf(100)));
-                meituanStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("meituan_user_rebate"), BigDecimal.valueOf(100)));
-                result.add(meituanStoreInfo);
-            }
-            //饿了么
-            if (jsonObject.getInteger("eleme_status") == 1) {
-                StoreInfo eleStoreInfo = new StoreInfo();
-                BeanUtils.copyProperties(storeInfo, eleStoreInfo);
-                eleStoreInfo.setType(2);
-                eleStoreInfo.setLeftNumber(jsonObject.getInteger("eleme_left_number"));
-                eleStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("eleme_order_money"), BigDecimal.valueOf(100)));
-                eleStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("eleme_user_rebate"),BigDecimal.valueOf(100)));
-                result.add(eleStoreInfo);
-            }
-            // 京东
-            if (jsonObject.containsKey("tp_promotion")) {
-                JSONObject tpPromotion = jsonObject.getJSONObject("tp_promotion");
-                if (tpPromotion.getInteger("tp_status") == 1) {
-                    StoreInfo eleStoreInfo = new StoreInfo();
-                    BeanUtils.copyProperties(storeInfo, eleStoreInfo);
-                    eleStoreInfo.setType(3);
-                    eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
-                    eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
-                    eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
-                    result.add(eleStoreInfo);
-                }
-
-            }
+            List<StoreInfo> storeInfos = parsePromotion(jsonObject);
+            result.addAll(storeInfos);
         }
         return result;
     }

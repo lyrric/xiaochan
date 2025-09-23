@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>通知管理</title>
+    <!-- 引入Vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <!-- 引入Element UI -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <!-- 引入axios用于接口请求 -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- 引入Font Awesome图标 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <!-- 引入自定义样式 -->
+    <link rel="stylesheet" href="css/location.css">
+    <link rel="stylesheet" href="css/notify.css">
+</head>
+<body>
+<div id="app" class="container">
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <a href="/index.html" class="navbar-brand">
+            🐛 小蚕活动平台
+        </a>
+        <div class="navbar-nav">
+            <a href="/index.html" class="nav-link">
+                🏠 首页
+            </a>
+            <a href="/location.html" class="nav-link">
+                📍 地址管理
+            </a>
+            <a href="#" class="nav-link active">
+                🔔 通知管理
+            </a>
+        </div>
+    </nav>
+
+    <!-- 通知配置列表区域 -->
+    <el-card v-if="!showDetail" class="mt-4" style="border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);" v-loading="loading">
+        <div slot="header" class="card-header">
+            <span>通知配置管理</span>
+            <el-button class="add-address-btn" @click="refreshList" :disabled="loading" style="display: flex; align-items: center; gap: 5px;">
+                <i class="fa fa-refresh"></i> 刷新列表
+            </el-button>
+        </div>
+
+        <div v-if="notifyList.length === 0" class="empty-state">
+            <el-empty description="暂无通知配置">
+                <el-button class="add-address-btn" @click="refreshList" slot="bottom">
+                    <i class="fa fa-refresh"></i> 刷新列表
+                </el-button>
+            </el-empty>
+        </div>
+
+        <div v-else class="notify-grid mt-4">
+            <el-card
+                    v-for="(config, index) in notifyList"
+                    :key="config.id"
+                    class="address-card"
+                    :style="{animationDelay: (index * 0.1) + 's'}"
+            >
+                <div>
+                    <div class="address-header">
+                        <div class="address-name">
+                            <i class="fa fa-bell"></i> {{ config.location?.name || '未知地址' }}
+                        </div>
+                        <el-tag 
+                            :type="getStatusType(config.status)" 
+                            size="small"
+                            style="margin-left: auto;"
+                        >
+                            {{ getStatusText(config.status) }}
+                        </el-tag>
+                    </div>
+
+                    <div class="notify-info">
+                        <p class="info-item">
+                            <i class="fa fa-store"></i>
+                            <span>门店：{{ config.storeInfo?.name || '未知门店' }}</span>
+                        </p>
+                        <p class="info-item">
+                            <i class="fa fa-tag"></i>
+                            <span>类型：{{ getTypeText(config.type) }}</span>
+                        </p>
+                        <p class="info-item">
+                            <i class="fa fa-refresh"></i>
+                            <span>只提醒一次：{{ config.onlyOne ? '是' : '否' }}</span>
+                        </p>
+                        <p class="info-item">
+                            <i class="fa fa-calendar"></i>
+                            <span>有效天数：{{ config.expireDay || '无限制' }}</span>
+                        </p>
+                        <p class="info-item">
+                            <i class="fa fa-bell-o"></i>
+                            <span>通知次数：{{ config.notifyCount || 0 }}</span>
+                        </p>
+                    </div>
+
+                    <div class="operation-buttons">
+                        <el-button
+                                size="small"
+                                class="edit-btn"
+                                @click="viewDetail(config)"
+                                :disabled="loading"
+                                style="display: flex; align-items: center; gap: 3px;"
+                        >
+                            <i class="fa fa-eye"></i> 查看详情
+                        </el-button>
+                        <el-button
+                                size="small"
+                                class="delete-btn"
+                                @click="deleteNotifyConfig(config.id, index)"
+                                :disabled="loading"
+                                style="display: flex; align-items: center; gap: 3px;"
+                        >
+                            <i class="fa fa-trash"></i> 删除
+                        </el-button>
+                    </div>
+                </div>
+            </el-card>
+        </div>
+    </el-card>
+
+    <!-- 详情展示区域 -->
+    <el-card v-if="showDetail" class="mt-4" style="border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);">
+        <div slot="header" class="card-header">
+            <span>通知配置详情</span>
+            <el-button type="text" @click="backToList" style="display: flex; align-items: center; gap: 3px;">
+                <i class="fa fa-arrow-left"></i> 返回列表
+            </el-button>
+        </div>
+
+        <div v-if="currentDetail" class="detail-content">
+            <div class="detail-section">
+                <h3><i class="fa fa-bell"></i> 基本信息</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>配置ID：</label>
+                        <span>{{ currentDetail.id }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>类型：</label>
+                        <span>{{ getTypeText(currentDetail.type) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>状态：</label>
+                        <el-tag :type="getStatusType(currentDetail.status)">
+                            {{ getStatusText(currentDetail.status) }}
+                        </el-tag>
+                    </div>
+                    <div class="detail-item">
+                        <label>只提醒一次：</label>
+                        <span>{{ currentDetail.onlyOne ? '是' : '否' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>有效天数：</label>
+                        <span>{{ currentDetail.expireDay || '无限制' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>通知次数：</label>
+                        <span>{{ currentDetail.notifyCount || 0 }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>创建时间：</label>
+                        <span>{{ formatDate(currentDetail.createTime) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>上次通知时间：</label>
+                        <span>{{ formatDate(currentDetail.lastNotifyTime) || '暂无' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section" v-if="currentDetail.location">
+                <h3><i class="fa fa-map-marker"></i> 位置信息</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>地址名称：</label>
+                        <span>{{ currentDetail.location.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>推送SPT：</label>
+                        <span>{{ currentDetail.location.spt || '无' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section" v-if="currentDetail.storeInfo">
+                <h3><i class="fa fa-store"></i> 门店信息</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>门店名称：</label>
+                        <span>{{ currentDetail.storeInfo.name }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>门店ID：</label>
+                        <span>{{ currentDetail.storeInfo.storeId }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>平台类型：</label>
+                        <span>{{ getPlatformNameById(currentDetail.storeInfo.type) }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>满返金额：</label>
+                        <span>满{{ currentDetail.storeInfo.price }}返{{ currentDetail.storeInfo.rebatePrice }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>好评条件：</label>
+                        <span>{{ getRebateConditionText(currentDetail.storeInfo.rebateCondition) }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detail-section" v-if="currentDetail.remark">
+                <h3><i class="fa fa-comment"></i> 备注信息</h3>
+                <div class="remark-content">
+                    {{ currentDetail.remark }}
+                </div>
+            </div>
+        </div>
+    </el-card>
+</div>
+
+<script>
+    new Vue({
+        el: '#app',
+        data() {
+            return {
+                // 通知配置列表
+                notifyList: [],
+
+                // 状态控制
+                loading: false,
+                showDetail: false,
+                currentDetail: null
+            };
+        },
+        mounted() {
+            this.loadNotifyList();
+        },
+        methods: {
+            // 加载通知配置列表
+            async loadNotifyList() {
+                this.loading = true;
+                try {
+                    const response = await axios.get('/api/notify/config/list');
+                    if (response.data.success) {
+                        this.notifyList = response.data.data || [];
+                    } else {
+                        this.$message.error(response.data.msg || '获取通知配置列表失败');
+                    }
+                } catch (error) {
+                    console.error('获取通知配置列表失败:', error);
+                    this.$message.error('获取通知配置列表失败，请检查网络连接');
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            // 刷新列表
+            refreshList() {
+                this.loadNotifyList();
+            },
+
+            // 查看详情
+            viewDetail(config) {
+                this.currentDetail = config;
+                this.showDetail = true;
+            },
+
+            // 返回列表
+            backToList() {
+                this.showDetail = false;
+                this.currentDetail = null;
+            },
+
+            // 删除通知配置
+            deleteNotifyConfig(configId, index) {
+                this.$confirm('确定要删除这个通知配置吗？', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(async () => {
+                    this.loading = true;
+                    try {
+                        const response = await axios.delete(`/api/notify/config/${configId}`);
+                        if (response.data.success) {
+                            this.$message.success('通知配置删除成功');
+                            // 重新加载列表
+                            await this.loadNotifyList();
+                        } else {
+                            this.$message.error(response.data.msg || '通知配置删除失败');
+                        }
+                    } catch (error) {
+                        console.error('删除通知配置失败:', error);
+                        this.$message.error('删除通知配置失败，请检查网络连接');
+                    } finally {
+                        this.loading = false;
+                    }
+                }).catch(() => {
+                    this.$message.info('已取消删除');
+                });
+            },
+
+            // 获取状态类型（用于标签颜色）
+            getStatusType(status) {
+                switch (status) {
+                    case 0: return 'info';    // 停用
+                    case 1: return 'success'; // 正常
+                    case 2: return 'warning'; // 已结束
+                    default: return '';
+                }
+            },
+
+            // 获取状态文本
+            getStatusText(status) {
+                switch (status) {
+                    case 0: return '停用';
+                    case 1: return '正常';
+                    case 2: return '已结束';
+                    default: return '未知';
+                }
+            },
+
+            // 获取类型文本
+            getTypeText(type) {
+                switch (type) {
+                    case 1: return '指定门店活动提醒';
+                    case 2: return '自定义规则提醒';
+                    default: return '未知类型';
+                }
+            },
+
+            // 格式化日期
+            formatDate(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                return date.toLocaleString('zh-CN');
+            },
+
+            // 根据平台类型ID获取平台名称
+            getPlatformNameById(type) {
+                switch (type) {
+                    case 1: return '美团';
+                    case 2: return '饿了么';
+                    case 3: return '京东';
+                    default: return '未知平台';
+                }
+            },
+
+            // 格式化距离
+            formatDistance(distance) {
+                if (!distance) return '未知';
+                if (distance < 1000) {
+                    return distance + 'm';
+                } else {
+                    return (distance / 1000).toFixed(1) + 'km';
+                }
+            },
+
+            // 获取好评条件文本
+            getRebateConditionText(condition) {
+                switch (condition) {
+                    case 99: return '无需评价';
+                    case 2: return '图文评价';
+                    default: return '未知条件';
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

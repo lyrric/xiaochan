@@ -14,4 +14,9 @@ public class RedisConstant {
      * 地址
      */
     public static final String LOCATION = "LOCATION";
+    
+    /**
+     * 通知配置列表
+     */
+    public static final String NOTIFY_CONFIG_MAP = "NOTIFY_CONFIG_MAP";
 }

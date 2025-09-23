@@ -15,12 +15,8 @@ public class XiaochanTest {
 
     @Test
     public void test() {
-        List<StoreInfo> list = new XiaoChanServiceImpl().getList(
-                510116,
-                "30.57862",
-                "104.00647",
-                150);
-        log.info("门店数量:{}", list.size());
+        StoreInfo storeInfo = new XiaochanHttp().GetStorePromotionDetail(74213510);
+        log.info(storeInfo.toString());
     }
 
     @Test

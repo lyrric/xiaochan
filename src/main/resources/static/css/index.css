@@ -272,38 +272,15 @@ body {
 .zero-stock {
     color: #ff4757 !important;
     font-weight: 700;
-    background: linear-gradient(45deg, #ff4757, #ff6b7d);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: pulse 2s infinite;
-    text-shadow: 0 0 10px rgba(255, 71, 87, 0.3);
-    position: relative;
-}
-
-.zero-stock::after {
-    content: "⚡";
-    position: absolute;
-    margin-left: 5px;
-    color: #ff4757;
-    animation: flash 1s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-@keyframes flash {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
 }
 
 .store-card.sold-out {
-    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
-    border: 2px solid #d3d3d3;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
     position: relative;
-    overflow: hidden;
+}
+
+/* 售罄时只对门店信息区域应用置灰效果，保持操作按钮的正常显示 */
+.store-card.sold-out .store-image,
+.store-card.sold-out .store-info {
     opacity: 0.6;
     filter: grayscale(0.3);
 }
@@ -316,21 +293,18 @@ body {
     color: #999;
 }
 
-.store-card.sold-out::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 107, 125, 0.1), transparent);
-    animation: shimmer 3s infinite;
+/* 确保操作按钮在售罄时保持正常的可点击外观 */
+.store-card.sold-out .store-actions {
+    opacity: 1;
+    filter: none;
 }
 
-@keyframes shimmer {
-    0% { left: -100%; }
-    100% { left: 100%; }
+.store-card.sold-out .store-actions .action-button {
+    opacity: 1;
+    filter: none;
 }
+
+
 
 .store-actions {
     display: flex;
@@ -347,6 +321,21 @@ body {
 .loading-container {
     text-align: center;
     padding: 40px;
+}
+
+.loading-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #409eff;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.loading-content i {
+    font-size: 18px;
+    animation: rotating 1s linear infinite;
 }
 
 .empty-state {
@@ -640,4 +629,393 @@ body {
         opacity: 1;
         transform: scale(1);
     }
+}
+
+/* 通知配置对话框样式 */
+.notify-config-dialog {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* 防止 dialog 出现横向和纵向滚动条 */
+.notify-config-dialog .el-dialog {
+    overflow: hidden !important;
+    max-width: 95vw !important;
+    box-sizing: border-box;
+}
+
+.notify-config-dialog .el-dialog__wrapper {
+    overflow: hidden !important;
+}
+
+.notify-config-dialog .el-dialog__header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 18px;
+    text-align: center;
+    border-bottom: none;
+}
+
+.notify-config-dialog .el-dialog__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+}
+
+.notify-config-dialog .el-dialog__headerbtn {
+    top: 12px;
+    right: 18px;
+}
+
+.notify-config-dialog .el-dialog__headerbtn .el-dialog__close {
+    color: white;
+    font-size: 16px;
+}
+
+.notify-config-dialog .el-dialog__body {
+    max-height: 45vh;
+    overflow: hidden;
+    padding: 14px 16px;
+    background: #fff;
+}
+
+.notify-config-dialog .el-dialog__footer {
+    padding: 12px 18px;
+    background: #f9f9f9;
+    border-top: 1px solid #eee;
+}
+
+/* 对话框内容样式 */
+.dialog-content {
+    max-height: none;
+    overflow: visible;
+}
+
+/* 门店预览样式 */
+.store-preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 6px;
+    margin-bottom: 12px;
+    border: 1px solid #e3e6ea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.store-preview-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+.store-preview-icon img {
+    width: 100%;
+    height: 100%;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.store-preview-info {
+    flex: 1;
+}
+
+.store-preview-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 3px;
+}
+
+.store-preview-detail {
+    font-size: 13px;
+    color: #666;
+}
+
+/* 配置表单样式 */
+.config-form .el-form-item {
+    margin-bottom: 15px;
+}
+
+.config-form .el-form-item__label {
+    padding-bottom: 8px !important;
+}
+
+.config-form .el-form-item__label {
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+/* Element UI 单选按钮内置样式覆盖 */
+.radio-option .el-radio {
+    line-height: 1 !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+}
+
+.radio-option .el-radio__label {
+    padding-left: 0px !important;
+    line-height: 1.2 !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+}
+
+.radio-option .el-radio__input {
+    line-height: 1.2 !important;
+    vertical-align: top !important;
+    margin-top: 1px !important;
+    /* 隐藏默认的radio圆圈样式 */
+    display: none !important;
+}
+
+/* 完全隐藏radio按钮的圆圈部分 */
+.radio-option .el-radio__input.is-checked .el-radio__inner,
+.radio-option .el-radio__input .el-radio__inner {
+    display: none !important;
+}
+
+/* 隐藏radio按钮的原始样式 */
+.radio-option .el-radio__input .el-radio__original {
+    display: none !important;
+}
+
+/* 单选按钮组样式 */
+.radio-option {
+    display: block;
+    width: 100%;
+    margin-bottom: 8px;
+    border: 2px solid #e4e7ed;
+    border-radius: 8px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    background: #fff;
+    cursor: pointer;
+    position: relative;
+}
+
+.radio-option:hover {
+    border-color: #c6e2ff;
+    background: #f0f8ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+}
+
+/* 选中状态样式 - 通过卡片样式变化显示选中状态 */
+.radio-option .el-radio.is-checked + .radio-content::before,
+.radio-option:has(.el-radio.is-checked),
+.radio-option.selected {
+    border-color: #409eff !important;
+    background: linear-gradient(135deg, #e6f4ff 0%, #f0f8ff 100%) !important;
+    box-shadow: 0 4px 16px rgba(64, 158, 255, 0.2) !important;
+}
+
+/* 添加选中指示器 */
+.radio-option:has(.el-radio.is-checked)::after,
+.radio-option.selected::after {
+    content: "✓";
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    color: #409eff;
+    font-weight: bold;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.radio-content {
+    margin-left: 0px;
+    margin-top: 0px;
+    padding-left: 0px;
+    width: 100%;
+}
+
+.radio-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 2px;
+    line-height: 1.2;
+    margin-top: 0;
+}
+
+.radio-desc {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.2;
+    margin-top: 1px;
+}
+
+/* 有效期设置样式 */
+.expire-setting {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.expire-unit {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.clear-expire {
+    color: #f56c6c;
+    padding: 0;
+    font-size: 12px;
+}
+
+.expire-tip {
+    font-size: 11px;
+    color: #909399;
+    line-height: 1.2;
+    padding: 4px 8px;
+    background: #f0f9ff;
+    border-radius: 4px;
+    border: 1px solid #d4edda;
+    margin-top: 2px;
+}
+
+/* 对话框按钮样式 */
+.dialog-footer {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.cancel-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    border: 2px solid #dcdfe6;
+    color: #606266;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    border-color: #c0c4cc;
+    color: #409eff;
+    background: #f5f7fa;
+    transform: translateY(-1px);
+}
+
+.confirm-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #409eff 0%, #36a3f7 100%);
+    border: none;
+    box-shadow: 0 3px 8px rgba(64, 158, 255, 0.3);
+    transition: all 0.3s ease;
+}
+
+.confirm-btn:hover {
+    background: linear-gradient(135deg, #66b1ff 0%, #409eff 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(64, 158, 255, 0.4);
+}
+
+.confirm-btn.is-loading {
+    background: linear-gradient(135deg, #a0cfff 0%, #79bbff 100%);
+    transform: none;
+    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .notify-config-dialog {
+        width: 90vw !important;
+        margin: 0 5vw;
+    }
+    
+    .notify-config-dialog .el-dialog__body {
+        padding: 15px;
+        max-height: 55vh;
+    }
+    
+    .notify-config-dialog .el-dialog__footer {
+        padding: 12px 15px;
+    }
+    
+    .store-preview {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .store-preview-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+    
+    .radio-option {
+        padding: 10px;
+    }
+    
+    .radio-content {
+        margin-left: 18px;
+    }
+    
+    .dialog-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .cancel-btn,
+    .confirm-btn {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
+/* 全局 Dialog 优化样式 - 增强防止页面内容溢出 */
+body .el-dialog__wrapper {
+    overflow: hidden !important;
+}
+
+body .el-dialog {
+    overflow: hidden !important;
+    max-width: 95vw !important;
+    margin: 0 auto !important;
+}
+
+body .el-dialog__body {
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
+/* 对话框内容滚动条优化 */
+.dialog-content::-webkit-scrollbar {
+    width: 5px;
+}
+
+.dialog-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.dialog-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }

@@ -3,9 +3,16 @@
 - 2025年8月30日 ip检测机制应该是判断有没有调用其它接口，优化后目前运行了两天暂时未被block。
 - 2025年9月21日 取消了轮训和通知，加入了新的页面，可以手动查询活动列表。后期可能会做更加复杂的轮训推送。
 - 2025年9月22日 优化了列表，搜索使用官方的搜索接口。不排序则使用官方的分页接口。其它情况获取一批次的数据，手动排序过滤
+- 2025年9月23日 添加了可抢通知功能，新增了通知管理页面。
 ## 注意
 - 小蚕有检测机制，如果只调用获取活动列表的接口，一会儿ip就会被封禁。
-- 即使模拟了小程序的接口调用逻辑，如果请求参数一模一样，短时间内调用次数过多，会触发腾讯云的WAF，但是ip不会被封，更改请求参数接口之后还是可以调通（有点奇怪，照理header头每次都不一样才对）。
+- 即使模拟了小程序的接口调用逻辑，如果请求参数一模一样，短时间内调用次数过多，会触发腾讯云的WAF，但是ip不会被封，更改经纬度之后还是可以调通（有点奇怪，照理body有分页参数每次都不一样）。
+- spt来源：[WxPusher消息推送平台](https://wxpusher.zjiecode.com/docs/#/)
+- promotion_id活动id，同一个门店的promotion_id，每天是不一样的。
+## todo
+- [x] 通知提醒模式1：指定门店活动提醒
+- [ ] 通知提醒模式2：自定义通知例如：金额差小于指定数值的
+- [ ] 自动抢购活动
 ## 小蚕加密逻辑
 请求头有几个参数值得注意。
 - X-Garen：毫秒时间戳
@@ -23,3 +30,6 @@
 ![image](https://github.com/lyrric/xiaochan/blob/main/images/index.png) 
 ### 地址管理
 ![image](https://github.com/lyrric/xiaochan/blob/main/images/location.png)
+### 通知管理
+![image](https://github.com/lyrric/xiaochan/blob/main/images/notify1.png)
+![image](https://github.com/lyrric/xiaochan/blob/main/images/notify2.png)

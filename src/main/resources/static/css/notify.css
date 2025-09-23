@@ -1,0 +1,187 @@
+/* 通知管理页面专用样式 */
+
+/* 通知配置网格布局 */
+.notify-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+}
+
+/* 响应式调整 - PC端显示更多列 */
+@media screen and (min-width: 1400px) {
+    .notify-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media screen and (min-width: 1200px) and (max-width: 1399px) {
+    .notify-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (min-width: 900px) and (max-width: 1199px) {
+    .notify-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 899px) {
+    .notify-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 通知信息样式 */
+.notify-info {
+    margin-bottom: 15px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #666;
+}
+
+.info-item i {
+    margin-right: 8px;
+    width: 14px;
+    color: #888;
+    font-size: 12px;
+}
+
+/* 详情页面样式 */
+.detail-content {
+    padding: 20px;
+}
+
+.detail-section {
+    margin-bottom: 30px;
+}
+
+.detail-section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.detail-section h3 i {
+    color: #36b37e;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item label {
+    font-weight: 500;
+    color: #555;
+    min-width: 120px;
+    margin-right: 10px;
+}
+
+.detail-item span {
+    color: #333;
+    flex: 1;
+}
+
+.remark-content {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid #36b37e;
+    line-height: 1.6;
+    color: #666;
+}
+
+/* 通知状态样式 */
+.status-normal {
+    color: #52c41a;
+}
+
+.status-disabled {
+    color: #999;
+}
+
+.status-finished {
+    color: #faad14;
+}
+
+/* 通知类型标签样式 */
+.type-store {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border-color: #91d5ff;
+}
+
+.type-custom {
+    background-color: #f6ffed;
+    color: #52c41a;
+    border-color: #b7eb8f;
+}
+
+/* 响应式调整 */
+@media screen and (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .detail-item label {
+        min-width: auto;
+        margin-right: 0;
+    }
+    
+    .info-item {
+        font-size: 12px;
+    }
+    
+    .notify-info {
+        margin-bottom: 12px;
+    }
+}
+
+/* 卡片悬停效果增强 */
+.address-card:hover .info-item {
+    color: #555;
+}
+
+.address-card:hover .info-item i {
+    color: #36b37e;
+}
+
+/* 空状态优化 */
+.empty-state .el-empty {
+    padding: 40px 20px;
+}
+
+.empty-state .el-empty__image {
+    width: 160px;
+    height: 160px;
+}
+
+.empty-state .el-empty__description {
+    font-size: 14px;
+    color: #999;
+    margin-top: 16px;
+}
