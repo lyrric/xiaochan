@@ -1008,10 +1008,12 @@
                     try {
                         const configData = {
                             type: 1, // 1：指定门店活动提醒
-                            onlyOne: this.notifyConfigForm.onlyOne,
-                            expireDay: this.notifyConfigForm.expireDay,
                             location: this.selectedAddress, // 当前选中的地址
-                            storeInfo: this.currentNotifyStore
+                            storeExtConfig: {
+                                storeInfo: this.currentNotifyStore,
+                                onlyOne:this.notifyConfigForm.onlyOne,
+                                expireDay: this.notifyConfigForm.expireDay,
+                            },
                         };
                         
                         const response = await axios.post('/api/notify/config', configData);

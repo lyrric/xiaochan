@@ -6,15 +6,13 @@ import io.github.xiaochan.http.MessageHttp;
 import io.github.xiaochan.model.Location;
 import io.github.xiaochan.model.NotifyConfig;
 import io.github.xiaochan.model.StoreInfo;
+import io.github.xiaochan.rules.MaxDiffPriceRule;
+import io.github.xiaochan.rules.SpecifyStoreRule;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RedissonClient;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,16 +21,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppService {
 
-
-    @Resource
-    private RedissonClient redissonClient;
     @Resource
     private XiaoChanService xiaoChanService;
     @Resource
     private NotifyService notifyService;
+    @Resource
+    private SpecifyStoreRule specifyStoreRule;
+    @Resource
+    private MaxDiffPriceRule maxDiffPriceRule;
 
 
-    private static final int DEFAULT_MAX_SIZE = 100;
+    private static final int DEFAULT_MAX_SIZE = 150;
 
 
     /**
@@ -44,10 +43,29 @@ public class AppService {
         List<NotifyConfig> notifyConfigList = notifyService.getNotifyConfigList();
         for (NotifyConfig notifyConfig : notifyConfigList) {
             try {
-                if (notifyConfig.getType() != 1 || !checkNotifyAvailable(notifyConfig)) {
+                if (!specifyStoreRule.notifyAvailable(notifyConfig)) {
                     continue;
                 }
                 specifyStoreActivityRemind(notifyConfig);
+            }catch (Exception e){
+                log.error("发生异常 {}", notifyConfig, e);
+            }
+        }
+    }
+
+    /**
+     * 自定义规则提醒
+     */
+    @Scheduled(cron = "0 30 * * * ? ")
+    public void customerScheduled(){
+        //获取所有配置信息
+        List<NotifyConfig> notifyConfigList = notifyService.getNotifyConfigList();
+        for (NotifyConfig notifyConfig : notifyConfigList) {
+            try {
+                if (!maxDiffPriceRule.notifyAvailable(notifyConfig)) {
+                    continue;
+                }
+                customerActivityRemind(notifyConfig);
             }catch (Exception e){
                 log.error("发生异常 {}", notifyConfig, e);
             }
@@ -55,78 +73,44 @@ public class AppService {
         }
     }
 
-    /**
-     * 配置是否有效
-     */
-    private boolean checkNotifyAvailable(NotifyConfig notifyConfig){
-        if(notifyConfig.getStatus() != 1)
-            return false;
+    private void customerActivityRemind(NotifyConfig notifyConfig) {
+        Location location = notifyConfig.getLocation();
+        List<StoreInfo> list = xiaoChanService.getList(location.getCityCode(), location.getLongitude(), location.getLatitude(), DEFAULT_MAX_SIZE);
+        List<StoreInfo> availableStores = maxDiffPriceRule.filter(notifyConfig, list);
+        if (availableStores.isEmpty()) {
+            log.info("没有满足条件的门店活动");
+            return;
+        }
+        notifyConfig.setNotifyCount(notifyConfig.getNotifyCount() + 1);
         Date now = new Date();
-        if (notifyConfig.getLastNotifyTime() != null) {
-            //如果上次通知时间在今天内，则不进行通知
-            if (DateUtil.isSameDay(now, notifyConfig.getLastNotifyTime())) {
-                return false;
-            }
-        }
-        Date createTime = notifyConfig.getCreateTime();
-        Integer expireDay = notifyConfig.getExpireDay();
-        if (expireDay != null) {
-            //如果超过了有效天数，则不进行通知
-            Date expireDate = DateUtil.offsetDay(createTime, expireDay);
-            if (now.after(expireDate)) {
-                notifyConfig.setRemark("超过有效期天数");
-                notifyService.updateNotifyConfig(notifyConfig);
-                return false;
-            }
-        }
-        return true;
+        notifyConfig.setLastNotifyTime(now);
+        notifyService.updateNotifyConfig(notifyConfig);
+        //通知
+        sendMessage(availableStores, notifyConfig.getLocation());
     }
+
 
     /**
      * 指定门店活动提醒
      */
     private void specifyStoreActivityRemind(NotifyConfig notifyConfig){
-        List<StoreInfo> availableStores = getAvailableStores(notifyConfig);
+        //通过搜索来获取门店活动信息
+        List<StoreInfo> storeInfos = xiaoChanService.searchList(notifyConfig.getStoreExtNotifyConfig().getStoreInfo().getName(),
+                notifyConfig.getLocation().getCityCode(), notifyConfig.getLocation().getLongitude(),
+                notifyConfig.getLocation().getLatitude());
+        List<StoreInfo> availableStores = specifyStoreRule.filter(notifyConfig, storeInfos);
         if(availableStores.isEmpty())
             return;
         notifyConfig.setNotifyCount(notifyConfig.getNotifyCount() + 1);
         Date now = new Date();
         notifyConfig.setLastNotifyTime(now);
-        if (notifyConfig.getOnlyOne()) {
+        if (notifyConfig.getStoreExtNotifyConfig().getOnlyOne()) {
             notifyConfig.setStatus(2);
         }
         notifyConfig.setRemark("任务完成" + DateUtil.format(now, "yyyy-MM-dd HH:mm:ss"));
         notifyService.updateNotifyConfig(notifyConfig);
         //通知
         sendMessage(availableStores, notifyConfig.getLocation());
-    }
-
-    /**
-     * 获取符合规则的活动信息
-     */
-    private List<StoreInfo> getAvailableStores(NotifyConfig notifyConfig) {
-        //通过搜索来获取门店活动信息
-        List<StoreInfo> storeInfos = xiaoChanService.searchList(notifyConfig.getStoreInfo().getName(),
-                notifyConfig.getLocation().getCityCode(), notifyConfig.getLocation().getLongitude(),
-                notifyConfig.getLocation().getLatitude());
-        return storeInfos
-                .stream()
-                //同一个门店
-                .filter(storeInfo -> notifyConfig.getStoreInfo().getStoreId().equals(storeInfo.getStoreId()))
-                .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
-                //返现金额必须大于等于之前的返现金额
-                .filter(storeInfo -> storeInfo.getRebatePrice().compareTo(notifyConfig.getStoreInfo().getRebatePrice()) >= 0)
-                //价格必须小于等于之前的价格
-                .filter(storeInfo -> storeInfo.getPrice().compareTo(notifyConfig.getStoreInfo().getPrice()) <= 0)
-                .toList();
-    }
-
-    public void run(){
-        List<Location> locations = Collections.emptyList();
-        for (Location location : locations) {
-            run(location);
-            log.info("执行完成 {}",location);
-        }
     }
 
     public void run(Location location){
@@ -165,32 +149,6 @@ public class AppService {
                 "库存：" + storeInfo.getLeftNumber() + "<br/>" +
                 "规则：满" + storeInfo.getPrice() + "返" + storeInfo.getRebatePrice() + "<br/>" +
                 "是否需要评价:" + (storeInfo.getRebateCondition() == null ? "未知" : (storeInfo.getRebateCondition() != 99 ? "是" : "否")) + "\r\n";
-    }
-
-
-    private boolean check(StoreInfo storeInfo, Location location) {
-        Integer leftNumber = storeInfo.getLeftNumber();
-        if (leftNumber < 1) {
-            return false;
-        }
-        //金额判断
-/*        BigDecimal price = storeInfo.getPrice();
-        if (location.getPrice() != null && price.compareTo(location.getPrice()) < 0) {
-            return false;
-        }
-        //反现金额大于指定值
-        BigDecimal rebatePrice = storeInfo.getRebatePrice();
-        if (location.getRebatePrice() != null &&
-                rebatePrice.compareTo(location.getRebatePrice()) < 0) {
-            return false;
-        }
-        if (location.getDifPrice() != null &&
-                price.subtract(rebatePrice).compareTo(location.getDifPrice()) > 0) {
-            //金额差大于指定值
-            return false;
-        }*/
-        return false;
-
     }
 
 }

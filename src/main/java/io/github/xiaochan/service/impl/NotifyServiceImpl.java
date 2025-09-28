@@ -6,14 +6,12 @@ import io.github.xiaochan.model.dto.NotifyConfigDTO;
 import io.github.xiaochan.service.NotifyService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RList;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.StringCodec;
 import org.redisson.codec.CompositeCodec;
 import org.redisson.codec.JsonJacksonCodec;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -36,11 +34,9 @@ public class NotifyServiceImpl implements NotifyService {
     @Override
     public String saveNotifyConfig(NotifyConfigDTO notifyConfigDTO) {
         log.info("保存通知配置: {}", notifyConfigDTO);
-
         // 转换DTO为实体
         NotifyConfig notifyConfig = new NotifyConfig();
         BeanUtils.copyProperties(notifyConfigDTO, notifyConfig);
-
         // 设置ID为当前时间戳
         notifyConfig.setId(String.valueOf(System.currentTimeMillis()));
         // 设置创建时间
@@ -49,6 +45,7 @@ public class NotifyServiceImpl implements NotifyService {
         notifyConfig.setStatus(1);
         // 初始化通知次数为0
         notifyConfig.setNotifyCount(0);
+        notifyConfig.initDesc();
         getNotifyConfigMap().put(notifyConfig.getId(), notifyConfig);
         log.info("通知配置保存成功，配置ID: {}", notifyConfig.getId());
         return notifyConfig.getId();

@@ -41,9 +41,14 @@
     <el-card v-if="!showDetail" class="mt-4" style="border-radius: 12px; border: none; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);" v-loading="loading">
         <div slot="header" class="card-header">
             <span>通知配置管理</span>
-            <el-button class="add-address-btn" @click="refreshList" :disabled="loading" style="display: flex; align-items: center; gap: 5px;">
-                <i class="fa fa-refresh"></i> 刷新列表
-            </el-button>
+            <div style="display: flex; gap: 10px;">
+                <el-button class="add-address-btn" @click="showAddDialog" style="display: flex; align-items: center; gap: 5px;">
+                    <i class="fa fa-plus"></i> 新增通知
+                </el-button>
+                <el-button class="add-address-btn" @click="refreshList" :disabled="loading" style="display: flex; align-items: center; gap: 5px;">
+                    <i class="fa fa-refresh"></i> 刷新列表
+                </el-button>
+            </div>
         </div>
 
         <div v-if="notifyList.length === 0" class="empty-state">
@@ -78,15 +83,11 @@
                     <div class="notify-info">
                         <p class="info-item">
                             <i class="fa fa-store"></i>
-                            <span>门店：{{ config.storeInfo?.name || '未知门店' }}</span>
+                            <span>描述：{{ config.desc }}</span>
                         </p>
                         <p class="info-item">
                             <i class="fa fa-tag"></i>
                             <span>类型：{{ getTypeText(config.type) }}</span>
-                        </p>
-                        <p class="info-item">
-                            <i class="fa fa-refresh"></i>
-                            <span>只提醒一次：{{ config.onlyOne ? '是' : '否' }}</span>
                         </p>
                         <p class="info-item">
                             <i class="fa fa-calendar"></i>
@@ -140,6 +141,10 @@
                         <label>配置ID：</label>
                         <span>{{ currentDetail.id }}</span>
                     </div>
+                     <div class="detail-item">
+                        <label>描述：</label>
+                        <span>{{ currentDetail.desc }}</span>
+                    </div>
                     <div class="detail-item">
                         <label>类型：</label>
                         <span>{{ getTypeText(currentDetail.type) }}</span>
@@ -149,14 +154,6 @@
                         <el-tag :type="getStatusType(currentDetail.status)">
                             {{ getStatusText(currentDetail.status) }}
                         </el-tag>
-                    </div>
-                    <div class="detail-item">
-                        <label>只提醒一次：</label>
-                        <span>{{ currentDetail.onlyOne ? '是' : '否' }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <label>有效天数：</label>
-                        <span>{{ currentDetail.expireDay || '无限制' }}</span>
                     </div>
                     <div class="detail-item">
                         <label>通知次数：</label>
@@ -169,6 +166,10 @@
                     <div class="detail-item">
                         <label>上次通知时间：</label>
                         <span>{{ formatDate(currentDetail.lastNotifyTime) || '暂无' }}</span>
+                    </div>
+                     <div class="detail-item">
+                        <label>备注：</label>
+                        <span>{{ currentDetail.remark }}</span>
                     </div>
                 </div>
             </div>
@@ -187,41 +188,119 @@
                 </div>
             </div>
 
-            <div class="detail-section" v-if="currentDetail.storeInfo">
-                <h3><i class="fa fa-store"></i> 门店信息</h3>
+            <div class="detail-section" v-if="currentDetail.type === 1 && currentDetail.storeExtNotifyConfig.storeInfo">
+                <h3><i class="fa fa-store"></i> 门店配置</h3>
                 <div class="detail-grid">
                     <div class="detail-item">
                         <label>门店名称：</label>
-                        <span>{{ currentDetail.storeInfo.name }}</span>
+                        <span>{{ currentDetail.storeExtNotifyConfig.storeInfo.name }}</span>
                     </div>
                     <div class="detail-item">
                         <label>门店ID：</label>
-                        <span>{{ currentDetail.storeInfo.storeId }}</span>
+                        <span>{{ currentDetail.storeExtNotifyConfig.storeInfo.storeId }}</span>
                     </div>
                     <div class="detail-item">
-                        <label>平台类型：</label>
-                        <span>{{ getPlatformNameById(currentDetail.storeInfo.type) }}</span>
+                        <label>门店平台：</label>
+                        <span>{{ getPlatformNameById(currentDetail.storeExtNotifyConfig.storeInfo.type) }}</span>
                     </div>
                     <div class="detail-item">
                         <label>满返金额：</label>
-                        <span>满{{ currentDetail.storeInfo.price }}返{{ currentDetail.storeInfo.rebatePrice }}</span>
+                        <span>满{{ currentDetail.storeExtNotifyConfig.storeInfo.price }}返{{ currentDetail.storeExtNotifyConfig.storeInfo.rebatePrice }}</span>
                     </div>
                     <div class="detail-item">
                         <label>好评条件：</label>
-                        <span>{{ getRebateConditionText(currentDetail.storeInfo.rebateCondition) }}</span>
+                        <span>{{ getRebateConditionText(currentDetail.storeExtNotifyConfig.storeInfo.rebateCondition) }}</span>
+                    </div>
+                     <div class="detail-item">
+                        <label>是否仅提醒一次：</label>
+                        <span>{{ currentDetail.storeExtNotifyConfig.onlyOne ? '是' : '否' }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>有效天数：</label>
+                        <span>{{ currentDetail.expireDay || '无限制' }}</span>
                     </div>
                 </div>
             </div>
 
-            <div class="detail-section" v-if="currentDetail.remark">
-                <h3><i class="fa fa-comment"></i> 备注信息</h3>
-                <div class="remark-content">
-                    {{ currentDetail.remark }}
+            <!-- 添加type为2时的额外信息展示 -->
+            <div class="detail-section" v-if="currentDetail.type === 2 && currentDetail.maxDiffPriceExtNotifyConfig">
+                <h3><i class="fa fa-money"></i> 金额差配置</h3>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <label>最大金额差：</label>
+                        <span>{{ currentDetail.maxDiffPriceExtNotifyConfig.maxDiffPrice }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <label>间隔天数：</label>
+                        <span>{{ currentDetail.maxDiffPriceExtNotifyConfig.idleDay }}</span>
+                    </div>
                 </div>
             </div>
         </div>
     </el-card>
+    
+    <!-- 新增通知配置对话框 -->
+    <el-dialog
+        title="新增通知配置"
+        :visible.sync="addDialogVisible"
+        width="500px"
+        @close="resetAddForm"
+        :modal-append-to-body="true"
+        :append-to-body="true"
+        :close-on-click-modal="false"
+        style="margin-top: 5vh;">
+        <el-form :model="addForm" :rules="addRules" ref="addForm" label-width="100px">
+            <el-form-item label="类型" prop="type">
+                <el-select v-model="addForm.type" placeholder="请选择类型" style="width: 100%;">
+                    <el-option label="金额差" :value="2"></el-option>
+                </el-select>
+            </el-form-item>
+
+            <el-form-item label="位置" prop="location">
+                <el-select v-model="addForm.location" placeholder="请选择位置" style="width: 100%;">
+                    <el-option
+                        v-for="loc in locationList"
+                        :key="loc.id"
+                        :label="loc.name"
+                        :value="loc">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+
+            <!-- type为2时的配置项 -->
+            <template v-if="addForm.type === 2">
+                <el-row :gutter="20">
+                    <el-col :span="12">
+                        <el-form-item label="最大金额差" prop="maxDiffPriceExtNotifyConfig.maxDiffPrice">
+                            <el-input-number
+                                v-model="addForm.maxDiffPriceExtNotifyConfig.maxDiffPrice"
+                                :min="1"
+                                controls-position="right"
+                                style="width: 100%;">
+                            </el-input-number>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="12">
+                        <el-form-item label="间隔天数" prop="maxDiffPriceExtNotifyConfig.idleDay">
+                            <el-input-number
+                                v-model="addForm.maxDiffPriceExtNotifyConfig.idleDay"
+                                :min="1"
+                                controls-position="right"
+                                style="width: 100%;">
+                            </el-input-number>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </template>
+        </el-form>
+
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="addDialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="submitAddForm" :loading="submitLoading">确 定</el-button>
+        </div>
+    </el-dialog>
 </div>
+
 
 <script>
     new Vue({
@@ -234,18 +313,122 @@
                 // 状态控制
                 loading: false,
                 showDetail: false,
-                currentDetail: null
+                currentDetail: null,
+                
+                // 新增对话框相关
+                addDialogVisible: false,
+                submitLoading: false,
+                locationList: [],
+                addForm: {
+                    type: 2,
+                    location: null,
+                    maxDiffPriceExtNotifyConfig: {
+                        maxDiffPrice: 1,
+                        idleDay: 1
+                    }
+                },
+                addRules: {
+                    type: [
+                        { required: true, message: '请选择类型', trigger: 'change' }
+                    ],
+                    location: [
+                        { required: true, message: '请选择位置', trigger: 'change' }
+                    ],
+                    'maxDiffPriceExtNotifyConfig.maxDiffPrice': [
+                        { required: true, message: '请输入最大金额差', trigger: 'blur' }
+                    ],
+                    'maxDiffPriceExtNotifyConfig.idleDay': [
+                        { required: true, message: '请输入间隔天数', trigger: 'blur' }
+                    ]
+                }
             };
         },
         mounted() {
             this.loadNotifyList();
+            this.loadLocations();
         },
         methods: {
+            // 显示新增对话框
+            showAddDialog() {
+                console.log('显示新增对话框');
+                this.addDialogVisible = true;
+            },
+            
+            // 重置新增表单
+            resetAddForm() {
+                this.$refs.addForm.resetFields();
+                this.addForm = {
+                    type: 2,
+                    location: null,
+                    maxDiffPriceExtNotifyConfig: {
+                        maxDiffPrice: 1,
+                        idleDay: 1
+                    }
+                };
+            },
+            
+            // 加载位置列表
+            async loadLocations() {
+                try {
+                    const response = await axios.get('/api/location');
+                    console.log('获取位置列表响应:', response);
+                    if (response.data.success) {
+                        this.locationList = response.data.data || [];
+                    } else {
+                        this.$message.error(response.data.msg || '获取位置列表失败');
+                    }
+                } catch (error) {
+                    console.error('获取位置列表失败:', error);
+                    this.$message.error('获取位置列表失败，请检查网络连接');
+                }
+            },
+            
+            // 提交新增表单
+            submitAddForm() {
+                this.$refs.addForm.validate(async (valid) => {
+                    if (valid) {
+                        this.submitLoading = true;
+                        try {
+                            // 构造请求参数
+                            const requestData = {
+                                type: this.addForm.type,
+                                location: this.addForm.location
+                            };
+                            
+                            // 根据type添加相应的配置
+                            if (this.addForm.type === 2) {
+                                requestData.maxDiffPriceExtNotifyConfig = this.addForm.maxDiffPriceExtNotifyConfig;
+                                // type为2时，不传storeExtConfig
+                            }
+                            
+                            console.log('提交通知配置请求数据:', requestData);
+                            const response = await axios.post('/api/notify/config', requestData);
+                            console.log('提交通知配置响应:', response);
+                            
+                            if (response.data.success) {
+                                this.$message.success('通知配置保存成功');
+                                this.addDialogVisible = false;
+                                // 重新加载列表
+                                await this.loadNotifyList();
+                            } else {
+                                this.$message.error(response.data.msg || '通知配置保存失败');
+                            }
+                        } catch (error) {
+                            console.error('保存通知配置失败:', error);
+                            this.$message.error('保存通知配置失败，请检查网络连接');
+                        } finally {
+                            this.submitLoading = false;
+                        }
+                    }
+                });
+            },
+            
             // 加载通知配置列表
             async loadNotifyList() {
                 this.loading = true;
                 try {
                     const response = await axios.get('/api/notify/config/list');
+                    console.log('获取通知配置列表响应:', response);
                     if (response.data.success) {
                         this.notifyList = response.data.data || [];
                     } else {
@@ -327,8 +510,8 @@
             // 获取类型文本
             getTypeText(type) {
                 switch (type) {
-                    case 1: return '指定门店活动提醒';
-                    case 2: return '自定义规则提醒';
+                    case 1: return '指定门店';
+                    case 2: return '金额差';
                     default: return '未知类型';
                 }
             },
