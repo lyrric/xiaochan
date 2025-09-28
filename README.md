@@ -30,9 +30,9 @@
   - 将字符串D进行MD5加密得到字符串E，E即为X-Ashe的值。
 ## 截图
 ### 活动列表页
-![image](https://github.com/lyrric/xiaochan/blob/main/images/index.png) 
+![image](main/images/index.png) 
 ### 地址管理
-![image](https://github.com/lyrric/xiaochan/blob/main/images/location.png)
+![image](main/images/location.png)
 ### 通知管理
-![image](https://github.com/lyrric/xiaochan/blob/main/images/notify1.png)
-![image](https://github.com/lyrric/xiaochan/blob/main/images/notify2.png)
+![image](main/images/notify1.png)
+![image](main/images/notify2.png)
