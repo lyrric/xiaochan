@@ -39,17 +39,21 @@ public class AppService {
      */
     @Scheduled(cron = "0 10 * * * ? ")
     public void specifyStoreScheduled(){
-        //获取所有配置信息
-        List<NotifyConfig> notifyConfigList = notifyService.getNotifyConfigList();
-        for (NotifyConfig notifyConfig : notifyConfigList) {
-            try {
+        if (isSkip()) {
+            log.info("当前时间段位于00:00-08:00，不进行定时任务");
+            return;
+        }
+        try {
+            //获取所有配置信息
+            List<NotifyConfig> notifyConfigList = notifyService.getNotifyConfigList();
+            for (NotifyConfig notifyConfig : notifyConfigList) {
                 if (!specifyStoreRule.notifyAvailable(notifyConfig)) {
                     continue;
                 }
                 specifyStoreActivityRemind(notifyConfig);
-            }catch (Exception e){
-                log.error("发生异常 {}", notifyConfig, e);
             }
+        }catch (Exception e){
+            log.error("发生异常", e);
         }
     }
 
@@ -58,21 +62,29 @@ public class AppService {
      */
     @Scheduled(cron = "0 30 * * * ? ")
     public void customerScheduled(){
-        //获取所有配置信息
-        List<NotifyConfig> notifyConfigList = notifyService.getNotifyConfigList();
-        for (NotifyConfig notifyConfig : notifyConfigList) {
-            try {
+        if (isSkip()) {
+            log.info("当前时间段位于00:00-08:00，不进行定时任务");
+            return;
+        }
+        try {
+            //获取所有配置信息
+            List<NotifyConfig> notifyConfigList = notifyService.getNotifyConfigList();
+            for (NotifyConfig notifyConfig : notifyConfigList) {
                 if (!maxDiffPriceRule.notifyAvailable(notifyConfig)) {
                     continue;
                 }
                 customerActivityRemind(notifyConfig);
-            }catch (Exception e){
-                log.error("发生异常 {}", notifyConfig, e);
             }
-
+        }catch (Exception e){
+            log.error("发生异常 ", e);
         }
     }
 
+    private boolean isSkip() {
+        Date now = new Date();
+        int hour = DateUtil.hour(now, true);
+        return hour >= 0 && hour <= 8;
+    }
     private void customerActivityRemind(NotifyConfig notifyConfig) {
         Location location = notifyConfig.getLocation();
         List<StoreInfo> list = xiaoChanService.getList(location.getCityCode(), location.getLongitude(), location.getLatitude(), DEFAULT_MAX_SIZE);
