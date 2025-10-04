@@ -1,7 +1,8 @@
 server:
-  port: 8084
+  port: 8080
 spring:
   data:
     redis:
-      host: 127.0.0.1
-      database: 1
+      host: ${REDIS_HOST:127.0.0.1}
+      password: ${REDIS_PASSWORD:}
+      database: 0

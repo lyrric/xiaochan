@@ -23,6 +23,12 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-resolver-dns-native-macos</artifactId>
+            <version>4.1.75.Final</version>
+            <classifier>osx-aarch_64</classifier>
+        </dependency>
+        <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>4.5.12</version>
@@ -98,7 +104,7 @@
     </dependencies>
 
     <build>
-        <finalName>xiaochan-server</finalName>
+        <finalName>xiaochan</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
