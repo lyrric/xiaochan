@@ -1,6 +1,6 @@
 package io.github.xiaochan.controller;
 
-import io.github.xiaochan.core.BusinessException;
+import io.github.xiaochan.config.BusinessException;
 import io.github.xiaochan.model.BaseResult;
 import io.github.xiaochan.model.NotifyConfig;
 import io.github.xiaochan.model.dto.NotifyConfigDTO;
