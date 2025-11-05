@@ -30,7 +30,7 @@ public class NotifyConfigDTO {
      * 门店提醒扩展配置
      */
     @Valid
-    private StoreExtNotifyConfig storeExtConfig;
+    private StoreExtNotifyConfig storeExtNotifyConfig;
     /**
      * 金额差提醒扩展配置
      */

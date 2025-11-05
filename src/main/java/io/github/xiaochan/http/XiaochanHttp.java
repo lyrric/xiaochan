@@ -5,7 +5,7 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
-import io.github.xiaochan.core.BusinessException;
+import io.github.xiaochan.config.BusinessException;
 import io.github.xiaochan.model.StoreInfo;
 import io.github.xiaochan.model.vo.AddressVO;
 import lombok.extern.slf4j.Slf4j;
