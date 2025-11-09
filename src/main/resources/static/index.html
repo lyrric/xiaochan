@@ -194,16 +194,7 @@
                             
                             <!-- 操作按钮 -->
                             <div class="store-actions">
-                                <el-button
-                                    v-if="canApply(store)"
-                                    type="primary"
-                                    size="small"
-                                    class="action-button"
-                                    @click="handleApply(store)"
-                                    :loading="actionLoading[store.promotionId + '_apply']"
-                                >
-                                    报名
-                                </el-button>
+
                                 <el-button
                                     v-if="store.leftNumber <= 0"
                                     type="success"
@@ -214,15 +205,7 @@
                                 >
                                    可抢通知
                                 </el-button>
-                                <el-button
-                                    type="warning"
-                                    size="small"
-                                    class="action-button"
-                                    @click="handleIgnore(store)"
-                                    :loading="actionLoading[store.storeId + '_ignore']"
-                                >
-                                    不再显示
-                                </el-button>
+
                             </div>
                         </div>
                     </div>
@@ -1009,7 +992,7 @@
                         const configData = {
                             type: 1, // 1：指定门店活动提醒
                             location: this.selectedAddress, // 当前选中的地址
-                            storeExtConfig: {
+                            storeExtNotifyConfig: {
                                 storeInfo: this.currentNotifyStore,
                                 onlyOne:this.notifyConfigForm.onlyOne,
                                 expireDay: this.notifyConfigForm.expireDay,
