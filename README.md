@@ -29,6 +29,21 @@
   - 将字符串B进行MD5加密得到字符串C。
   - 字符串C + X-Garen + X-Nami得到字符串D。
   - 将字符串D进行MD5加密得到字符串E，E即为X-Ashe的值。
+## 风险检测
+### 关于device_id以及腾讯云WAF
+小蚕的检测机制应该是用的数美的sdk，[文档地址](https://help.ishumei.com/docs/tw/sdk/weapp/developDoc)，对于的方法应该是`PlacementMatchService.BatchMatchPlacement`，也就是device_id的来源，通过源码可以发现如下配置信息
+```javascript
+require.async("../subpack/plugin/pages/fp-wx-lite.min.js")
+    .then((function(e) {
+        g.SMSdk = e, g.SMSdk.initConf({
+            organization: "xIXziPxe6o8HkTczAhHP",
+            appId: "default",
+            publicKey: "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1MX7HW+rvThoh80GSJyfev0/+ZgrybkZTKCEQx7O3JXXssy4FLzcUZg3Mz2yQYHSDMauH/GpcNYsRW5BkSKbch3ALRnUcfH+RDVT9zb4Cr4AE/oyt0qNpi5KnsnFufvo3ICHJzGPsWkZxRXdpuIycLmnXpujxdl4NIwDxWAH7BwIDAQAB"
+        })
+    }))
+```
+应该是通过BatchMatchPlacement收集的数据，然后判断进行的风控，从而block IP。
+小蚕也接入了腾讯云的WAF，现在被WAF风控的几率感觉大大提升了，暂时不太清楚风控的逻辑。也许跟BatchMatchPlacement有关？
 ## 截图
 ### 活动列表页
 ![image](images/index.png) 
