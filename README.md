@@ -48,6 +48,7 @@ require.async("../subpack/plugin/pages/fp-wx-lite.min.js")
 需要注意的是使用的算法应该是非对称的，加密的device_id无法用这个密钥解密。
 应该是通过BatchMatchPlacement收集的数据，然后判断进行的风控，从而block IP。
 小蚕也接入了腾讯云的WAF，现在被WAF风控的几率感觉大大提升了，暂时不太清楚风控的逻辑。也许跟BatchMatchPlacement有关？
+风控是根据ip来的，且每次更换ip后会有一定的延迟时间。大概率也是用的数美的风控？
 ## 截图
 ### 活动列表页
 ![image](images/index.png) 
