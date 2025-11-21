@@ -201,7 +201,7 @@ public class XiaochanHttp {
         headers.put("x-City", String.valueOf(cityCode));
         headers.put("X-Garen", String.valueOf(timeMillis));
         headers.put("X-Nami", NAMI);
-        headers.put("version", "3.11.1.44");
+        headers.put("version", "3.11.1.46");
         headers.put("appid", "20");
         headers.put("x-Vayne", "0");
         headers.put("x-Annie", "XC");
