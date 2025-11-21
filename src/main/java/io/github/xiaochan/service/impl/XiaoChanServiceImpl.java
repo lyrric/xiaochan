@@ -71,30 +71,14 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude) {
-        preCallBeforeSearch(cityCode, latitude, longitude);
         return xiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
     }
 
-    private void preCallBeforeSearch(Integer cityCode, String latitude, String longitude) {
-        try {
-            xiaochanHttp.UploadBuriedPoints(cityCode);
-            xiaochanHttp.ListSearchWord(cityCode);
-            xiaochanHttp.ListSilkRecommendation(cityCode);
-            xiaochanHttp.GetInviteWordPatterns(cityCode);
-            xiaochanHttp.meituanShangjinGetPoiList(latitude, longitude, cityCode);
-            xiaochanHttp.getClientUnionPromotions2(cityCode);
-            xiaochanHttp.getClientUnionPromotions1(cityCode);
-            xiaochanHttp.getClientUnionPromotions2(cityCode);
-        }catch (Exception e){
-            log.error("调用preCallBeforeSearch发生错误 ",e);
-        }
-    }
 
     @Override
     @Cacheable(cacheNames = "xiaoChan", key = "#cityCode+#longitude+#latitude+#maxSize")
     public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int maxSize){
         log.info("请求小产列表，城市: {}, 经度: {}, 纬度: {}, 最大数量: {}", cityCode, longitude, latitude, maxSize);
-        preCall(cityCode);
         int offset = 0;
         List<StoreInfo> result = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
@@ -113,7 +97,6 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
-        preCall(cityCode);
         return doGetList(cityCode, longitude, latitude, offset);
     }
     private boolean hasNext(List<StoreInfo> list){
@@ -134,32 +117,11 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     private List<StoreInfo> doGetList(Integer cityCode, String longitude, String latitude, int offset){
         try {
             List<StoreInfo> list = xiaochanHttp.getList(cityCode, longitude, latitude, offset);
-            xiaochanHttp.meituanShangjinGetPoiList(latitude, longitude, cityCode);
-            xiaochanHttp.getClientUnionPromotions1(cityCode);
-            xiaochanHttp.getClientUnionPromotions2(cityCode);
             return list;
         } catch (Exception e) {
             log.error("请求小产列表时发生错误 ",e);
         }
         return Collections.emptyList();
-    }
-
-    private void preCall(Integer cityCode){
-        try {
-            xiaochanHttp.getTabTag();
-            xiaochanHttp.getClientCfg();
-            xiaochanHttp.getClientCfg();
-            xiaochanHttp.batchMatchPlacement1(cityCode);
-            xiaochanHttp.batchMatchPlacement2(cityCode);
-            xiaochanHttp.getFullRewardBanner();
-            xiaochanHttp.KfAccountList();
-            xiaochanHttp.geocoder();
-            xiaochanHttp.geocoder();
-            xiaochanHttp.getGlobalConfig2(cityCode);
-            xiaochanHttp.batchMatchPlacement3(cityCode);
-        }catch (Exception e){
-            log.error("请求小产列表时发生错误 ",e);
-        }
     }
 
 

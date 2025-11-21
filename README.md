@@ -10,6 +10,7 @@
 - 2025年9月24日 
     - 添加了自定义通知功能，支持金额差小于指定数值的活动通知，每30分钟检测一次。
     - 优化了不同规则的通知逻辑。
+- 2025年11.21 移除不必要的接口调用，修改获取门店列表接口
 ## 注意
 - 小蚕有检测机制，如果只调用获取活动列表的接口，一会儿ip就会被封禁。
 - 即使模拟了小程序的接口调用逻辑，如果请求参数一模一样，短时间内调用次数过多，会触发腾讯云的WAF，但是ip不会被封，更改经纬度之后还是可以调通（有点奇怪，照理body有分页参数每次都不一样）。
@@ -32,23 +33,6 @@
   - 将字符串B进行MD5加密得到字符串C。
   - 字符串C + X-Garen + X-Nami得到字符串D。
   - 将字符串D进行MD5加密得到字符串E，E即为X-Ashe的值。
-## 风险检测
-### 关于device_id以及腾讯云WAF
-小蚕的检测机制应该是用的数美的sdk，[文档地址](https://help.ishumei.com/docs/tw/sdk/weapp/developDoc)，对于的方法应该是`PlacementMatchService.BatchMatchPlacement`，也就是device_id的来源，通过源码可以发现如下配置信息
-```javascript
-require.async("../subpack/plugin/pages/fp-wx-lite.min.js")
-    .then((function(e) {
-        g.SMSdk = e, g.SMSdk.initConf({
-            organization: "xIXziPxe6o8HkTczAhHP",
-            appId: "default",
-            publicKey: "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC1MX7HW+rvThoh80GSJyfev0/+ZgrybkZTKCEQx7O3JXXssy4FLzcUZg3Mz2yQYHSDMauH/GpcNYsRW5BkSKbch3ALRnUcfH+RDVT9zb4Cr4AE/oyt0qNpi5KnsnFufvo3ICHJzGPsWkZxRXdpuIycLmnXpujxdl4NIwDxWAH7BwIDAQAB"
-        })
-    }))
-```
-需要注意的是使用的算法应该是非对称的，加密的device_id无法用这个密钥解密。
-应该是通过BatchMatchPlacement收集的数据，然后判断进行的风控，从而block IP。
-小蚕也接入了腾讯云的WAF，现在被WAF风控的几率感觉大大提升了，暂时不太清楚风控的逻辑。也许跟BatchMatchPlacement有关？
-风控是根据ip来的，且每次更换ip后会有一定的延迟时间。大概率也是用的数美的风控？
 ## 截图
 ### 活动列表页
 ![image](images/index.png) 

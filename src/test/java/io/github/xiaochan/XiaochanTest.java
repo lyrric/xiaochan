@@ -21,7 +21,5 @@ public class XiaochanTest {
 
     @Test
     public void test1() {
-        new XiaochanHttp().getClientCfg();
-        new XiaochanHttp().meituanShangjinGetPoiList("30.574471", "103.923767", 510116);
     }
 }
