@@ -34,7 +34,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     /**
      * 门店最长距离
      */
-    private static final int MAX_DISTANCE = 4000;
+    private static final int MAX_DISTANCE = 3000;
 
     @Resource
     @Lazy
