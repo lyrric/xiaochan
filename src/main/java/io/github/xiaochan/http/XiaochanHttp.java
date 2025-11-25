@@ -13,10 +13,7 @@ import org.springframework.beans.BeanUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class XiaochanHttp {
@@ -26,8 +23,6 @@ public class XiaochanHttp {
     private static final String SERVER_NAME = "SilkwormRec";
     private static final String METHOD_NAME = "RecService.GetStorePromotionList";
 
-    private static final String NAMI = "acec123456789";
-
 
     private static final int PAGE_SIZE = 30;
 
@@ -36,14 +31,14 @@ public class XiaochanHttp {
      * @param timeMillis X-Garen
      * @return
      */
-    private String getAshe(Long timeMillis, String serverName, String methodName) {
+    private static String getAshe(Long timeMillis, String serverName, String methodName, String nami) {
         String x = MD5.create().digestHex((serverName + "." + methodName).toLowerCase());
-        return MD5.create().digestHex(x + timeMillis + NAMI);
+        return MD5.create().digestHex(x + timeMillis + nami);
     }
 
 
     public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
-        String reqBody = getBody(cityCode, longitude, latitude, offset);
+        String reqBody = getBody(cityCode, longitude, latitude, offset, 0, 0);
         String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME);
         return parseListBody(resBody);
     }
@@ -52,7 +47,7 @@ public class XiaochanHttp {
 
     public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude, int offset, Integer number) {
         HashMap<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("silk_id", 897154359);
+        bodyMap.put("silk_id", 0);
         bodyMap.put("latitude", new BigDecimal(latitude));
         bodyMap.put("longitude", new BigDecimal(longitude));
         bodyMap.put("promotion_sort", 1);
@@ -70,9 +65,10 @@ public class XiaochanHttp {
 
     private String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName) {
         Long timeMillis = System.currentTimeMillis();
-        String ashe = getAshe(timeMillis, serverName, methodName);
+        String nami = getNami();
+        String ashe = getAshe(timeMillis, serverName, methodName,nami);
         HttpResponse response = HttpUtil.createPost(url)
-                .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName), true)
+                .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName, nami), true)
                 .timeout(3000)
                 .body(body)
                 .execute();
@@ -92,13 +88,14 @@ public class XiaochanHttp {
     public List<AddressVO> searchAddress(Integer cityCode, String keyword){
         final String serverName = "SilkwormLbs";
         final String methodName = "SilkwormLbsService.Suggestion";
-        Map<String, Object> bodyMap = Map.of("silk_id", 897154359, "keyword", keyword,
+        Map<String, Object> bodyMap = Map.of("silk_id", 0, "keyword", keyword,
                 "region", "", "page_size", 20, "page", 1, "app_id", 20);
         try {
             Long timeMillis = System.currentTimeMillis();
-            String ashe = getAshe(timeMillis, serverName, methodName);
+            String nami = getNami();
+            String ashe = getAshe(timeMillis, serverName, methodName,nami);
             HttpResponse response = HttpUtil.createPost(BASE_URL)
-                    .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName), true)
+                    .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName,nami), true)
                     .timeout(3000)
                     .body(JSONObject.toJSONString(bodyMap))
                     .execute();
@@ -121,7 +118,7 @@ public class XiaochanHttp {
      * @return
      */
     public StoreInfo GetStorePromotionDetail(Integer promotionId){
-        Map<String, Integer> reqMap = Map.of("silk_id", 897154359,
+        Map<String, Integer> reqMap = Map.of("silk_id", 0,
                 "promotion_id", promotionId,
                 "app_id", 20);
         String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(reqMap), null, "Silkworm", "SilkwormService.GetStorePromotionDetail");
@@ -156,28 +153,14 @@ public class XiaochanHttp {
     }
 
 
-
-    private void sendWithoutRes(String body, Integer cityCode, String serverName, String methodName) {
-        sendWithoutRes(BASE_URL, cityCode, body, serverName, methodName);
+    private static String getNami(){
+        String uuid = generateUuid();
+        uuid = uuid.replace("-", "");
+        String silkId = "0";
+        return uuid.substring(0, 4) + silkId + uuid.substring(4, 20 - silkId.length() - 4);
     }
 
-    private void sendWithoutRes(String url, Integer cityCode, String body, String serverName, String methodName) {
-        try {
-            Long timeMillis = System.currentTimeMillis();
-            String ashe = getAshe(timeMillis, serverName, methodName);
-            HttpResponse response = HttpUtil.createPost(url)
-                    .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName), true)
-                    .timeout(3000)
-                    .body(body)
-                    .execute();
-            if (!response.isOk()) {
-                throw new BusinessException("状态码错误:" + response.getStatus());
-            }
-        } catch (Exception e) {
-            log.error("{} error", methodName, e);
-        }
-    }
-    private static String getBody(Integer cityCode, String longitude, String latitude, int offset){
+    private static String getBody(Integer cityCode, String longitude, String latitude, int offset, int promotionCategory, int storeCategory) {
         Map<String, Object> body = new HashMap<>();
         body.put("latitude", new BigDecimal(latitude));
         body.put("longitude", new BigDecimal(longitude));
@@ -185,23 +168,23 @@ public class XiaochanHttp {
         body.put("store_type", 0);
         body.put("offset", offset);
         body.put("number", PAGE_SIZE);
-        body.put("silk_id", 89715435);
+        body.put("silk_id", 0);
         body.put("promotion_filter", 0);
-        body.put("promotion_category", 0);
+        body.put("promotion_category", promotionCategory);
         body.put("city_code", cityCode);
-        body.put("store_category", 0);
+        body.put("store_category", storeCategory);
         body.put("store_platform", 0);
         body.put("app_id", 20);
         return JSONObject.toJSONString(body);
     }
 
 
-    private Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName){
+    private Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName, String nami){
         Map<String, String> headers = new HashMap<>();
         headers.put("x-City", String.valueOf(cityCode));
         headers.put("X-Garen", String.valueOf(timeMillis));
-        headers.put("X-Nami", NAMI);
-        headers.put("version", "3.11.1.46");
+        headers.put("X-Nami",nami);
+        headers.put("version", "3.11.1.48");
         headers.put("appid", "20");
         headers.put("x-Vayne", "0");
         headers.put("x-Annie", "XC");
@@ -216,6 +199,7 @@ public class XiaochanHttp {
         headers.put("servername", serverName);
         headers.put("methodname", methodName);
         headers.put("X-Ashe", ashe);
+        headers.put("Referer", "https://servicewechat.com/wx52ae177248081591/642/page-frame.html");
         headers.put("Content-Type", "application/json");
         return headers;
     }
@@ -290,6 +274,25 @@ public class XiaochanHttp {
             result.addAll(storeInfos);
         }
         return result;
+    }
+
+    /**
+     * 生成UUID字符串，模仿原始JavaScript版本的行为
+     * @return UUID字符串
+     */
+    public static String generateUuid() {
+        char[] chars = new char[36];
+        String hexChars = "0123456789abcdef";
+        Random random = new Random();
+        // 填充随机十六进制字符
+        for (int i = 0; i < 36; i++) {
+            chars[i] = hexChars.charAt(random.nextInt(16));
+        }
+        // 设置特定位置确保UUID格式正确
+        chars[14] = '4';  // UUID版本
+        chars[19] = hexChars.charAt((chars[19] & 0x3) | 0x8);  // UUID变体
+        chars[8] = chars[13] = chars[18] = chars[23] = '-';   // 分隔符
+        return new String(chars);
     }
 
     private String formatStartEndTime(Integer hour, Integer minute){
