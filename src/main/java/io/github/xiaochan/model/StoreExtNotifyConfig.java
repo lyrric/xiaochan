@@ -20,7 +20,7 @@ public class StoreExtNotifyConfig extends AbstractExtNotifyConfig{
      */
     private Integer expireDay;
     /**
-     * 活动信息
+     * 门店活动信息
      */
     private StoreInfo storeInfo;
 

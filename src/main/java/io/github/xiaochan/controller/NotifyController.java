@@ -1,13 +1,11 @@
 package io.github.xiaochan.controller;
 
-import io.github.xiaochan.config.BusinessException;
 import io.github.xiaochan.model.BaseResult;
-import io.github.xiaochan.model.NotifyConfig;
 import io.github.xiaochan.model.dto.NotifyConfigDTO;
-import io.github.xiaochan.service.NotifyService;
+import io.github.xiaochan.model.vo.NotifyConfigVO;
+import io.github.xiaochan.service.NotifyConfigService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +24,7 @@ import java.util.List;
 public class NotifyController {
 
     @Resource
-    private NotifyService notifyService;
+    private NotifyConfigService notifyConfigService;
 
     /**
      * 保存通知配置
@@ -35,13 +33,10 @@ public class NotifyController {
      * @return 保存结果
      */
     @PostMapping("/config")
-    public BaseResult<String> saveNotifyConfig(@Valid @RequestBody NotifyConfigDTO notifyConfigDTO) {
+    public BaseResult<Void> saveNotifyConfig(@Valid @RequestBody NotifyConfigDTO notifyConfigDTO) {
         log.info("保存通知配置请求: {}", notifyConfigDTO);
-        if (StringUtil.isBlank(notifyConfigDTO.getLocation().getSpt())) {
-            throw new BusinessException("推送SPT不能为空");
-        }
-        String configId = notifyService.saveNotifyConfig(notifyConfigDTO);
-        return BaseResult.ok(configId);
+        notifyConfigService.addUpdateConfig(notifyConfigDTO);
+        return BaseResult.ok();
     }
 
     /**
@@ -50,8 +45,8 @@ public class NotifyController {
      * @return 通知配置列表
      */
     @GetMapping("/config/list")
-    public BaseResult<List<NotifyConfig>> getNotifyConfigList() {
-        List<NotifyConfig> configList = notifyService.getNotifyConfigList();
+    public BaseResult<List<NotifyConfigVO>> getNotifyConfigList() {
+        List<NotifyConfigVO> configList = notifyConfigService.listByUserId();
         return BaseResult.ok(configList);
     }
 
@@ -62,9 +57,9 @@ public class NotifyController {
      * @return 删除结果
      */
     @DeleteMapping("/config/{configId}")
-    public BaseResult<String> deleteNotifyConfig(@PathVariable String configId) {
+    public BaseResult<Void> deleteNotifyConfig(@PathVariable Integer configId) {
         log.info("删除通知配置请求，配置ID: {}", configId);
-        notifyService.deleteNotifyConfig(configId);
+        notifyConfigService.deleteById(configId);
         return BaseResult.ok();
     }
 }
