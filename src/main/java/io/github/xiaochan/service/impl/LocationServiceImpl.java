@@ -1,98 +1,86 @@
 package io.github.xiaochan.service.impl;
 
-import com.alibaba.fastjson2.JSON;
-import io.github.xiaochan.constant.RedisConstant;
-import io.github.xiaochan.model.Location;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import io.github.xiaochan.config.BusinessException;
+import io.github.xiaochan.mapper.LocationMapper;
+import io.github.xiaochan.model.dto.LocationDTO;
+import io.github.xiaochan.model.entity.LocationEntity;
+import io.github.xiaochan.model.entity.UserEntity;
+import io.github.xiaochan.model.vo.LocationVO;
 import io.github.xiaochan.service.LocationService;
+import io.github.xiaochan.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RMap;
-import org.redisson.api.RedissonClient;
-import org.redisson.client.codec.StringCodec;
-import org.redisson.codec.CompositeCodec;
-import org.redisson.codec.JsonJacksonCodec;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 
 @Service
 @Slf4j
-public class LocationServiceImpl implements LocationService {
+public class LocationServiceImpl extends ServiceImpl<LocationMapper, LocationEntity> implements LocationService {
 
     @Resource
-    private RedissonClient redissonClient;
+    private UserService userService;
 
     @Override
-    public String add(Location location) {
-        // 生成时间戳作为ID
-        String id = String.valueOf(System.currentTimeMillis());
-        location.setId(id);
-        // 获取Redis Map
-        RMap<String, Location> addressMap = getAddressMap();
-        addressMap.put(id, location);
-        log.info("地址新增成功，ID: {}, 地址信息: {}", id, location.getName());
-        return id;
-    }
-    private RMap<String, Location> getAddressMap() {
-        return redissonClient.getMap(RedisConstant.LOCATION, new CompositeCodec(StringCodec.INSTANCE, JsonJacksonCodec.INSTANCE));
-    }
+    @Transactional(rollbackFor = Exception.class)
+    public Integer add(LocationDTO locationDTO) {
+        // 获取当前登录用户
+        UserEntity currentUser = userService.getByCurrentRequest();
+        // 将DTO转换为Entity
+        LocationEntity locationEntity = new LocationEntity();
+        BeanUtils.copyProperties(locationDTO, locationEntity);
+        locationEntity.setUserId(currentUser.getId());
 
-    @Override
-    public boolean delete(String id) {
-        if (!StringUtils.hasText(id)) {
-            return false;
+        // 保存地址
+        boolean saved = this.save(locationEntity);
+        if (!saved) {
+            throw new BusinessException("新增地址失败");
         }
-        RMap<String, Location> addressMap = getAddressMap();
-        addressMap.remove(id);
-        return true;
+
+        return locationEntity.getId().intValue();
     }
 
     @Override
-    public boolean update(String id, String spt, Boolean pushSwitch) {
-        if (!StringUtils.hasText(id)) {
-            return false;
-        }
-        RMap<String, Location> addressMap = getAddressMap();
-        Location location = addressMap.get(id);
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(String id) {
+        // 获取当前登录用户
+        UserEntity currentUser = userService.getByCurrentRequest();
 
+
+        // 查询地址是否存在
+        LocationEntity location = this.getById(id);
         if (location == null) {
-            log.warn("地址不存在，ID: {}", id);
-            return false;
+            throw new BusinessException( "地址不存在");
         }
-        // 只更新spt和pushSwitch字段
-        if (spt != null) {
-            location.setSpt(spt);
-        }
-        if (pushSwitch != null) {
-            location.setPushSwitch(pushSwitch);
-        }
-        addressMap.put(id, location);
 
-        log.info("地址更新成功，ID: {}, spt: {}, pushSwitch: {}", id, spt, pushSwitch);
-        return true;
+        // 权限校验：只能删除自己的地址
+        if (!location.getUserId().equals(currentUser.getId())) {
+            throw new BusinessException("无权删除该地址");
+        }
+
+        // 删除地址
+        this.removeById(id);
     }
 
+
+
     @Override
-    public List<Location> getAll() {
-        RMap<String, Location> addressMap = getAddressMap();
-        List<Location> locations = new ArrayList<>(addressMap.values());
+    public List<LocationVO> getAll() {
+        // 获取当前登录用户
+        UserEntity currentUser = userService.getByCurrentRequest();
 
-        // 按照ID排序，确保返回顺序的一致性
-        locations.sort((a, b) -> {
-            try {
-                Long idA = Long.parseLong(a.getId());
-                Long idB = Long.parseLong(b.getId());
-                return idA.compareTo(idB);
-            } catch (NumberFormatException e) {
-                // 如果ID不是数字，则按字符串排序
-                return a.getId().compareTo(b.getId());
-            }
-        });
-
-        return locations.stream().sorted(Comparator.comparing(Location::getId)).toList();
+        // 查询当前用户的所有地址
+        LambdaQueryWrapper<LocationEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(LocationEntity::getUserId, currentUser.getId());
+        return this.list(wrapper).stream()
+                .map(entity->{
+                    LocationVO vo = new LocationVO();
+                    BeanUtils.copyProperties(entity, vo);
+                    return vo;
+                }).toList();
     }
 }
