@@ -184,22 +184,22 @@ public class XiaochanHttp {
         headers.put("x-City", String.valueOf(cityCode));
         headers.put("X-Garen", String.valueOf(timeMillis));
         headers.put("X-Nami",nami);
-        headers.put("version", "3.11.1.48");
+        headers.put("X-Platform","mini");
+        headers.put("version", "3.15.7.1");
         headers.put("appid", "20");
-        headers.put("x-Vayne", "0");
+        headers.put("X-Model", "microsoft microsoft");
         headers.put("x-Annie", "XC");
         headers.put("xweb_xhr", "1");
-        headers.put("x-Teemo", "0");
         headers.put("Accept-Encoding", "gzip, deflate, br");
         headers.put("Accept-Language", "zh-CN,zh;q=0.9");
         headers.put("Sec-Fetch-Site", "cross-site");
         headers.put("Sec-Fetch-Mode", "cors");
         headers.put("Sec-Fetch-Dest", "empty");
-        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf2541411) XWEB/16965");
+        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027");
         headers.put("servername", serverName);
         headers.put("methodname", methodName);
         headers.put("X-Ashe", ashe);
-        headers.put("Referer", "https://servicewechat.com/wx52ae177248081591/642/page-frame.html");
+        headers.put("Referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
         headers.put("Content-Type", "application/json");
         return headers;
     }
@@ -308,5 +308,4 @@ public class XiaochanHttp {
         }
         return b1.divide(b2, 2, RoundingMode.DOWN);
     }
-
 }
