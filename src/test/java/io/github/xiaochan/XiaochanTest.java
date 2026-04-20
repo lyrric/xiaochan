@@ -1,7 +1,7 @@
 package io.github.xiaochan;
 
-import io.github.xiaochan.http.XiaochanHttp;
-import io.github.xiaochan.model.StoreInfo;
+import io.github.xiaocan.http.XiaochanHttp;
+import io.github.xiaocan.model.StoreInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +11,7 @@ class XiaochanTest {
 
     @Test
     void test() {
-        StoreInfo storeInfo = new XiaochanHttp().GetStorePromotionDetail(74213510);
+        StoreInfo storeInfo = new XiaochanHttp().getStorePromotionDetail(74213510);
         log.info(storeInfo.toString());
     }
 
