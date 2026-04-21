@@ -1,4 +1,3 @@
-
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
@@ -41,7 +40,7 @@ CREATE TABLE `monitor_config`  (
                                    INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
                                    INDEX `idx_location_id`(`location_id` ASC) USING BTREE,
                                    INDEX `idx_status`(`status` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '监控配置表' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '监控配置表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for store_pushed_history
@@ -73,7 +72,7 @@ CREATE TABLE `store_pushed_history`  (
                                          INDEX `idx_store_id`(`store_id` ASC) USING BTREE,
                                          INDEX `idx_create_time`(`create_time` ASC) USING BTREE,
                                          INDEX `idx_promotion_id`(`promotion_id` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '门店推送历史' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '门店推送历史' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for task_exec_history
@@ -93,7 +92,7 @@ CREATE TABLE `task_exec_history`  (
                                       INDEX `idx_user_id`(`user_id` ASC) USING BTREE,
                                       INDEX `idx_notify_config_id`(`notify_config_id` ASC) USING BTREE,
                                       INDEX `idx_start_time`(`start_time` ASC) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '任务执行记录' ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '任务执行记录' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for user
