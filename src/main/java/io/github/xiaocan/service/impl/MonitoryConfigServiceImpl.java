@@ -45,7 +45,6 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
     @Override
     public List<MonitorConfigEntity> list(MonitorTypeEnums type, MonitorConfigStatusEnums enums) {
         return this.lambdaQuery()
-                .eq(MonitorConfigEntity::getUserId, userService.getByCurrentRequest().getId())
                 .eq(MonitorConfigEntity::getType, type)
                 .eq(MonitorConfigEntity::getStatus, enums)
                 .list();

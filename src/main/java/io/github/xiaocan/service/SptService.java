@@ -3,12 +3,11 @@ package io.github.xiaocan.service;
 import io.github.xiaocan.http.MessageHttp;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RBucket;
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author wangxiaodong
@@ -18,12 +17,12 @@ import java.util.Random;
 @Service
 public class SptService {
 
-    @Resource
-    private RedissonClient redissonClient;
+
+    private final Map<String, String> codeMap = new ConcurrentHashMap<>();
+
 
     private static final String SPT_CODE_KEY_PREFIX = "spt:code:";
     private static final int CODE_LENGTH = 6;
-    private static final long CODE_EXPIRE_MINUTES = 5;
 
     /**
      * 发送验证码
@@ -36,8 +35,7 @@ public class SptService {
 
         // 存储到Redis，5分钟过期
         String key = SPT_CODE_KEY_PREFIX + spt;
-        RBucket<String> bucket = redissonClient.getBucket(key);
-        bucket.set(code, Duration.ofMinutes(CODE_EXPIRE_MINUTES));
+        codeMap.put(key, code);
 
         // 发送消息
         String content = "您的验证码是: " + code + "，有效期5分钟，请勿泄露给他人。";
@@ -60,8 +58,7 @@ public class SptService {
         }
 
         String key = SPT_CODE_KEY_PREFIX + spt;
-        RBucket<String> bucket = redissonClient.getBucket(key);
-        String storedCode = bucket.get();
+        String storedCode = codeMap.get(key);
 
         if (storedCode == null) {
             log.warn("spt:{} 验证码已过期或不存在", spt);
@@ -70,7 +67,7 @@ public class SptService {
 
         if (storedCode.equals(code)) {
             // 校验成功后删除验证码
-            bucket.delete();
+            codeMap.remove(key);
             log.info("spt:{} 验证码校验成功", spt);
             return true;
         } else {

@@ -4,12 +4,14 @@ import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSON;
 import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
+import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
-import io.github.xiaocan.service.*;
+import io.github.xiaocan.service.MonitoryConfigService;
+import io.github.xiaocan.service.StorePushedHistoryService;
+import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,13 +29,7 @@ public class MinimumPayService extends BaseTask {
     @Resource
     private MonitoryConfigService monitoryConfigService;
     @Resource
-    private TaskExecHistoryService taskExecHistoryService;
-    @Resource
-    private LocationService locationService;
-    @Resource
     private StorePushedHistoryService storePushedHistoryService;
-    @Resource
-    private UserService userService;
 
 
     private static final int DEFAULT_MAX_SIZE = 150;
@@ -57,7 +53,7 @@ public class MinimumPayService extends BaseTask {
     /**
      * 最小实付
      */
-    @Scheduled(cron = "0 30 * * * ? ")
+    @Scheduled(cron = "0 45 * * * ? ")
     public void start(){
         if (isSkip()) {
             log.info("当前时间段位于00:00-08:00，不进行定时任务");
