@@ -4,6 +4,8 @@ import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.mapper.NotifyConfigMapper;
+import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
+import io.github.xiaocan.model.StoreExtNotifyConfig;
 import io.github.xiaocan.model.dto.monitorConfigDTO;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.UserEntity;
@@ -38,6 +40,11 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                 .list().stream().map(entity->{
                     NotifyConfigVO vo = new NotifyConfigVO();
                     BeanUtils.copyProperties(entity, vo);
+                    if (entity.getType() == MonitorTypeEnums.STORE_ACTIVITY) {
+                        vo.setStoreExtNotifyConfig(JSONObject.parseObject(entity.getExtConfig(), StoreExtNotifyConfig.class));
+                    }else{
+                        vo.setMinimumPayExtNotifyConfig(JSONObject.parseObject(entity.getExtConfig(), MinimumPayExtNotifyConfig.class));
+                    }
                     return vo;
         }).toList();
     }
