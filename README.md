@@ -23,6 +23,7 @@
 - [ ] 通知历史，以及再次通知
 ## 小蚕加密逻辑
 请求头有几个参数值得注意。
+- 新增了Header头校验X-Platform:mini
 - X-Garen：毫秒时间戳
 - servername：调用服务名
 - methodname：调用方法名称
