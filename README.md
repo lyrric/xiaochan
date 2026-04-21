@@ -40,5 +40,7 @@
 ### 地址管理
 ![image](images/location.png)
 ### 通知管理
-![image](images/notify1.png)
-![image](images/notify2.png)
+![image](images/monitor-list.png)
+![image](images/monitor-list-task.png)
+### 推送记录
+![image](images/push-store.png)

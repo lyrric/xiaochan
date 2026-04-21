@@ -12,16 +12,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     /**
-     * 配置静态资源处理
-     */
-/*    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 配置静态资源路径
-        registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/");
-    }*/
-
-    /**
      * 配置跨域请求
      */
     @Override
