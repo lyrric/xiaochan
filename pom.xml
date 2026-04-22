@@ -9,8 +9,8 @@
         <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>io.github.xiaochan</groupId>
-    <artifactId>xiaochan</artifactId>
+    <groupId>io.github.xiaocan</groupId>
+    <artifactId>xiaocan</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
@@ -95,7 +95,7 @@
     </dependencies>
 
     <build>
-        <finalName>xiaochan</finalName>
+        <finalName>xiaocan</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

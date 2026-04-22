@@ -10,8 +10,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @MapperScan("io.github.xiaocan.mapper")
-public class XiaochanServer {
+public class XiaocanServer {
     public static void main(String[] args) {
-        SpringApplication.run(XiaochanServer.class, args);
+        SpringApplication.run(XiaocanServer.class, args);
     }
 }
