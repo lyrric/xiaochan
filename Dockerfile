@@ -4,5 +4,5 @@ WORKDIR /app
 
 COPY target/xiaochan.jar .
 
-ENTRYPOINT ["java", "-jar", "-Xmx128m", "xiaochan.jar"]
+ENTRYPOINT ["java", "-jar", "-Xmx128m", "xiaocan.jar"]
 EXPOSE 8080
