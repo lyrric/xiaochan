@@ -29,6 +29,7 @@ public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistor
         Page<StorePushedHistoryEntity> page = lambdaQuery()
                 .eq(StorePushedHistoryEntity::getUserId, userId)
                 .eq(dto.getNotifyConfigId() != null, StorePushedHistoryEntity::getNotifyConfigId, dto.getNotifyConfigId())
+                .eq(dto.getNotifyType() != null, StorePushedHistoryEntity::getNotifyType, dto.getNotifyType())
                 .orderByDesc(StorePushedHistoryEntity::getId)
                 .page(new Page<>(dto.getPageNum(), dto.getPageSize()));
         return PageConvertUtil.convert(page, StorePushedHistoryVO.class);
