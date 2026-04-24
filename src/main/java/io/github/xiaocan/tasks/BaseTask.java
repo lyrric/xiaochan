@@ -48,6 +48,11 @@ public class BaseTask {
         execHistory.setSuccess(true);
         try {
             log.info("开始执行type is {}, config id is {}", notifyConfig.getType().getDescription(), notifyConfig.getId());
+            int currentHour = LocalDateTime.now().getHour();
+            if (currentHour < notifyConfig.getStartHour() || currentHour >= notifyConfig.getEndHour()) {
+                log.info("当前时间{}不在运行时间范围{}-{}内，跳过执行 config id is {}", currentHour, notifyConfig.getStartHour(), notifyConfig.getEndHour(), notifyConfig.getId());
+                return;
+            }
             //获取地址
             Optional<LocationEntity> optionalLocation = locationService.getOptById(notifyConfig.getLocationId());
             if (optionalLocation.isEmpty()) {
