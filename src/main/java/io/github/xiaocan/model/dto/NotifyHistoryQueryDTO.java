@@ -1,5 +1,6 @@
 package io.github.xiaocan.model.dto;
 
+import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import lombok.Data;
 
 /**
@@ -22,4 +23,9 @@ public class NotifyHistoryQueryDTO {
      * 监控ID
      */
     private Integer notifyConfigId;
+
+    /**
+     * 监控类型
+     */
+    private MonitorTypeEnums notifyType;
 }
