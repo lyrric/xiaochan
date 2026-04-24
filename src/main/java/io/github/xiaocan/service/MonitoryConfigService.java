@@ -26,4 +26,6 @@ public interface MonitoryConfigService extends IService<MonitorConfigEntity> {
     void updateConfig(int id, MonitorConfigStatusEnums statusEnums, String remark);
 
     void deleteById(Integer configId);
+
+    void deleteByLocationId(Integer locationId);
 }
