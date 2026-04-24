@@ -9,6 +9,7 @@ import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.vo.LocationVO;
 import io.github.xiaocan.service.LocationService;
+import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,8 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, LocationEnt
 
     @Resource
     private UserService userService;
+    @Resource
+    private MonitoryConfigService monitoryConfigService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -61,7 +64,7 @@ public class LocationServiceImpl extends ServiceImpl<LocationMapper, LocationEnt
         if (!location.getUserId().equals(currentUser.getId())) {
             throw new BusinessException("无权删除该地址");
         }
-
+        monitoryConfigService.deleteByLocationId(Integer.parseInt(id));
         // 删除地址
         this.removeById(id);
     }

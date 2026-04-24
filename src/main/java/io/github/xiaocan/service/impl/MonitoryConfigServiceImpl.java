@@ -96,4 +96,11 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                 .eq(MonitorConfigEntity::getUserId, userService.getByCurrentRequest().getId())
                 .remove();
     }
+
+    @Override
+    public void deleteByLocationId(Integer locationId) {
+        this.lambdaUpdate()
+                .eq(MonitorConfigEntity::getLocationId, locationId)
+                .remove();
+    }
 }
