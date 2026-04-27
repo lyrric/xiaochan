@@ -24,6 +24,7 @@ public class TaskExecHistoryServiceImpl extends ServiceImpl<TaskExecHistoryMappe
         this.lambdaQuery()
                 .eq(TaskExecHistoryEntity::getUserId, userService.getByCurrentRequest().getId())
                 .eq(queryDTO.getNotifyConfigId() != null, TaskExecHistoryEntity::getNotifyConfigId, queryDTO.getNotifyConfigId())
+                .orderByDesc(TaskExecHistoryEntity::getId)
                 .page(page);
         return PageConvertUtil.convert(page, TaskExecHistoryVO.class);
     }
