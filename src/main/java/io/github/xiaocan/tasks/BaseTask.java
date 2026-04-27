@@ -136,7 +136,8 @@ public class BaseTask {
         UserEntity userEntity = userService.getById(locationEntity.getUserId());
         try {
             log.info("发送消息:{}", body);
-            MessageHttp.sendMessage(userEntity.getSpt(), body, "有新的返现活动啦");
+            String summary = locationEntity.getName() + ": 有新的%s家返现活动".formatted(storeInfos.size());
+            MessageHttp.sendMessage(userEntity.getSpt(), body, summary);
         }catch (Exception e){
             log.error("发送消息失败", e);
         }
