@@ -15,9 +15,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +54,17 @@ public class BaseTask {
             int currentHour = LocalDateTime.now().getHour();
             if (currentHour < notifyConfig.getStartHour() || currentHour >= notifyConfig.getEndHour()) {
                 log.info("当前时间{}不在运行时间范围{}-{}内，跳过执行 config id is {}", currentHour, notifyConfig.getStartHour(), notifyConfig.getEndHour(), notifyConfig.getId());
+                return;
+            }
+            // 判断星期
+            int currentDayOfWeek = LocalDateTime.now().getDayOfWeek().getValue();
+            Set<Integer> weekSet = Arrays.stream(notifyConfig.getWeeks().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toSet());
+            if (!weekSet.contains(currentDayOfWeek)) {
+                log.info("当前星期{}不在运行星期{}内，跳过执行 config id is {}", currentDayOfWeek, notifyConfig.getWeeks(), notifyConfig.getId());
                 return;
             }
             //获取地址
