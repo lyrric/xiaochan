@@ -46,6 +46,7 @@ public class BaseTask {
     void runSingle(MonitorConfigEntity notifyConfig) {
         TaskExecHistoryEntity execHistory = new TaskExecHistoryEntity();
         execHistory.setUserId(notifyConfig.getUserId());
+        execHistory.setNotifyType(notifyConfig.getType());
         execHistory.setNotifyConfigId(notifyConfig.getId());
         execHistory.setStartTime(LocalDateTime.now());
         execHistory.setSuccess(true);
