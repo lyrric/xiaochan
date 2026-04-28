@@ -49,24 +49,24 @@ public class BaseTask {
         execHistory.setNotifyConfigId(notifyConfig.getId());
         execHistory.setStartTime(LocalDateTime.now());
         execHistory.setSuccess(true);
+        log.info("开始执行type is {}, config id is {}", notifyConfig.getType().getDescription(), notifyConfig.getId());
+        int currentHour = LocalDateTime.now().getHour();
+        if (currentHour < notifyConfig.getStartHour() || currentHour >= notifyConfig.getEndHour()) {
+            log.info("当前时间{}不在运行时间范围{}-{}内，跳过执行 config id is {}", currentHour, notifyConfig.getStartHour(), notifyConfig.getEndHour(), notifyConfig.getId());
+            return;
+        }
+        // 判断星期
+        int currentDayOfWeek = LocalDateTime.now().getDayOfWeek().getValue();
+        Set<Integer> weekSet = Arrays.stream(notifyConfig.getWeeks().split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Integer::parseInt)
+                .collect(Collectors.toSet());
+        if (!weekSet.contains(currentDayOfWeek)) {
+            log.info("当前星期{}不在运行星期{}内，跳过执行 config id is {}", currentDayOfWeek, notifyConfig.getWeeks(), notifyConfig.getId());
+            return;
+        }
         try {
-            log.info("开始执行type is {}, config id is {}", notifyConfig.getType().getDescription(), notifyConfig.getId());
-            int currentHour = LocalDateTime.now().getHour();
-            if (currentHour < notifyConfig.getStartHour() || currentHour >= notifyConfig.getEndHour()) {
-                log.info("当前时间{}不在运行时间范围{}-{}内，跳过执行 config id is {}", currentHour, notifyConfig.getStartHour(), notifyConfig.getEndHour(), notifyConfig.getId());
-                return;
-            }
-            // 判断星期
-            int currentDayOfWeek = LocalDateTime.now().getDayOfWeek().getValue();
-            Set<Integer> weekSet = Arrays.stream(notifyConfig.getWeeks().split(","))
-                    .map(String::trim)
-                    .filter(s -> !s.isEmpty())
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toSet());
-            if (!weekSet.contains(currentDayOfWeek)) {
-                log.info("当前星期{}不在运行星期{}内，跳过执行 config id is {}", currentDayOfWeek, notifyConfig.getWeeks(), notifyConfig.getId());
-                return;
-            }
             //获取地址
             Optional<LocationEntity> optionalLocation = locationService.getOptById(notifyConfig.getLocationId());
             if (optionalLocation.isEmpty()) {
