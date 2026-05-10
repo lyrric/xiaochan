@@ -184,7 +184,8 @@ public class XiaochanHttp {
         headers.put("X-Garen", String.valueOf(timeMillis));
         headers.put("X-Nami",nami);
         headers.put("X-Platform","mini");
-        headers.put("version", "3.15.7.1");
+        headers.put("version", "3.15.9.10");
+        headers.put("X-Version", "3.15.9.10");
         headers.put("appid", "20");
         headers.put("X-Model", "microsoft microsoft");
         headers.put("x-Annie", "XC");
