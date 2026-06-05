@@ -40,7 +40,7 @@ public class SpecificStoreTask extends BaseTask {
     /**
      * 指定门店活动定时任务
      */
-    @Scheduled(cron = "0 30 * * * ? ")
+    @Scheduled(cron = "0 15 * * * ? ")
     public void start(){
         if (isSkip()) {
             return;
