@@ -2,6 +2,7 @@ package io.github.xiaocan.model.vo;
 
 import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
 import io.github.xiaocan.model.StoreExtNotifyConfig;
+import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import lombok.Data;
 
@@ -43,5 +44,8 @@ public class NotifyConfigVO {
      * 金额差提醒扩展配置
      */
     private MinimumPayExtNotifyConfig minimumPayExtNotifyConfig;
-
+    /**
+     * 状态
+     */
+    private MonitorConfigStatusEnums status;
 }

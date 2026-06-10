@@ -103,4 +103,12 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                 .eq(MonitorConfigEntity::getLocationId, locationId)
                 .remove();
     }
+
+    @Override
+    public void toggleStatus(Integer configId, MonitorConfigStatusEnums status) {
+        this.lambdaUpdate()
+                .eq(MonitorConfigEntity::getId, configId)
+                .set(MonitorConfigEntity::getStatus, status)
+                .update();
+    }
 }

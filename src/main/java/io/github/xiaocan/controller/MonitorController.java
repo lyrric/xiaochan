@@ -2,6 +2,7 @@ package io.github.xiaocan.controller;
 
 import io.github.xiaocan.model.BaseResult;
 import io.github.xiaocan.model.dto.monitorConfigDTO;
+import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.vo.NotifyConfigVO;
 import io.github.xiaocan.service.MonitoryConfigService;
 import jakarta.annotation.Resource;
@@ -60,6 +61,21 @@ public class MonitorController {
     public BaseResult<Void> deleteMonitorConfig(@PathVariable Integer configId) {
         log.info("删除监控配置请求，配置ID: {}", configId);
         monitoryConfigService.deleteById(configId);
+        return BaseResult.ok();
+    }
+
+    /**
+     * 启用/停用监控配置
+     *
+     * @param configId 配置ID
+     * @param status   目标状态
+     * @return 操作结果
+     */
+    @PutMapping("/config/{configId}/status")
+    public BaseResult<Void> toggleMonitorStatus(@PathVariable Integer configId,
+                                                @RequestParam MonitorConfigStatusEnums status) {
+        log.info("切换监控配置状态请求，配置ID: {}, 目标状态: {}", configId, status);
+        monitoryConfigService.toggleStatus(configId, status);
         return BaseResult.ok();
     }
 }

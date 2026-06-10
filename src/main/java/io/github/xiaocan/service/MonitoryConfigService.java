@@ -28,4 +28,6 @@ public interface MonitoryConfigService extends IService<MonitorConfigEntity> {
     void deleteById(Integer configId);
 
     void deleteByLocationId(Integer locationId);
+
+    void toggleStatus(Integer configId, MonitorConfigStatusEnums status);
 }
