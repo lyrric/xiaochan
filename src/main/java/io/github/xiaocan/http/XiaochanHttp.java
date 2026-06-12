@@ -180,27 +180,30 @@ public class XiaochanHttp {
 
     private Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName, String nami){
         Map<String, String> headers = new HashMap<>();
-        headers.put("x-City", String.valueOf(cityCode));
-        headers.put("X-Garen", String.valueOf(timeMillis));
-        headers.put("X-Nami",nami);
-        headers.put("X-Platform","mini");
-        headers.put("version", "3.15.9.10");
-        headers.put("X-Version", "3.15.9.10");
+        headers.put("version", "3.16.4.15");
+        headers.put("x-version", "3.16.4.15");
         headers.put("appid", "20");
-        headers.put("X-Model", "microsoft microsoft");
-        headers.put("x-Annie", "XC");
+        headers.put("x-annie", "XC");
         headers.put("xweb_xhr", "1");
-        headers.put("Accept-Encoding", "gzip, deflate, br");
-        headers.put("Accept-Language", "zh-CN,zh;q=0.9");
-        headers.put("Sec-Fetch-Site", "cross-site");
-        headers.put("Sec-Fetch-Mode", "cors");
-        headers.put("Sec-Fetch-Dest", "empty");
-        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027");
+        headers.put("x-platform", "mini");
+        headers.put("x-model", "microsoft microsoft");
+        headers.put("accept", "*/*");
+        headers.put("accept-encoding", "gzip, deflate, br");
+        headers.put("accept-language", "zh-CN,zh;q=0.9");
+        headers.put("content-type", "application/json");
+        headers.put("sec-fetch-site", "cross-site");
+        headers.put("sec-fetch-mode", "cors");
+        headers.put("sec-fetch-dest", "empty");
+        headers.put("x-city", String.valueOf(cityCode));
+        headers.put("x-garen", String.valueOf(timeMillis));
+        headers.put("x-nami", nami);
+        headers.put("x-ashe", ashe);
+        headers.put("x-teemo", "0");
+        headers.put("x-vayne", "0");
+        headers.put("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027");
         headers.put("servername", serverName);
         headers.put("methodname", methodName);
-        headers.put("X-Ashe", ashe);
-        headers.put("Referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
-        headers.put("Content-Type", "application/json");
+        headers.put("referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
         return headers;
     }
 
