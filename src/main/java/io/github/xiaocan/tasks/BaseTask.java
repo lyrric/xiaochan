@@ -88,7 +88,7 @@ public class BaseTask {
             execHistory.setNotifyStoreCount(availableStores.size());
             log.info("configId: {} 找到{}个满足条件的门店活动", notifyConfig.getId(), availableStores.size());
             savePushedHistory(notifyConfig, availableStores);
-            afterSuccess(notifyConfig);
+            afterSuccess(notifyConfig, availableStores);
             //通知
             sendMessage(availableStores, location);
         }catch (Exception e){
@@ -112,7 +112,7 @@ public class BaseTask {
      * 执行成功后的操作
      * @param notifyConfig
      */
-    protected void afterSuccess(MonitorConfigEntity notifyConfig){
+    protected void afterSuccess(MonitorConfigEntity notifyConfig, List<StoreInfo> availableStores){
         //默认为空
     }
 

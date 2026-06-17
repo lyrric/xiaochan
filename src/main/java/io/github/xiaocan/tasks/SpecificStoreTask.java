@@ -53,8 +53,6 @@ public class SpecificStoreTask extends BaseTask {
                 if(!checkRepeat(notifyConfig)){
                     runSingle(notifyConfig);
                 }
-
-
             }
         }catch (Exception e){
             log.error("执行指定门店活动定时任务时发生异常", e);
@@ -67,6 +65,7 @@ public class SpecificStoreTask extends BaseTask {
         int hour = DateUtil.hour(now, true);
         return hour >= 0 && hour <= 8;
     }
+
     private boolean checkRepeat(MonitorConfigEntity notifyConfig) {
         //检查今天是否通知过了
         return storePushedHistoryService.lambdaQuery()
@@ -98,5 +97,14 @@ public class SpecificStoreTask extends BaseTask {
                 //价格必须小于等于之前的价格
                 .filter(storeInfo -> storeInfo.getPrice().compareTo(storeExtNotifyConfig.getStoreInfo().getPrice()) <= 0)
                 .toList();
+    }
+
+    @Override
+    protected void afterSuccess(MonitorConfigEntity notifyConfig, List<StoreInfo> availableStores) {
+        super.afterSuccess(notifyConfig, availableStores);
+        if (!availableStores.isEmpty()) {
+            //暂停，每个任务仅通知一次
+            monitoryConfigService.toggleStatus(notifyConfig.getId(), MonitorConfigStatusEnums.DISABLE);
+        }
     }
 }
