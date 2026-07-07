@@ -1,7 +1,12 @@
 ## 小蚕
 使用spring boot + vue3开发
+## tips
+- 浏览器收藏网址时直接带上token参数，会自动识别，避免token丢失,例如：http://xxxx.com/?token=xxxxxxxxx
 ## [前端 github](https://github.com/lyrric/xiaocan-front)
 ## 更新记录
+- 2026年7月7日 
+  - 运行了一段时间，未发现恶性BUG
+  - 增加了门店关键字监控配置
 - 2026-04-20 基本完成，待测试.
 - 2026-04-17 重构中，全采用全后端分离，支持H5，改动较大
 - 2025年 小蚕有ip检测机制，用了接口请求后，过一段时间后，ip会被封禁，app也会无法使用，用代理可能避免这个问题。
