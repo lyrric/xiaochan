@@ -2,6 +2,7 @@ package io.github.xiaocan.model.dto;
 
 import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
 import io.github.xiaocan.model.StoreExtNotifyConfig;
+import io.github.xiaocan.model.StoreKeywordExtNotifyConfig;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -52,5 +53,11 @@ public class monitorConfigDTO {
      */
     @Valid
     private MinimumPayExtNotifyConfig minimumPayExtNotifyConfig;
+
+    /**
+     * 门店关键字提醒扩展配置
+     */
+    @Valid
+    private StoreKeywordExtNotifyConfig storeKeywordExtNotifyConfig;
 
 }

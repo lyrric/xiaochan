@@ -12,7 +12,8 @@ import lombok.Getter;
 public enum MonitorTypeEnums {
 
     STORE_ACTIVITY( "指定门店"),
-    MINIMUM_PAY( "最小实付");
+    MINIMUM_PAY( "最小实付"),
+    STORE_KEYWORD( "门店关键字");
 
     private final String description;
 

@@ -6,6 +6,7 @@ import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.mapper.NotifyConfigMapper;
 import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
 import io.github.xiaocan.model.StoreExtNotifyConfig;
+import io.github.xiaocan.model.StoreKeywordExtNotifyConfig;
 import io.github.xiaocan.model.dto.monitorConfigDTO;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.UserEntity;
@@ -42,7 +43,9 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                     BeanUtils.copyProperties(entity, vo);
                     if (entity.getType() == MonitorTypeEnums.STORE_ACTIVITY) {
                         vo.setStoreExtNotifyConfig(JSONObject.parseObject(entity.getExtConfig(), StoreExtNotifyConfig.class));
-                    }else{
+                    } else if (entity.getType() == MonitorTypeEnums.STORE_KEYWORD) {
+                        vo.setStoreKeywordExtNotifyConfig(JSONObject.parseObject(entity.getExtConfig(), StoreKeywordExtNotifyConfig.class));
+                    } else {
                         vo.setMinimumPayExtNotifyConfig(JSONObject.parseObject(entity.getExtConfig(), MinimumPayExtNotifyConfig.class));
                     }
                     return vo;
@@ -74,7 +77,9 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
         BeanUtils.copyProperties(dto, entity);
         if (dto.getType() == MonitorTypeEnums.STORE_ACTIVITY) {
             entity.setExtConfig(JSONObject.toJSONString(dto.getStoreExtNotifyConfig()));
-        }else{
+        } else if (dto.getType() == MonitorTypeEnums.STORE_KEYWORD) {
+            entity.setExtConfig(JSONObject.toJSONString(dto.getStoreKeywordExtNotifyConfig()));
+        } else {
             entity.setExtConfig(JSONObject.toJSONString(dto.getMinimumPayExtNotifyConfig()));
         }
         saveOrUpdate(entity);

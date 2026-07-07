@@ -78,7 +78,8 @@ public class BaseTask {
                 return;
             }
             LocationEntity location = optionalLocation.get();
-            List<StoreInfo> availableStores = doRunSingle(notifyConfig, execHistory, location);
+            List<StoreInfo> storeInfos = fetchStoreInfos(notifyConfig, execHistory, location);
+            List<StoreInfo> availableStores = filterStoreInfos(notifyConfig, storeInfos);
             if(availableStores.isEmpty()){
                 log.info("configId: {} 没有满足条件的门店活动", notifyConfig.getId());
                 execHistory.setRemark("没有满足条件的门店活动");
@@ -102,9 +103,14 @@ public class BaseTask {
 
     }
 
-    protected List<StoreInfo> doRunSingle(MonitorConfigEntity notifyConfig,
-                                          TaskExecHistoryEntity execHistory,
-                                          LocationEntity locationEntity){
+    protected List<StoreInfo> fetchStoreInfos(MonitorConfigEntity notifyConfig,
+                                              TaskExecHistoryEntity execHistory,
+                                              LocationEntity locationEntity){
+        throw new UnsupportedOperationException("不支持的调用");
+    }
+
+    protected List<StoreInfo> filterStoreInfos(MonitorConfigEntity notifyConfig,
+                                               List<StoreInfo> storeInfos){
         throw new UnsupportedOperationException("不支持的调用");
     }
 
