@@ -4,6 +4,7 @@
 - 浏览器收藏网址时直接带上token参数，会自动识别，避免token丢失,例如：http://xxxx.com/?token=xxxxxxxxx
 ## [前端 github](https://github.com/lyrric/xiaocan-front)
 ## 更新记录
+- 2026年7月10日 支持corn表达式（未测试）
 - 2026年7月7日 
   - 运行了一段时间，未发现恶性BUG
   - 增加了门店关键字监控配置

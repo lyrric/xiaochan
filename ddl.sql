@@ -107,6 +107,7 @@ CREATE TABLE `user`  (
                          UNIQUE INDEX `idx_spt`(`spt` ASC) USING BTREE
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin COMMENT = 'user表' ROW_FORMAT = Dynamic;
 
+-- 2026年7月10日 支持corn表达式
 SET FOREIGN_KEY_CHECKS = 1;
 ALTER TABLE `monitor_config`
     ADD COLUMN `cron` VARCHAR(50) NULL DEFAULT NULL COMMENT '自定义 cron 表达式'
