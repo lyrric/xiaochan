@@ -19,6 +19,7 @@ import io.github.xiaocan.tasks.MonitorCronScheduler;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -37,6 +38,7 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
     @Resource
     private UserService userService;
     @Resource
+    @Lazy
     private MonitorCronScheduler monitorCronScheduler;
 
     @Override
