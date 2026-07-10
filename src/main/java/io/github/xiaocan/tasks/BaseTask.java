@@ -14,6 +14,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -43,6 +44,10 @@ public class BaseTask {
 
 
     void runSingle(MonitorConfigEntity notifyConfig) {
+        runSingle(notifyConfig, false);
+    }
+
+    void runSingle(MonitorConfigEntity notifyConfig, boolean ignoreTimeWindow) {
         TaskExecHistoryEntity execHistory = new TaskExecHistoryEntity();
         execHistory.setUserId(notifyConfig.getUserId());
         execHistory.setNotifyType(notifyConfig.getType());
@@ -50,22 +55,30 @@ public class BaseTask {
         execHistory.setStartTime(LocalDateTime.now());
         execHistory.setSuccess(true);
         log.info("开始执行type is {}, config id is {}", notifyConfig.getType().getDescription(), notifyConfig.getId());
-        int currentHour = LocalDateTime.now().getHour();
-        if (currentHour < notifyConfig.getStartHour() || currentHour >= notifyConfig.getEndHour()) {
-            log.info("当前时间{}不在运行时间范围{}-{}内，跳过执行 config id is {}", currentHour, notifyConfig.getStartHour(), notifyConfig.getEndHour(), notifyConfig.getId());
-            return;
+
+        if (!ignoreTimeWindow && !StringUtils.hasText(notifyConfig.getCron())) {
+            if (notifyConfig.getStartHour() == null || notifyConfig.getEndHour() == null || !StringUtils.hasText(notifyConfig.getWeeks())) {
+                log.info("configId: {} 未配置 cron 且时间字段不完整，跳过执行", notifyConfig.getId());
+                return;
+            }
+            int currentHour = LocalDateTime.now().getHour();
+            if (currentHour < notifyConfig.getStartHour() || currentHour >= notifyConfig.getEndHour()) {
+                log.info("当前时间{}不在运行时间范围{}-{}内，跳过执行 config id is {}", currentHour, notifyConfig.getStartHour(), notifyConfig.getEndHour(), notifyConfig.getId());
+                return;
+            }
+            // 判断星期
+            int currentDayOfWeek = LocalDateTime.now().getDayOfWeek().getValue();
+            Set<Integer> weekSet = Arrays.stream(notifyConfig.getWeeks().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toSet());
+            if (!weekSet.contains(currentDayOfWeek)) {
+                log.info("当前星期{}不在运行星期{}内，跳过执行 config id is {}", currentDayOfWeek, notifyConfig.getWeeks(), notifyConfig.getId());
+                return;
+            }
         }
-        // 判断星期
-        int currentDayOfWeek = LocalDateTime.now().getDayOfWeek().getValue();
-        Set<Integer> weekSet = Arrays.stream(notifyConfig.getWeeks().split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(Integer::parseInt)
-                .collect(Collectors.toSet());
-        if (!weekSet.contains(currentDayOfWeek)) {
-            log.info("当前星期{}不在运行星期{}内，跳过执行 config id is {}", currentDayOfWeek, notifyConfig.getWeeks(), notifyConfig.getId());
-            return;
-        }
+
         try {
             //获取地址
             Optional<LocationEntity> optionalLocation = locationService.getOptById(notifyConfig.getLocationId());

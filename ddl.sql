@@ -108,3 +108,11 @@ CREATE TABLE `user`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_bin COMMENT = 'user表' ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
+ALTER TABLE `monitor_config`
+    ADD COLUMN `cron` VARCHAR(50) NULL DEFAULT NULL COMMENT '自定义 cron 表达式'
+        AFTER `weeks`;
+
+ALTER TABLE `monitor_config`
+    MODIFY COLUMN `start_hour` INT NULL COMMENT '运行开始时间',
+    MODIFY COLUMN `end_hour` INT NULL COMMENT '运行结束时间',
+    MODIFY COLUMN `weeks` VARCHAR(50) NULL COMMENT '运行星期配置';

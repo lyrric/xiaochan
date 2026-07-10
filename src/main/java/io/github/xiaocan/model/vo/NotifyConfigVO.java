@@ -38,6 +38,10 @@ public class NotifyConfigVO {
      */
     private String weeks;
     /**
+     * 自定义 cron 表达式（6位，含秒）
+     */
+    private String cron;
+    /**
      * 门店提醒扩展配置
      */
     private StoreExtNotifyConfig storeExtNotifyConfig;

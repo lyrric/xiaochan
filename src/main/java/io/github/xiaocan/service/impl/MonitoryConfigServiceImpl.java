@@ -15,10 +15,13 @@ import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import io.github.xiaocan.model.vo.NotifyConfigVO;
 import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.UserService;
+import io.github.xiaocan.tasks.MonitorCronScheduler;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
+import org.springframework.scheduling.support.CronExpression;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -33,6 +36,8 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
 
     @Resource
     private UserService userService;
+    @Resource
+    private MonitorCronScheduler monitorCronScheduler;
 
     @Override
     public List<NotifyConfigVO> listByUserId() {
@@ -61,8 +66,51 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
     }
 
     @Override
+    public List<MonitorConfigEntity> listAllWithCron(MonitorConfigStatusEnums status) {
+        return this.lambdaQuery()
+                .eq(MonitorConfigEntity::getStatus, status)
+                .isNotNull(MonitorConfigEntity::getCron)
+                .ne(MonitorConfigEntity::getCron, "")
+                .list();
+    }
+
+    @Override
+    public List<MonitorConfigEntity> listWithoutCron(MonitorTypeEnums type, MonitorConfigStatusEnums enums) {
+        return this.lambdaQuery()
+                .eq(MonitorConfigEntity::getType, type)
+                .eq(MonitorConfigEntity::getStatus, enums)
+                .apply("(cron IS NULL OR cron = '')")
+                .list();
+    }
+
+    @Override
+    public List<MonitorConfigEntity> listWithoutCron(List<MonitorTypeEnums> types, MonitorConfigStatusEnums enums) {
+        return this.lambdaQuery()
+                .in(MonitorConfigEntity::getType, types)
+                .eq(MonitorConfigEntity::getStatus, enums)
+                .apply("(cron IS NULL OR cron = '')")
+                .list();
+    }
+
+    @Override
     public void addUpdateConfig(monitorConfigDTO dto) {
         log.info("保存通知配置请求: {}", dto);
+        // cron 表达式校验
+        String cron = dto.getCron();
+        if (StringUtils.hasText(cron)) {
+            String trimmedCron = cron.trim();
+            if (!CronExpression.isValidExpression(trimmedCron)) {
+                throw new BusinessException("cron 表达式格式不正确");
+            }
+            dto.setCron(trimmedCron);
+        } else {
+            dto.setCron(null);
+            // 未填写 cron 时，时间字段必填
+            if (dto.getStartHour() == null || dto.getEndHour() == null || !StringUtils.hasText(dto.getWeeks())) {
+                throw new BusinessException("未填写 cron 表达式时，开始时间、结束时间、运行星期必须填写");
+            }
+        }
+
         UserEntity user = userService.getByCurrentRequest();
         MonitorConfigEntity entity;
         if (dto.getId() != null) {
@@ -83,6 +131,8 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
             entity.setExtConfig(JSONObject.toJSONString(dto.getMinimumPayExtNotifyConfig()));
         }
         saveOrUpdate(entity);
+        // 配置变更后刷新 cron 调度
+        monitorCronScheduler.refresh(entity.getId());
     }
 
     @Override
@@ -92,6 +142,7 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                 .set(MonitorConfigEntity::getStatus, statusEnums)
                 .set(MonitorConfigEntity::getRemark, remark)
                 .update();
+        monitorCronScheduler.refresh(id);
     }
 
     @Override
@@ -100,10 +151,16 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                 .eq(MonitorConfigEntity::getId, configId)
                 .eq(MonitorConfigEntity::getUserId, userService.getByCurrentRequest().getId())
                 .remove();
+        monitorCronScheduler.cancel(configId);
     }
 
     @Override
     public void deleteByLocationId(Integer locationId) {
+        // 先取消相关调度任务
+        this.lambdaQuery()
+                .eq(MonitorConfigEntity::getLocationId, locationId)
+                .list()
+                .forEach(config -> monitorCronScheduler.cancel(config.getId()));
         this.lambdaUpdate()
                 .eq(MonitorConfigEntity::getLocationId, locationId)
                 .remove();
@@ -115,5 +172,6 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
                 .eq(MonitorConfigEntity::getId, configId)
                 .set(MonitorConfigEntity::getStatus, status)
                 .update();
+        monitorCronScheduler.refresh(configId);
     }
 }

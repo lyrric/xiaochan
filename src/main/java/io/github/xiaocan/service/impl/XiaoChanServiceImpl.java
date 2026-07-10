@@ -28,13 +28,13 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     private static final int DEFAULT_PAGE_SIZE = 30;
     /**
-     * 门店最大距离
+     * 门店最大数量
      */
-    private static final int MAX_SIZE = 300;
+    public static final int MAX_SIZE = 500;
     /**
      * 门店最长距离
      */
-    private static final int MAX_DISTANCE = 3000;
+    private static final int MAX_DISTANCE = 3500;
 
     @Resource
     @Lazy
@@ -76,7 +76,6 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
 
     @Override
-    @Cacheable(cacheNames = "xiaoChan", key = "#cityCode+#longitude+#latitude+#maxSize")
     public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int maxSize){
         log.info("请求小产列表，城市: {}, 经度: {}, 纬度: {}, 最大数量: {}", cityCode, longitude, latitude, maxSize);
         int offset = 0;

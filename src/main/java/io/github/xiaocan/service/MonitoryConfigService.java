@@ -21,6 +21,21 @@ public interface MonitoryConfigService extends IService<MonitorConfigEntity> {
 
     List<MonitorConfigEntity> list(MonitorTypeEnums type, MonitorConfigStatusEnums enums);
 
+    /**
+     * 查询指定状态下所有配置了 cron 的配置（不区分类型，一次性查询）
+     */
+    List<MonitorConfigEntity> listAllWithCron(MonitorConfigStatusEnums status);
+
+    /**
+     * 查询指定类型和状态下未配置 cron 的配置
+     */
+    List<MonitorConfigEntity> listWithoutCron(MonitorTypeEnums type, MonitorConfigStatusEnums enums);
+
+    /**
+     * 查询多个类型和状态下未配置 cron 的配置（一次查询）
+     */
+    List<MonitorConfigEntity> listWithoutCron(List<MonitorTypeEnums> types, MonitorConfigStatusEnums enums);
+
     void addUpdateConfig(monitorConfigDTO dto);
 
     void updateConfig(int id, MonitorConfigStatusEnums statusEnums, String remark);

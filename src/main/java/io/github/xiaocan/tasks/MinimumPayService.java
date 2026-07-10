@@ -32,12 +32,11 @@ public class MinimumPayService extends BaseTask {
     private StorePushedHistoryService storePushedHistoryService;
 
 
-    private static final int DEFAULT_MAX_SIZE = 150;
 
     @Override
     protected List<StoreInfo> fetchStoreInfos(MonitorConfigEntity notifyConfig, TaskExecHistoryEntity execHistory, LocationEntity location) {
         execHistory.setNotifyType(MonitorTypeEnums.MINIMUM_PAY);
-        return xiaoChanService.getList(location.getCityCode(), location.getLongitude(), location.getLatitude(), DEFAULT_MAX_SIZE);
+        return xiaoChanService.getList(location.getCityCode(), location.getLongitude(), location.getLatitude(), 500);
     }
 
     @Override
@@ -54,7 +53,7 @@ public class MinimumPayService extends BaseTask {
 
 
     /**
-     * 最小实付
+     * 最小实付（静态兜底调度，仅处理未配置 cron 的配置）
      */
     @Scheduled(cron = "0 45 * * * ? ")
     public void start(){
@@ -65,13 +64,26 @@ public class MinimumPayService extends BaseTask {
         try {
             //获取所有配置信息
             log.info("开始执行 最小实付活动 定时任务");
-            List<MonitorConfigEntity> notifyConfigList = monitoryConfigService.list(MonitorTypeEnums.MINIMUM_PAY, MonitorConfigStatusEnums.ENABLE);
+            List<MonitorConfigEntity> notifyConfigList = monitoryConfigService.listWithoutCron(MonitorTypeEnums.MINIMUM_PAY, MonitorConfigStatusEnums.ENABLE);
             for (MonitorConfigEntity notifyConfig : notifyConfigList) {
-                runSingle(notifyConfig);
+                execute(notifyConfig, false);
             }
         }catch (Exception e){
             log.error("发生异常 ", e);
         }
+    }
+
+    /**
+     * 按配置执行任务入口
+     *
+     * @param cronDriven true 表示由 cron 动态调度器触发，跳过时间窗口和静默期检查
+     */
+    public void execute(MonitorConfigEntity notifyConfig, boolean cronDriven) {
+        if (!cronDriven && isSkip()) {
+            log.info("当前时间段位于00:00-08:00，不进行定时任务 configId: {}", notifyConfig.getId());
+            return;
+        }
+        runSingle(notifyConfig, cronDriven);
     }
 
     private boolean isSkip() {

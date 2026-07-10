@@ -18,7 +18,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -40,7 +39,7 @@ public class StoreTask extends BaseTask {
 
 
     /**
-     * 指定门店活动定时任务
+     * 指定门店活动定时任务（静态兜底调度，仅处理未配置 cron 的配置）
      */
     @Scheduled(cron = "0 15 * * * ? ")
     public void start(){
@@ -48,25 +47,36 @@ public class StoreTask extends BaseTask {
             return;
         }
         try {
-            List<MonitorConfigEntity> storeActivityList = monitoryConfigService.list(MonitorTypeEnums.STORE_ACTIVITY, MonitorConfigStatusEnums.ENABLE);
-            List<MonitorConfigEntity> storeKeywordList = monitoryConfigService.list(MonitorTypeEnums.STORE_KEYWORD, MonitorConfigStatusEnums.ENABLE);
-            log.info("开始执行 门店活动定时任务 STORE_ACTIVITY:{}个，STORE_KEYWORD:{}个", storeActivityList.size(), storeKeywordList.size());
-
-            List<MonitorConfigEntity> all = new ArrayList<>(storeActivityList);
-            all.addAll(storeKeywordList);
+            List<MonitorConfigEntity> all = monitoryConfigService.listWithoutCron(
+                    List.of(MonitorTypeEnums.STORE_ACTIVITY, MonitorTypeEnums.STORE_KEYWORD), MonitorConfigStatusEnums.ENABLE);
+            long storeActivityCount = all.stream().filter(c -> c.getType() == MonitorTypeEnums.STORE_ACTIVITY).count();
+            long storeKeywordCount = all.stream().filter(c -> c.getType() == MonitorTypeEnums.STORE_KEYWORD).count();
+            log.info("开始执行 门店活动定时任务 STORE_ACTIVITY:{}个，STORE_KEYWORD:{}个", storeActivityCount, storeKeywordCount);
 
             for (MonitorConfigEntity notifyConfig : all) {
-                if (notifyConfig.getType() == MonitorTypeEnums.STORE_KEYWORD) {
-                    // STORE_KEYWORD：不做整体防重复，由 filterStoreInfos 内部按门店ID过滤
-                    runSingle(notifyConfig);
-                } else {
-                    if (!checkRepeat(notifyConfig)) {
-                        runSingle(notifyConfig);
-                    }
-                }
+                execute(notifyConfig, false);
             }
         }catch (Exception e){
             log.error("执行门店活动定时任务时发生异常", e);
+        }
+    }
+
+    /**
+     * 按配置执行任务入口
+     *
+     * @param cronDriven true 表示由 cron 动态调度器触发，跳过时间窗口和静默期检查
+     */
+    public void execute(MonitorConfigEntity notifyConfig, boolean cronDriven) {
+        if (!cronDriven && isSkip()) {
+            return;
+        }
+        if (notifyConfig.getType() == MonitorTypeEnums.STORE_KEYWORD) {
+            // STORE_KEYWORD：不做整体防重复，由 filterStoreInfos 内部按门店ID过滤
+            runSingle(notifyConfig, cronDriven);
+        } else {
+            if (!checkRepeat(notifyConfig)) {
+                runSingle(notifyConfig, cronDriven);
+            }
         }
     }
 

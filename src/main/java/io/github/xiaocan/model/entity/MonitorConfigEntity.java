@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -38,18 +36,19 @@ public class MonitorConfigEntity {
     /**
      * 运行时间
      */
-    @NotNull
     private Integer startHour;
     /**
      * 结束时间
      */
-    @NotNull
     private Integer endHour;
     /**
      * 运行星期内配置,从1开始，多个以,分隔
      */
-    @NotEmpty
     private String weeks;
+    /**
+     * 自定义 cron 表达式（6位，含秒）
+     */
+    private String cron;
     /**
      * 门店提醒扩展配置
      */
