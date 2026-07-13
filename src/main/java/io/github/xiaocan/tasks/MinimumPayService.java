@@ -1,6 +1,5 @@
 package io.github.xiaocan.tasks;
 
-import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSON;
 import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
 import io.github.xiaocan.model.StoreInfo;
@@ -17,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -57,10 +55,6 @@ public class MinimumPayService extends BaseTask {
      */
     @Scheduled(cron = "0 45 * * * ? ")
     public void start(){
-        if (isSkip()) {
-            log.info("当前时间段位于00:00-08:00，不进行定时任务");
-            return;
-        }
         try {
             //获取所有配置信息
             log.info("开始执行 最小实付活动 定时任务");
@@ -79,16 +73,6 @@ public class MinimumPayService extends BaseTask {
      * @param cronDriven true 表示由 cron 动态调度器触发，跳过时间窗口和静默期检查
      */
     public void execute(MonitorConfigEntity notifyConfig, boolean cronDriven) {
-        if (!cronDriven && isSkip()) {
-            log.info("当前时间段位于00:00-08:00，不进行定时任务 configId: {}", notifyConfig.getId());
-            return;
-        }
         runSingle(notifyConfig, cronDriven);
-    }
-
-    private boolean isSkip() {
-        Date now = new Date();
-        int hour = DateUtil.hour(now, true);
-        return hour >= 0 && hour <= 8;
     }
 }

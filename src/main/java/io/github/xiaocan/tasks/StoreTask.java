@@ -1,24 +1,24 @@
 package io.github.xiaocan.tasks;
 
-import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSON;
 import io.github.xiaocan.model.StoreExtNotifyConfig;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.StoreKeywordExtNotifyConfig;
-import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
+import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
-import io.github.xiaocan.service.*;
+import io.github.xiaocan.service.MonitoryConfigService;
+import io.github.xiaocan.service.StorePushedHistoryService;
+import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -43,9 +43,6 @@ public class StoreTask extends BaseTask {
      */
     @Scheduled(cron = "0 15 * * * ? ")
     public void start(){
-        if (isSkip()) {
-            return;
-        }
         try {
             List<MonitorConfigEntity> all = monitoryConfigService.listWithoutCron(
                     List.of(MonitorTypeEnums.STORE_ACTIVITY, MonitorTypeEnums.STORE_KEYWORD), MonitorConfigStatusEnums.ENABLE);
@@ -67,9 +64,6 @@ public class StoreTask extends BaseTask {
      * @param cronDriven true 表示由 cron 动态调度器触发，跳过时间窗口和静默期检查
      */
     public void execute(MonitorConfigEntity notifyConfig, boolean cronDriven) {
-        if (!cronDriven && isSkip()) {
-            return;
-        }
         if (notifyConfig.getType() == MonitorTypeEnums.STORE_KEYWORD) {
             // STORE_KEYWORD：不做整体防重复，由 filterStoreInfos 内部按门店ID过滤
             runSingle(notifyConfig, cronDriven);
@@ -81,11 +75,6 @@ public class StoreTask extends BaseTask {
     }
 
 
-    private boolean isSkip() {
-        Date now = new Date();
-        int hour = DateUtil.hour(now, true);
-        return hour >= 0 && hour <= 8;
-    }
 
     private boolean checkRepeat(MonitorConfigEntity notifyConfig) {
         //检查今天是否通知过了
