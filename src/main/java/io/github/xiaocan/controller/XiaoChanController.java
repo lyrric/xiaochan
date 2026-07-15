@@ -2,11 +2,12 @@ package io.github.xiaocan.controller;
 
 import io.github.xiaocan.model.BaseResult;
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.vo.BookVO;
-import io.github.xiaocan.model.vo.IgnoreStoreVO;
+import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,7 +22,7 @@ public class XiaoChanController {
 
 
     /**
-     * 查询所有
+     * 查询所有满减
      * @param queryListVO
      * @return
      */
@@ -31,37 +32,15 @@ public class XiaoChanController {
     }
 
     /**
-     * 报名
-     * @param promotionId 活动id
-     * @return 成功或者失败
+     * 美团赏金
+     *
+     * @param dto
+     * @return
      */
-    @PostMapping(value = "/apply/{promotionId}")
-    public BaseResult<String> apply(@PathVariable Integer promotionId){
-        return BaseResult.ok();
+    @PostMapping(value = "/mtsj")
+    public BaseResult<XcMeituanshangjinPageVO> getXcMeituanshangjinPageVO(@RequestBody @Validated XcMeituanshangjinDTO dto) {
+        return BaseResult.ok(xiaoChanService.getXcMeituanshangjinPageVO(dto));
     }
-
-    /**
-     * 预约
-     * @param bookVO 信息
-     * @return 成功或者失败
-     */
-    @PostMapping(value = "/book")
-    public BaseResult<String> book(@RequestBody BookVO bookVO){
-        return BaseResult.ok();
-    }
-
-
-    /**
-     * 忽略
-     * @param ignoreStoreVO 忽略的门店信息
-     * @return 成功或者失败
-     */
-    @PostMapping(value = "/ignore")
-    public BaseResult<String> ignore(@RequestBody IgnoreStoreVO ignoreStoreVO){
-        return BaseResult.ok();
-    }
-
-
 
 
 }

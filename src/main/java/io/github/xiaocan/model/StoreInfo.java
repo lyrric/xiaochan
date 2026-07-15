@@ -1,5 +1,6 @@
 package io.github.xiaocan.model;
 
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,17 @@ public class StoreInfo {
      * 门店id
      */
     private Integer storeId;
+
+    /**
+     * 门店唯一id
+     * storeId or wm_poi_id
+     */
+    private String uniqId;
+
+    /**
+     * 门店类型
+     */
+    private StoreTypeEnum storeTypeEnum;
     /**
      * 是否是新店
      */
@@ -53,23 +65,34 @@ public class StoreInfo {
     private Integer leftNumber;
 
     /**
-     * 距离，单位米
+     * 距离
+     * 单位米（小蚕满减）
+     * 美团赏金自带单位
      */
-    private Integer distance;
+    private String distance;
     /**
-     * 满多少返
+     * 满多少返（仅小蚕满减）
      */
     private BigDecimal price;
     /**
-     * 返的金额
+     * 返的金额（仅小蚕满减）
      */
     private BigDecimal rebatePrice;
+    /**
+     * 返现百分比（仅美团赏金）
+     */
+    private BigDecimal rebateRatio;
+    /**
+     * 返现百分比-最高返金额（仅美团赏金）
+     */
+    private BigDecimal rebateMax;
     /**
      * 好评条件
      * 99：无需评价
      * 2：图文评价
      */
     private Integer rebateCondition;
+
     /**
      * 门店图片
      */

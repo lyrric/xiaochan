@@ -128,7 +128,7 @@ public class StoreTask extends BaseTask {
                     .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
                     .filter(storeInfo -> storeKeywordExtNotifyConfig.getLimitDistance() == null
                             || !storeKeywordExtNotifyConfig.getLimitDistance()
-                            || (storeInfo.getDistance() != null && storeInfo.getDistance() <= 3500))
+                            || (storeInfo.getDistance() != null && Long.parseLong(storeInfo.getDistance()) <= 3500))
                     .filter(storeInfo -> storePushedHistoryService
                             .findByNotifyIdAndStoreIdAll(notifyConfig.getId(), storeInfo.getStoreId()) == null)
                     .toList();
