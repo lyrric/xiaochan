@@ -1,7 +1,9 @@
 package io.github.xiaocan.service;
 
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
 import io.github.xiaocan.model.vo.QueryListVO;
+import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 
 import java.util.List;
 
@@ -44,8 +46,6 @@ public interface XiaoChanService {
     List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude);
 
 
-
-
     /**
      * 查询
      * @param queryListVO
@@ -53,4 +53,11 @@ public interface XiaoChanService {
      */
 
     List<StoreInfo> query(QueryListVO queryListVO);
+
+    /**
+     * 获取美团赏金页面数据
+     * @param dto
+     * @return
+     */
+    XcMeituanshangjinPageVO getXcMeituanshangjinPageVO(XcMeituanshangjinDTO dto);
 }

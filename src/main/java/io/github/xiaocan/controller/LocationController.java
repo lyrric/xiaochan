@@ -29,8 +29,6 @@ public class LocationController {
     @Resource
     private LocationService locationService;
 
-    private final XiaochanHttp xiaochanHttp = new XiaochanHttp();
-
     /**
      * 新增地址
      * @return 新增结果，包含地址ID
@@ -69,7 +67,7 @@ public class LocationController {
      */
     @GetMapping(value = "/searchAddress")
     public BaseResult<List<AddressVO>> searchAddress(@RequestParam String keyword, @RequestParam Integer cityCode){
-        return BaseResult.ok(xiaochanHttp.searchAddress(cityCode, keyword));
+        return BaseResult.ok(XiaochanHttp.searchAddress(cityCode, keyword));
     }
     /**
      * 获取行政区划代码

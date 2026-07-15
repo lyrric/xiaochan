@@ -8,6 +8,7 @@ import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.vo.AddressVO;
+import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
@@ -37,15 +38,105 @@ public class XiaochanHttp {
     }
 
 
-    public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
+    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
         String reqBody = getBody(cityCode, longitude, latitude, offset, 0, 0);
         String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME);
         return parseListBody(resBody);
     }
 
+    /**
+     * 获取小蚕美团赏金数据
+     * @param longitude
+     * @param latitude
+     * @param pvId 上一页的id
+     * @return
+     */
+    public static XcMeituanshangjinPageVO getMeituanList(String longitude, String latitude, String pvId){
+        Map<String, Object> body = new HashMap<>();
+        body.put("lat", new BigDecimal(latitude));
+        body.put("lon", new BigDecimal(longitude));
+        body.put("silk_id", 897154359);
+        body.put("pv_id", pvId);
+        body.put("scene", 1);
+        body.put("app_id", 20);
+        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(body), null, "SilkwormFusion", "FusionService.GetMeiTuanPromotions");
+        checkResult(resBody);
+        JSONObject jsonObject = JSONObject.parseObject(resBody);
+        XcMeituanshangjinPageVO xcMeituanshangjinPageVO = new XcMeituanshangjinPageVO();
+        xcMeituanshangjinPageVO.setPagePvId(jsonObject.getString("pv_id"));
+        xcMeituanshangjinPageVO.setMeituanPvId(jsonObject.getString("mt_pv_id"));
+        List<StoreInfo> storeInfos = parseMeituanListBody(jsonObject.getJSONArray("list"));
+        xcMeituanshangjinPageVO.setStoreInfos(storeInfos);
+        return xcMeituanshangjinPageVO;
+    }
+
+    /**
+     * 搜索小蚕美团赏金数据
+     * @param longitude
+     * @param latitude
+     * @param keyword
+     * @return
+     */
+    public static XcMeituanshangjinPageVO searchMeituanList(String longitude, String latitude, String keyword, String pvId){
+        Map<String, Object> body = new HashMap<>();
+        body.put("lat", new BigDecimal(latitude));
+        body.put("lng", new BigDecimal(longitude));
+        body.put("silk_id", 897154359);
+        body.put("pv_id", pvId);
+        body.put("sort_type", 3);
+        body.put("search_word", keyword);
+        body.put("app_id", 20);
+        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(body), null, "SilkwormRcs", "SilkwormRcsService.MeituanShangjinGetPoiList");
+        checkResult(resBody);
+        JSONObject jsonObject = JSONObject.parseObject(resBody);
+        XcMeituanshangjinPageVO xcMeituanshangjinPageVO = new XcMeituanshangjinPageVO();
+        xcMeituanshangjinPageVO.setPagePvId(jsonObject.getString("page_pv_id"));
+        xcMeituanshangjinPageVO.setMeituanPvId(jsonObject.getString("meituan_pv_id"));
+        List<StoreInfo> storeInfos = parseMeituanListBody(jsonObject.getJSONArray("poi_list"));
+        xcMeituanshangjinPageVO.setStoreInfos(storeInfos);
+        return xcMeituanshangjinPageVO;
+    }
 
 
-    public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude, int offset, Integer number) {
+    private static List<StoreInfo> parseMeituanListBody(JSONArray poiList) {
+        if (poiList == null) {
+            return Collections.emptyList();
+        }
+        List<StoreInfo> storeInfos = new ArrayList<>();
+        for (int i = 0; i < poiList.size(); i++) {
+            JSONObject poi = poiList.getJSONObject(i);
+            StoreInfo storeInfo = new StoreInfo();
+            storeInfo.setName(poi.getString("name"));
+            storeInfo.setType(1);
+            storeInfo.setIcon(poi.getString("picture"));
+            storeInfo.setDistance(poi.getString("delivery_distance"));
+            storeInfo.setUniqId(poi.getString("wm_poi_id"));
+            JSONArray plans = poi.getJSONArray("plan_activity_info_list");
+            for (int j = 0; j < plans.size(); j++) {
+                StoreInfo item = new StoreInfo();
+                BeanUtils.copyProperties(storeInfo, item);
+                JSONObject activity = plans.getJSONObject(j);
+                item.setRebateRatio(activity.getBigDecimal("ratio").divide(new BigDecimal(100)));
+                item.setRebateMax(activity.getBigDecimal("max_commission").divide(new BigDecimal(100)));
+                item.setLeftNumber(activity.getInteger("inventory"));
+                if (Objects.equals(activity.getInteger("plan_activity_type"), 1)) {
+                    item.setRebateCondition(99);
+                }else if (Objects.equals(activity.getInteger("plan_activity_type"), 2)) {
+                    item.setRebateCondition(2);
+                }
+                item.setIfNew(false);
+                item.setOpenHours("00:00-24:00");
+                item.setStartTime("00:00");
+                item.setEndTime("24:00");
+                storeInfos.add(item);
+            }
+        }
+        return storeInfos;
+
+    }
+
+
+    public static List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude, int offset, Integer number) {
         HashMap<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("silk_id", 0);
         bodyMap.put("latitude", new BigDecimal(latitude));
@@ -63,7 +154,7 @@ public class XiaochanHttp {
 
     }
 
-    private String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName) {
+    private static String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName) {
         Long timeMillis = System.currentTimeMillis();
         String nami = getNami();
         String ashe = getAshe(timeMillis, serverName, methodName,nami);
@@ -85,7 +176,7 @@ public class XiaochanHttp {
     /**
      * 搜索地址
      */
-    public List<AddressVO> searchAddress(Integer cityCode, String keyword){
+    public static List<AddressVO> searchAddress(Integer cityCode, String keyword){
         final String serverName = "SilkwormLbs";
         final String methodName = "SilkwormLbsService.Suggestion";
         Map<String, Object> bodyMap = Map.of("silk_id", 0, "keyword", keyword,
@@ -116,7 +207,7 @@ public class XiaochanHttp {
      * @param promotionId
      * @return
      */
-    public StoreInfo getStorePromotionDetail(Integer promotionId){
+    public static StoreInfo getStorePromotionDetail(Integer promotionId){
         Map<String, Integer> reqMap = Map.of("silk_id", 0,
                 "promotion_id", promotionId,
                 "app_id", 20);
@@ -125,7 +216,7 @@ public class XiaochanHttp {
         List<StoreInfo> storeInfos = parsePromotion(jsonObject.getJSONObject("promotion_detail"));
         return storeInfos.get(0);
     }
-    private List<AddressVO> parseBodyToAddress(String body) {
+    private static List<AddressVO> parseBodyToAddress(String body) {
         JSONObject jsonObject = JSONObject.parseObject(body);
         if (jsonObject.getJSONObject("status").getInteger("code") != 0) {
             log.error("parseBodyToAddress error body: {} ", body);
@@ -178,7 +269,7 @@ public class XiaochanHttp {
     }
 
 
-    private Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName, String nami){
+    private static Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName, String nami){
         Map<String, String> headers = new HashMap<>();
         headers.put("x-City", String.valueOf(cityCode));
         headers.put("X-Garen", String.valueOf(timeMillis));
@@ -204,7 +295,7 @@ public class XiaochanHttp {
         return headers;
     }
 
-    private List<StoreInfo> parsePromotion(JSONObject jsonObject){
+    private static List<StoreInfo> parsePromotion(JSONObject jsonObject){
         List<StoreInfo> result = new ArrayList<>();
         StoreInfo storeInfo = new StoreInfo();
         storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
@@ -213,9 +304,10 @@ public class XiaochanHttp {
         storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
         storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
         storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
-        storeInfo.setDistance(jsonObject.getInteger("distance") );
+        storeInfo.setDistance(jsonObject.getString("distance") );
         storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
         storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
+        storeInfo.setUniqId(String.valueOf(storeInfo.getStoreId()));
         //美团
         if (jsonObject.getInteger("meituan_status") == 1) {
             StoreInfo meituanStoreInfo = new StoreInfo();
@@ -252,7 +344,7 @@ public class XiaochanHttp {
         return result;
     }
 
-    private JSONObject checkResult(String body){
+    private static JSONObject checkResult(String body){
         JSONObject jsonBody = JSONObject.parseObject(body);
         if (jsonBody.getJSONObject("status").getInteger("code") != 0) {
             String msg = jsonBody.getJSONObject("status").getString("msg");
@@ -261,7 +353,7 @@ public class XiaochanHttp {
         }
         return jsonBody;
     }
-    private List<StoreInfo> parseListBody(String body){
+    private static List<StoreInfo> parseListBody(String body){
         JSONObject jsonBody = checkResult(body);
         List<StoreInfo> result = new ArrayList<>();
         JSONArray promotionList = jsonBody.getJSONArray("promotion_list");
@@ -295,11 +387,11 @@ public class XiaochanHttp {
         return new String(chars);
     }
 
-    private String formatStartEndTime(Integer hour, Integer minute){
+    private static String formatStartEndTime(Integer hour, Integer minute){
         return String.format("%02d", hour) + ":" + String.format("%02d", minute);
     }
 
-    private BigDecimal safeDivide(BigDecimal b1, BigDecimal b2){
+    private static BigDecimal safeDivide(BigDecimal b1, BigDecimal b2){
         if (b1 == null || b2 == null) {
             return BigDecimal.ZERO;
         }

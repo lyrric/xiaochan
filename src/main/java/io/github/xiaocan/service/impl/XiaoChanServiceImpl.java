@@ -2,7 +2,9 @@ package io.github.xiaocan.service.impl;
 
 import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
 import io.github.xiaocan.model.vo.QueryListVO;
+import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -23,8 +25,6 @@ import java.util.List;
 @Service
 @Slf4j
 public class XiaoChanServiceImpl implements XiaoChanService {
-
-    private final XiaochanHttp xiaochanHttp = new XiaochanHttp();
 
     private static final int DEFAULT_PAGE_SIZE = 30;
     /**
@@ -71,7 +71,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude) {
-        return xiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
+        return XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
     }
 
 
@@ -98,12 +98,23 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
         return doGetList(cityCode, longitude, latitude, offset);
     }
+
+
+    @Override
+    public XcMeituanshangjinPageVO getXcMeituanshangjinPageVO(XcMeituanshangjinDTO dto) {
+        if (StringUtils.isNotBlank(dto.getName())) {
+            //走搜索接口
+            return XiaochanHttp.searchMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getName(), dto.getPvId());
+        }
+        return XiaochanHttp.getMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getPvId());
+    }
+
     private boolean hasNext(List<StoreInfo> list){
         if (list.size() < DEFAULT_PAGE_SIZE) {
             return false;
         }
         long overDistanceCount = list.stream()
-                .filter(t -> t.getDistance() > MAX_DISTANCE)
+                .filter(t -> Long.parseLong(t.getDistance()) > MAX_DISTANCE)
                 .count();
         int size = list.size();
         //有一半的店距离超过MAX_DISTANCE，则不再查找下一页
@@ -115,7 +126,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     private List<StoreInfo> doGetList(Integer cityCode, String longitude, String latitude, int offset){
         try {
-            List<StoreInfo> list = xiaochanHttp.getList(cityCode, longitude, latitude, offset);
+            List<StoreInfo> list = XiaochanHttp.getList(cityCode, longitude, latitude, offset);
             return list;
         } catch (Exception e) {
             log.error("请求小产列表时发生错误 ",e);
@@ -132,7 +143,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     private void sortStoreList(List<StoreInfo> list, Integer orderType) {
         if (orderType == null || orderType == 1) {
             // 默认排序，不处理
-            list.sort(Comparator.comparing(StoreInfo::getDistance));
+            //list.sort(Comparator.comparing(StoreInfo::getDistance));
         }else if (orderType == 2) {
             // 按返现金额倒序排序
             list.sort(Comparator.comparing(StoreInfo::getRebatePrice, Comparator.nullsLast(Comparator.reverseOrder())));
