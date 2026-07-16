@@ -41,7 +41,7 @@ public class StoreTask extends BaseTask {
     /**
      * 指定门店活动定时任务（静态兜底调度，仅处理未配置 cron 的配置）
      */
-    @Scheduled(cron = "0 15 * * * ? ")
+    @Scheduled(cron = "0 0/30 * * * ? ")
     public void start(){
         try {
             List<MonitorConfigEntity> all = monitoryConfigService.listWithoutCron(
