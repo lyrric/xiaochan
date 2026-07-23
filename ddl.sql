@@ -117,3 +117,15 @@ ALTER TABLE `monitor_config`
     MODIFY COLUMN `start_hour` INT NULL COMMENT '运行开始时间',
     MODIFY COLUMN `end_hour` INT NULL COMMENT '运行结束时间',
     MODIFY COLUMN `weeks` VARCHAR(50) NULL COMMENT '运行星期配置';
+
+-- 2026年7月10日 添加门店库存记录表
+CREATE TABLE `store_inventory_history` (
+                                           `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                           `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '门店名称',
+                                           `unique_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '门店唯一标识',
+                                           `inventory` int NOT NULL COMMENT '库存数量',
+                                           `store_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '门店类型',
+                                           `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                           PRIMARY KEY (`id`),
+                                           KEY `idx_unique_time` (`unique_id`,`create_time`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='门店库存记录';

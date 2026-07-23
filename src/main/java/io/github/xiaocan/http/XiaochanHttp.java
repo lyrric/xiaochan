@@ -310,6 +310,7 @@ public class XiaochanHttp {
         storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
         storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
         storeInfo.setUniqId(String.valueOf(storeInfo.getStoreId()));
+        storeInfo.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN);
         //美团
         if (jsonObject.getInteger("meituan_status") == 1) {
             StoreInfo meituanStoreInfo = new StoreInfo();
@@ -337,7 +338,6 @@ public class XiaochanHttp {
                 StoreInfo eleStoreInfo = new StoreInfo();
                 BeanUtils.copyProperties(storeInfo, eleStoreInfo);
                 eleStoreInfo.setType(3);
-                eleStoreInfo.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN);
                 eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
                 eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
                 eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
