@@ -5,6 +5,7 @@ import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
+import io.github.xiaocan.service.StoreInventoryHistoryService;
 import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,8 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     private static final int MAX_DISTANCE = 3500;
 
     @Resource
-    @Lazy
-    private XiaoChanService xiaoChanService;
+    private StoreInventoryHistoryService storeInventoryHistoryService;
+
 
     @Override
     public List<StoreInfo> query(QueryListVO queryListVO) {
@@ -51,19 +52,19 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (pageNum > 0) {
                 return Collections.emptyList();
             }
-            result = xiaoChanService.searchList(queryListVO.getName(), queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude());
+            result = searchList(queryListVO.getName(), queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude());
         }else{
             if (queryListVO.getOrderType() != null && queryListVO.getOrderType() != 1) {
                 //排序不为空，则获取所有活动再排序过滤
                 if (pageNum > 0) {
                     return Collections.emptyList();
                 }
-                result = xiaoChanService.getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), MAX_SIZE);
+                result = getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), MAX_SIZE);
                 sortStoreList(result, queryListVO.getOrderType());
                 result = filter(result, queryListVO);
             }else{
                 //排序为空，则走官方分页接口
-                result = xiaoChanService.getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
+                result = getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
             }
         }
         return result;
@@ -71,7 +72,9 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude) {
-        return XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
+        List<StoreInfo> storeInfos = XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
+        storeInventoryHistoryService.insertBatch(storeInfos);
+        return storeInfos;
     }
 
 
@@ -91,6 +94,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             }
             offset += DEFAULT_PAGE_SIZE;
         }
+        storeInventoryHistoryService.insertBatch(result);
         return result;
     }
 

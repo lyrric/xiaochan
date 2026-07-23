@@ -7,6 +7,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.AddressVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import lombok.extern.slf4j.Slf4j;
@@ -128,6 +129,7 @@ public class XiaochanHttp {
                 item.setOpenHours("00:00-24:00");
                 item.setStartTime("00:00");
                 item.setEndTime("24:00");
+                item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ);
                 storeInfos.add(item);
             }
         }
@@ -335,6 +337,7 @@ public class XiaochanHttp {
                 StoreInfo eleStoreInfo = new StoreInfo();
                 BeanUtils.copyProperties(storeInfo, eleStoreInfo);
                 eleStoreInfo.setType(3);
+                eleStoreInfo.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN);
                 eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
                 eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
                 eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
