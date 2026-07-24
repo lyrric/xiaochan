@@ -50,7 +50,8 @@
   - 将字符串D进行MD5加密得到字符串E，E即为X-Ashe的值。
 ## 截图
 ### 活动列表页
-![image](images/index.png) 
+![image](images/门店列表.png)
+![image](images/折线图.png)
 ### 地址管理
 ![image](images/location.png)
 ### 通知管理
