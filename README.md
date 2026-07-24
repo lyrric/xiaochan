@@ -4,6 +4,9 @@
 - 浏览器收藏网址时直接带上token参数，会自动识别，避免token丢失,例如：http://xxxx.com/?token=xxxxxxxxx
 ## [前端 github](https://github.com/lyrric/xiaocan-front)
 ## 更新记录
+- 2026年7月24日
+  - 增加了收藏功能
+  - 增加了库存折线图
 - 2026年7月15日
  - 同门店活动折叠显示
  - 可快速搜索美团赏金的活动信息
