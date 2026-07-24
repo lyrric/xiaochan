@@ -41,6 +41,16 @@ public class StoreInventoryHistoryEntity {
     private StoreTypeEnum storeType;
 
     /**
+     * 活动id（对应 StoreInfo.promotionId）
+     */
+    private String skuId;
+
+    /**
+     * 活动名称（如：满X返Y、返x%最高Y）
+     */
+    private String skuName;
+
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

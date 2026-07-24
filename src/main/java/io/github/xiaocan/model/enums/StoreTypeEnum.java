@@ -11,7 +11,7 @@ public enum StoreTypeEnum {
      */
     XC_MANJIAN,
     /**
-     * 小蚕美团商家
+     * 小蚕美团赏金
      */
     XC_MTSJ
     ;

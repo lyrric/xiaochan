@@ -147,3 +147,9 @@ CREATE TABLE `favorite_store` (
                                 KEY `idx_user_id_location_id_store_type` (`user_id`,`location_id`,`store_type`),
                                 KEY `idx_unique_id` (`uniq_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='收藏门店表';
+
+-- 2026年7月24日 门店库存记录增加 sku 字段
+ALTER TABLE `store_inventory_history`
+    ADD COLUMN `sku_id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '活动id/SkuID',
+    ADD COLUMN `sku_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT '' COMMENT '活动名称/Sku名称',
+    ADD KEY `idx_sku_id` (`sku_id`);
