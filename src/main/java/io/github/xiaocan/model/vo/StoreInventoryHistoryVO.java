@@ -43,7 +43,7 @@ public class StoreInventoryHistoryVO {
     /**
      * 创建时间
      */
-    @JsonFormat(pattern = "dd HH:mm")
+    @JsonFormat(pattern = "HH:mm")
     private LocalDateTime createTime;
 
 }
