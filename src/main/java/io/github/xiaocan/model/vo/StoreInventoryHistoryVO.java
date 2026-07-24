@@ -31,6 +31,16 @@ public class StoreInventoryHistoryVO {
     private Integer inventory;
 
     /**
+     * 活动id
+     */
+    private String skuId;
+
+    /**
+     * 活动名称
+     */
+    private String skuName;
+
+    /**
      * 创建时间
      */
     @JsonFormat(pattern = "dd HH:mm")
