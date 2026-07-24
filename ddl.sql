@@ -118,7 +118,7 @@ ALTER TABLE `monitor_config`
     MODIFY COLUMN `end_hour` INT NULL COMMENT '运行结束时间',
     MODIFY COLUMN `weeks` VARCHAR(50) NULL COMMENT '运行星期配置';
 
--- 2026年7月10日 添加门店库存记录表
+-- 2026年7月23日 添加门店库存记录表
 CREATE TABLE `store_inventory_history` (
                                            `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
                                            `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '门店名称',
@@ -129,3 +129,21 @@ CREATE TABLE `store_inventory_history` (
                                            PRIMARY KEY (`id`),
                                            KEY `idx_unique_time` (`unique_id`,`create_time`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='门店库存记录';
+
+-- 2026年7月24日 添加收藏门店表
+CREATE TABLE `favorite_store` (
+                                `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+                                `user_id` int NOT NULL COMMENT '用户ID',
+                                `location_id` bigint NOT NULL COMMENT '位置信息ID',
+                                `uniq_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '门店唯一标识',
+                                `store_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '门店类型：XC_MANJIAN、XC_MTSJ',
+                                `icon` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '门店图片URL',
+                                `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '门店名称',
+                                `type` int DEFAULT NULL COMMENT '平台类型：1-美团, 2-饿了么, 3-京东',
+                                `distance` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '距离',
+                                `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+                                `deleted` tinyint(1) NOT NULL DEFAULT '0' COMMENT '逻辑删除标志：0-未删除, 1-已删除',
+                                PRIMARY KEY (`id`) USING BTREE,
+                                KEY `idx_user_id_location_id_store_type` (`user_id`,`location_id`,`store_type`),
+                                KEY `idx_unique_id` (`uniq_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='收藏门店表';

@@ -98,4 +98,14 @@ public class StoreInfo {
      */
     private String icon;
 
+    /**
+     * 收藏记录ID（仅收藏门店模式有效）
+     */
+    private Long favoriteId;
+
+    /**
+     * 门店是否仍存在（仅收藏门店模式有效）
+     */
+    private Boolean exists;
+
 }
