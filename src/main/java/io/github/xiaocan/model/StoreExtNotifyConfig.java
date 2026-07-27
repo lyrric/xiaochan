@@ -13,7 +13,7 @@ public class StoreExtNotifyConfig extends AbstractExtNotifyConfig{
     /**
      * 门店活动信息
      */
-    private StoreInfo storeInfo;
+    private SimpleStoreInfo storeInfo;
 
     /**
      * 提醒频率
