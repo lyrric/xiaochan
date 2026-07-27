@@ -10,6 +10,7 @@ import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.NotifyFrequencyEnums;
 import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.StorePushedHistoryService;
 import io.github.xiaocan.service.XiaoChanService;
@@ -64,26 +65,46 @@ public class StoreTask extends BaseTask {
      * @param cronDriven true 表示由 cron 动态调度器触发，跳过时间窗口和静默期检查
      */
     public void execute(MonitorConfigEntity notifyConfig, boolean cronDriven) {
-        if (notifyConfig.getType() == MonitorTypeEnums.STORE_KEYWORD) {
-            // STORE_KEYWORD：不做整体防重复，由 filterStoreInfos 内部按门店ID过滤
-            runSingle(notifyConfig, cronDriven);
-        } else {
-            if (!checkRepeat(notifyConfig)) {
-                runSingle(notifyConfig, cronDriven);
+        if (notifyConfig.getType() == MonitorTypeEnums.STORE_ACTIVITY) {
+            StoreExtNotifyConfig storeExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreExtNotifyConfig.class);
+            NotifyFrequencyEnums remindFrequency = storeExtNotifyConfig.getRemindFrequency();
+            if (remindFrequency == null) {
+                remindFrequency = NotifyFrequencyEnums.ONCE;
+            }
+            if (remindFrequency == NotifyFrequencyEnums.DAILY && hasPushedToday(notifyConfig.getId())) {
+                log.info("configId: {} 今日已提醒，跳过本次执行", notifyConfig.getId());
+                return;
             }
         }
+        runSingle(notifyConfig, cronDriven);
     }
 
-
-
-    private boolean checkRepeat(MonitorConfigEntity notifyConfig) {
-        //检查今天是否通知过了
+    private boolean hasPushedToday(Integer notifyConfigId) {
         return storePushedHistoryService.lambdaQuery()
-                .eq(StorePushedHistoryEntity::getNotifyConfigId, notifyConfig.getId())
-                .ge(StorePushedHistoryEntity::getCreateTime, LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0))
+                .eq(StorePushedHistoryEntity::getNotifyConfigId, notifyConfigId)
+                .ge(StorePushedHistoryEntity::getCreateTime, LocalDateTime.now().withHour(0).withMinute(0).withSecond(0))
                 .last("limit 1")
                 .oneOpt().isPresent();
+    }
 
+    @Override
+    protected void handleAvailableStores(MonitorConfigEntity notifyConfig, List<StoreInfo> availableStores,
+                                         LocationEntity location) {
+        if (notifyConfig.getType() == MonitorTypeEnums.STORE_ACTIVITY) {
+            StoreExtNotifyConfig storeExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreExtNotifyConfig.class);
+            NotifyFrequencyEnums remindFrequency = storeExtNotifyConfig.getRemindFrequency();
+            if (remindFrequency == null) {
+                remindFrequency = NotifyFrequencyEnums.ONCE;
+            }
+            if (remindFrequency == NotifyFrequencyEnums.NONE) {
+                afterSuccess(notifyConfig, availableStores);
+                log.info("configId: {} 配置为不提醒", notifyConfig.getId());
+                return;
+            }
+        }
+        savePushedHistory(notifyConfig, availableStores);
+        afterSuccess(notifyConfig, availableStores);
+        sendMessage(notifyConfig, availableStores, location);
     }
 
     /**
@@ -138,9 +159,13 @@ public class StoreTask extends BaseTask {
     @Override
     protected void afterSuccess(MonitorConfigEntity notifyConfig, List<StoreInfo> availableStores) {
         super.afterSuccess(notifyConfig, availableStores);
-        // 仅 STORE_ACTIVITY 通知后停用，STORE_KEYWORD 继续运行
+        // 仅 STORE_ACTIVITY 且提醒频率为提醒一次时，通知后停用
         if (!availableStores.isEmpty() && notifyConfig.getType() == MonitorTypeEnums.STORE_ACTIVITY) {
-            monitoryConfigService.toggleStatus(notifyConfig.getId(), MonitorConfigStatusEnums.DISABLE);
+            StoreExtNotifyConfig storeExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreExtNotifyConfig.class);
+            NotifyFrequencyEnums remindFrequency = storeExtNotifyConfig.getRemindFrequency();
+            if (remindFrequency == null || remindFrequency == NotifyFrequencyEnums.ONCE) {
+                monitoryConfigService.toggleStatus(notifyConfig.getId(), MonitorConfigStatusEnums.DISABLE);
+            }
         }
     }
 }

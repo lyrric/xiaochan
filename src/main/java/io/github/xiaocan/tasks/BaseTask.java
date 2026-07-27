@@ -9,6 +9,7 @@ import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
+import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -100,10 +101,7 @@ public class BaseTask {
             }
             execHistory.setNotifyStoreCount(availableStores.size());
             log.info("configId: {} 找到{}个满足条件的门店活动", notifyConfig.getId(), availableStores.size());
-            savePushedHistory(notifyConfig, availableStores);
-            afterSuccess(notifyConfig, availableStores);
-            //通知
-            sendMessage(notifyConfig, availableStores, location);
+            handleAvailableStores(notifyConfig, availableStores, location);
         }catch (Exception e){
             log.error("执行异常 type {} config id is {}", notifyConfig.getType(), notifyConfig.getId(), e);
             execHistory.setSuccess(false);
@@ -134,7 +132,7 @@ public class BaseTask {
         //默认为空
     }
 
-    private void savePushedHistory(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos){
+    protected void savePushedHistory(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos){
         List<StorePushedHistoryEntity> entities = storeInfos.stream().map(storeInfo -> {
             StorePushedHistoryEntity entity = new StorePushedHistoryEntity();
             BeanUtils.copyProperties(storeInfo, entity);
@@ -145,6 +143,16 @@ public class BaseTask {
             return entity;
         }).toList();
         storePushedHistoryService.saveBatch(entities);
+    }
+
+    /**
+     * 找到满足条件的门店后，保存历史、后续处理及发送通知
+     */
+    protected void handleAvailableStores(MonitorConfigEntity notifyConfig, List<StoreInfo> availableStores,
+                                         LocationEntity location) {
+        savePushedHistory(notifyConfig, availableStores);
+        afterSuccess(notifyConfig, availableStores);
+        sendMessage(notifyConfig, availableStores, location);
     }
 
 
