@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import java.util.List;
 
 @RestController
@@ -40,7 +41,7 @@ public class FavoriteStoreController {
     }
 
     @PostMapping(value = "/stores")
-    public BaseResult<List<StoreInfo>> queryFavoriteStores(@RequestBody @Validated FavoriteStoreQueryDTO dto) {
+    public BaseResult<Page<StoreInfo>> queryFavoriteStores(@RequestBody @Validated FavoriteStoreQueryDTO dto) {
         return BaseResult.ok(favoriteStoreService.queryFavoriteStores(dto));
     }
 }

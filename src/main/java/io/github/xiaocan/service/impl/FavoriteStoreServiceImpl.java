@@ -1,6 +1,7 @@
 package io.github.xiaocan.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.http.XiaochanHttp;
@@ -90,7 +91,7 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
     }
 
     @Override
-    public List<StoreInfo> queryFavoriteStores(FavoriteStoreQueryDTO dto) {
+    public Page<StoreInfo> queryFavoriteStores(FavoriteStoreQueryDTO dto) {
         UserEntity currentUser = userService.getByCurrentRequest();
         Long locationId = dto.getLocationId();
         if (locationId == null) {
@@ -101,27 +102,33 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
             throw new BusinessException("地址不存在");
         }
 
+        int pageNum = dto.getPageNum() == null || dto.getPageNum() < 1 ? 1 : dto.getPageNum();
+        int pageSize = dto.getPageSize() == null || dto.getPageSize() < 1 ? 10 : dto.getPageSize();
+        Page<FavoriteStoreEntity> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<FavoriteStoreEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FavoriteStoreEntity::getUserId, currentUser.getId())
                 .eq(FavoriteStoreEntity::getLocationId, locationId);
         if (StringUtils.hasText(dto.getStoreType())) {
             wrapper.eq(FavoriteStoreEntity::getStoreType, parseStoreType(dto.getStoreType()));
         }
+        if (StringUtils.hasText(dto.getStoreName())) {
+            wrapper.like(FavoriteStoreEntity::getName, dto.getStoreName());
+        }
         wrapper.orderByDesc(FavoriteStoreEntity::getCreateTime);
-        List<FavoriteStoreEntity> favorites = this.list(wrapper);
-        if (favorites.isEmpty()) {
-            return Collections.emptyList();
+        this.page(page, wrapper);
+        if (page.getRecords().isEmpty()) {
+            return new Page<>(pageNum, pageSize, 0);
         }
 
-        List<StoreInfo> result = new ArrayList<>();
-        for (FavoriteStoreEntity favorite : favorites) {
+        List<StoreInfo> records = new ArrayList<>();
+        for (FavoriteStoreEntity favorite : page.getRecords()) {
             List<StoreInfo> matched = queryStoreByFavorite(favorite, location);
             if (matched != null && !matched.isEmpty()) {
                 matched.forEach(item -> {
                     item.setFavoriteId(favorite.getId());
                     item.setExists(true);
                 });
-                result.addAll(matched);
+                records.addAll(matched);
             } else {
                 StoreInfo fallback = new StoreInfo();
                 BeanUtils.copyProperties(favorite, fallback);
@@ -129,10 +136,12 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
                 fallback.setStoreTypeEnum(favorite.getStoreType());
                 fallback.setFavoriteId(favorite.getId());
                 fallback.setExists(false);
-                result.add(fallback);
+                records.add(fallback);
             }
         }
-        return result;
+        Page<StoreInfo> resultPage = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
+        resultPage.setRecords(records);
+        return resultPage;
     }
 
     private List<StoreInfo> queryStoreByFavorite(FavoriteStoreEntity favorite, LocationEntity location) {
