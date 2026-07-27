@@ -134,13 +134,9 @@ public class StoreTask extends BaseTask {
             StoreExtNotifyConfig storeExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreExtNotifyConfig.class);
             return storeInfos
                     .stream()
-                    //同一个门店
-                    .filter(storeInfo -> storeExtNotifyConfig.getStoreInfo().getStoreId().equals(storeInfo.getStoreId()))
+                    //同一个门店（按 uniqId 匹配，兼容美团赏金无 storeId 的情况）
+                    .filter(storeInfo -> storeExtNotifyConfig.getStoreInfo().getUniqId().equals(storeInfo.getUniqId()))
                     .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
-                    //返现金额必须大于等于之前的返现金额
-                    .filter(storeInfo -> storeInfo.getRebatePrice().compareTo(storeExtNotifyConfig.getStoreInfo().getRebatePrice()) >= 0)
-                    //价格必须小于等于之前的价格
-                    .filter(storeInfo -> storeInfo.getPrice().compareTo(storeExtNotifyConfig.getStoreInfo().getPrice()) <= 0)
                     .toList();
         } else {
             // STORE_KEYWORD：过滤有库存 + 排除已通知过的门店（按配置ID + 门店ID）
