@@ -117,6 +117,7 @@ public class XiaochanHttp {
                 StoreInfo item = new StoreInfo();
                 BeanUtils.copyProperties(storeInfo, item);
                 JSONObject activity = plans.getJSONObject(j);
+                item.setPromotionId(activity.getString("poi_event_id"));
                 item.setRebateRatio(activity.getBigDecimal("ratio").divide(new BigDecimal(100)));
                 item.setRebateMax(activity.getBigDecimal("max_commission").divide(new BigDecimal(100)));
                 item.setLeftNumber(activity.getInteger("inventory"));
@@ -302,7 +303,7 @@ public class XiaochanHttp {
         StoreInfo storeInfo = new StoreInfo();
         storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
         storeInfo.setOpenHours(jsonObject.getJSONObject("store").getString("opening_hours"));
-        storeInfo.setPromotionId(jsonObject.getInteger("promotion_id"));
+        storeInfo.setPromotionId(jsonObject.getString("promotion_id"));
         storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
         storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
         storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));

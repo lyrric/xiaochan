@@ -10,6 +10,7 @@ import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.FavoriteStoreQueryDTO;
 import io.github.xiaocan.model.dto.RemoveFavoriteDTO;
 import io.github.xiaocan.model.dto.SaveFavoriteDTO;
+import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
 import io.github.xiaocan.model.entity.FavoriteStoreEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.UserEntity;
@@ -18,6 +19,7 @@ import io.github.xiaocan.model.vo.FavoriteStoreVO;
 import io.github.xiaocan.service.FavoriteStoreService;
 import io.github.xiaocan.service.LocationService;
 import io.github.xiaocan.service.UserService;
+import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -38,6 +40,8 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
     private UserService userService;
     @Resource
     private LocationService locationService;
+    @Resource
+    private XiaoChanService xiaoChanService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -154,13 +158,18 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
                 return Collections.emptyList();
             }
             if (StoreTypeEnum.XC_MANJIAN.equals(storeType)) {
-                List<StoreInfo> list = XiaochanHttp.searchList(name, location.getCityCode(), longitude, latitude, 0, 15);
+                List<StoreInfo> list = xiaoChanService.searchList(name, location.getCityCode(), longitude, latitude);
                 return list.stream()
                         .filter(item -> Objects.equals(item.getUniqId(), favorite.getUniqId()))
                         .peek(item -> item.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN))
                         .toList();
             } else if (StoreTypeEnum.XC_MTSJ.equals(storeType)) {
-                List<StoreInfo> meituanList = XiaochanHttp.searchMeituanList(longitude, latitude, name, "").getStoreInfos();
+                XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
+                dto.setLongitude(longitude);
+                dto.setLatitude(latitude);
+                dto.setName(name);
+                dto.setPvId("");
+                List<StoreInfo> meituanList = xiaoChanService.getXcMeituanshangjinPageVO(dto).getStoreInfos();
                 return meituanList.stream()
                         .filter(item -> Objects.equals(item.getUniqId(), favorite.getUniqId()))
                         .peek(item -> item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ))

@@ -45,7 +45,7 @@ public class StoreInfo {
      * 活动id
      * 同一个门店，这个活动id每天都是不一样的
      */
-    private Integer promotionId;
+    private String promotionId;
     /**
      * 平台类型 1:美团，2：饿了么，3京东
      */
