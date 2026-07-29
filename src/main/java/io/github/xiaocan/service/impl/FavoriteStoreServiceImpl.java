@@ -7,6 +7,7 @@ import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.mapper.FavoriteStoreMapper;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.FavoriteStoreListDTO;
 import io.github.xiaocan.model.dto.FavoriteStoreQueryDTO;
 import io.github.xiaocan.model.dto.RemoveFavoriteDTO;
 import io.github.xiaocan.model.dto.SaveFavoriteDTO;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
@@ -80,15 +82,15 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
     }
 
     @Override
-    public List<FavoriteStoreVO> listFavorites(Long locationId, String storeType) {
+    public List<FavoriteStoreVO> listFavorites(FavoriteStoreListDTO dto) {
         UserEntity currentUser = userService.getByCurrentRequest();
         LambdaQueryWrapper<FavoriteStoreEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(FavoriteStoreEntity::getUserId, currentUser.getId());
-        if (locationId != null) {
-            wrapper.eq(FavoriteStoreEntity::getLocationId, locationId);
+        if (dto.getLocationId() != null) {
+            wrapper.eq(FavoriteStoreEntity::getLocationId, dto.getLocationId());
         }
-        if (StringUtils.hasText(storeType)) {
-            wrapper.eq(FavoriteStoreEntity::getStoreType, parseStoreType(storeType));
+        if (!CollectionUtils.isEmpty(dto.getStoreTypes())) {
+            wrapper.in(FavoriteStoreEntity::getStoreType, dto.getStoreTypes());
         }
         wrapper.orderByDesc(FavoriteStoreEntity::getCreateTime);
         return this.list(wrapper).stream().map(this::convertToVO).toList();

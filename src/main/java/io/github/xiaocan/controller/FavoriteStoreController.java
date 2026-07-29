@@ -2,6 +2,7 @@ package io.github.xiaocan.controller;
 
 import io.github.xiaocan.model.BaseResult;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.FavoriteStoreListDTO;
 import io.github.xiaocan.model.dto.FavoriteStoreQueryDTO;
 import io.github.xiaocan.model.dto.RemoveFavoriteDTO;
 import io.github.xiaocan.model.dto.SaveFavoriteDTO;
@@ -34,10 +35,9 @@ public class FavoriteStoreController {
         return BaseResult.ok();
     }
 
-    @GetMapping(value = "/list")
-    public BaseResult<List<FavoriteStoreVO>> list(@RequestParam(required = true) Long locationId,
-                                                   @RequestParam(required = true) String storeType) {
-        return BaseResult.ok(favoriteStoreService.listFavorites(locationId, storeType));
+    @PostMapping(value = "/list")
+    public BaseResult<List<FavoriteStoreVO>> list(@RequestBody @Valid FavoriteStoreListDTO dto) {
+        return BaseResult.ok(favoriteStoreService.listFavorites(dto));
     }
 
     @PostMapping(value = "/stores")

@@ -2,6 +2,7 @@ package io.github.xiaocan.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.FavoriteStoreListDTO;
 import io.github.xiaocan.model.dto.FavoriteStoreQueryDTO;
 import io.github.xiaocan.model.dto.RemoveFavoriteDTO;
 import io.github.xiaocan.model.dto.SaveFavoriteDTO;
@@ -25,11 +26,10 @@ public interface FavoriteStoreService {
 
     /**
      * 查询当前用户的收藏记录
-     * @param locationId 地址ID
-     * @param storeType 门店类型
+     * @param dto 查询条件（地址ID、门店类型列表）
      * @return 收藏记录列表
      */
-    List<FavoriteStoreVO> listFavorites(Long locationId, String storeType);
+    List<FavoriteStoreVO> listFavorites(FavoriteStoreListDTO dto);
 
     /**
      * 查询收藏门店的实时信息
