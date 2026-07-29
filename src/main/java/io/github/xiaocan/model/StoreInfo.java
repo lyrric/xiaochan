@@ -21,6 +21,7 @@ public class StoreInfo {
     /**
      * 门店id
      */
+    @Deprecated
     private Integer storeId;
 
     /**
@@ -33,14 +34,6 @@ public class StoreInfo {
      * 门店类型
      */
     private StoreTypeEnum storeTypeEnum;
-    /**
-     * 是否是新店
-     */
-    private Boolean ifNew;
-    /**
-     * 营业时间 10:00-22:00
-     */
-    private String openHours;
     /**
      * 活动id
      * 同一个门店，这个活动id每天都是不一样的
@@ -65,17 +58,21 @@ public class StoreInfo {
     private Integer leftNumber;
 
     /**
-     * 距离
-     * 单位米（小蚕满减）
-     * 美团赏金自带单位
+     * 距离,仅小蚕满减有值
+     * 单位米
      */
-    private String distance;
+    private Integer distance;
+
     /**
-     * 满多少返（仅小蚕满减）
+     * 距离自带单位
+     */
+    private String distanceStr;
+    /**
+     * 满多少返（仅满减）
      */
     private BigDecimal price;
     /**
-     * 返的金额（仅小蚕满减）
+     * 返的金额（仅满减）
      */
     private BigDecimal rebatePrice;
     /**
@@ -88,10 +85,8 @@ public class StoreInfo {
     private BigDecimal rebateMax;
     /**
      * 好评条件
-     * 99：无需评价
-     * 2：图文评价
      */
-    private Integer rebateCondition;
+    private String rebateConditionStr;
 
     /**
      * 门店图片

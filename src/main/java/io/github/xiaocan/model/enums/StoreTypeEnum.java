@@ -13,6 +13,16 @@ public enum StoreTypeEnum {
     /**
      * 小蚕美团赏金
      */
-    XC_MTSJ
+    XC_MTSJ ,
+
+    /**
+     * 歪卖-满减
+     */
+    WM_MANJIAN,
+
+    /**
+     * 歪卖-美团赏金
+     */
+    WM_MTSJ,
     ;
 }

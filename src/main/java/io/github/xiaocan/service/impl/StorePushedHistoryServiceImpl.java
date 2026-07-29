@@ -36,14 +36,14 @@ public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistor
     }
 
     @Override
-    public StorePushedHistoryEntity findByNotifyIdAndStoreIdToday(Integer notifyId, Integer storeId) {
+    public StorePushedHistoryEntity findByNotifyIdAndUniqIdToday(Integer notifyId, String uniqId) {
         // 获取今天的开始时间和结束时间
         LocalDateTime todayStart = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime todayEnd = todayStart.plusDays(1);
 
         return lambdaQuery()
                 .eq(StorePushedHistoryEntity::getNotifyConfigId, notifyId)
-                .eq(StorePushedHistoryEntity::getStoreId, storeId)
+                .eq(StorePushedHistoryEntity::getUniqId, uniqId)
                 .last("limit 1")
                 .between(StorePushedHistoryEntity::getCreateTime, todayStart, todayEnd)
                 .one();
@@ -51,10 +51,10 @@ public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistor
 
 
     @Override
-    public StorePushedHistoryEntity findByNotifyIdAndStoreIdAll(Integer notifyId, Integer storeId) {
+    public StorePushedHistoryEntity findByNotifyIdAndUniqIdAll(Integer notifyId, String uniqId) {
         return lambdaQuery()
                 .eq(StorePushedHistoryEntity::getNotifyConfigId, notifyId)
-                .eq(StorePushedHistoryEntity::getStoreId, storeId)
+                .eq(StorePushedHistoryEntity::getUniqId, uniqId)
                 .last("limit 1")
                 .one();
     }

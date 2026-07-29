@@ -118,7 +118,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             return false;
         }
         long overDistanceCount = list.stream()
-                .filter(t -> Long.parseLong(t.getDistance()) > MAX_DISTANCE)
+                .filter(t -> t.getDistance() > MAX_DISTANCE)
                 .count();
         int size = list.size();
         //有一半的店距离超过MAX_DISTANCE，则不再查找下一页

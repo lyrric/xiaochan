@@ -29,10 +29,8 @@ public class IgnoreStoreVO {
     private BigDecimal rebatePrice;
     /**
      * 好评条件
-     * 99：无需评价
-     * 2：图文评价
      */
-    private Integer rebateCondition;
+    private String rebateConditionStr;
     /**
      * 门店图片
      */

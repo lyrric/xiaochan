@@ -139,15 +139,15 @@ public class StoreTask extends BaseTask {
                     .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
                     .toList();
         } else {
-            // STORE_KEYWORD：过滤有库存 + 排除已通知过的门店（按配置ID + 门店ID）
+            // STORE_KEYWORD：过滤有库存 + 排除已通知过的门店（按配置ID + 门店唯一ID）
             StoreKeywordExtNotifyConfig storeKeywordExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreKeywordExtNotifyConfig.class);
             return storeInfos.stream()
                     .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
                     .filter(storeInfo -> storeKeywordExtNotifyConfig.getLimitDistance() == null
                             || !storeKeywordExtNotifyConfig.getLimitDistance()
-                            || (storeInfo.getDistance() != null && Long.parseLong(storeInfo.getDistance()) <= 3500))
+                            || (storeInfo.getDistance() != null && storeInfo.getDistance() <= 3500))
                     .filter(storeInfo -> storePushedHistoryService
-                            .findByNotifyIdAndStoreIdAll(notifyConfig.getId(), storeInfo.getStoreId()) == null)
+                            .findByNotifyIdAndUniqIdAll(notifyConfig.getId(), storeInfo.getUniqId()) == null)
                     .toList();
         }
     }

@@ -204,15 +204,14 @@ public class BaseTask {
     }
 
     private String buildMessage(StoreInfo storeInfo, LocationEntity locationEntity) {
-        String rebateConditionText = storeInfo.getRebateCondition() == null ? "未知"
-                : (storeInfo.getRebateCondition() != 99 ? "是" : "否");
+        String rebateConditionText = storeInfo.getRebateConditionStr() == null ? "未知" : storeInfo.getRebateConditionStr();
         return BaseTask.DEFAULT_BODY_TEMPLATE
                 .replace("${地点}", locationEntity.getName())
                 .replace("${平台}", StorePlatformEnum.getByType(storeInfo.getType()).name)
                 .replace("${店铺}", storeInfo.getName())
                 .replace("${开始时间}", storeInfo.getStartTime())
                 .replace("${结束时间}", storeInfo.getEndTime())
-                .replace("${距离}", String.valueOf(storeInfo.getDistance()))
+                .replace("${距离}", String.valueOf(storeInfo.getDistanceStr()))
                 .replace("${库存}", String.valueOf(storeInfo.getLeftNumber()))
                 .replace("${满}", storeInfo.getPrice().toPlainString())
                 .replace("${返}", storeInfo.getRebatePrice().toPlainString())

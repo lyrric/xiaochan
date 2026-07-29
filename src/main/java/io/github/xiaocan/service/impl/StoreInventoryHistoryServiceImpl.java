@@ -37,7 +37,7 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
                     entity.setUniqueId(storeInfo.getUniqId());
                     entity.setInventory(storeInfo.getLeftNumber());
                     entity.setStoreType(storeInfo.getStoreTypeEnum());
-                    entity.setSkuId(storeInfo.getPromotionId() != null ? String.valueOf(storeInfo.getPromotionId()) : "");
+                    entity.setSkuId(storeInfo.getPromotionId() != null ? storeInfo.getPromotionId() : "");
                     entity.setSkuName(buildSkuName(storeInfo));
                     entity.setCreateTime(now);
                     return entity;
@@ -65,6 +65,17 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
         Map<String, List<StoreInventoryHistoryEntity>> grouped = entities.stream()
                 .collect(Collectors.groupingBy(e -> Objects.toString(e.getSkuId(), ""), LinkedHashMap::new, Collectors.toList()));
 
+        List<StoreInventoryHistoryEntity> deduped = getStoreInventoryHistoryEntities(grouped);
+        return deduped.stream()
+                .map(entity -> {
+                    StoreInventoryHistoryVO vo = new StoreInventoryHistoryVO();
+                    BeanUtils.copyProperties(entity, vo);
+                    return vo;
+                })
+                .toList();
+    }
+
+    private static List<StoreInventoryHistoryEntity> getStoreInventoryHistoryEntities(Map<String, List<StoreInventoryHistoryEntity>> grouped) {
         List<StoreInventoryHistoryEntity> deduped = new ArrayList<>();
         for (List<StoreInventoryHistoryEntity> group : grouped.values()) {
             int size = group.size();
@@ -79,13 +90,7 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
                 }
             }
         }
-        return deduped.stream()
-                .map(entity -> {
-                    StoreInventoryHistoryVO vo = new StoreInventoryHistoryVO();
-                    BeanUtils.copyProperties(entity, vo);
-                    return vo;
-                })
-                .toList();
+        return deduped;
     }
 
     private String buildSkuName(StoreInfo storeInfo) {

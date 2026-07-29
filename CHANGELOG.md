@@ -1,5 +1,10 @@
 # 更新记录
 
+- 2026年7月29日
+  - 门店推送历史（store_pushed_history）字段对齐 StoreInfo：storeId 改为 uniqId（字符串），兼容美团赏金无 storeId 的场景；promotionId 改为字符串
+  - 移除 ifNew、openHours 字段，新增 storeTypeEnum、distanceStr、rebateRatio、rebateMax 字段，推送历史支持记录赏金类活动信息
+  - 去重查询改为按 notifyConfigId + uniqId 匹配（findByNotifyIdAndUniqIdToday/All）
+  - 存量库需执行 ddl.sql 末尾 2026年7月29日的 ALTER 语句迁移表结构
 - 2026年7月27日
   - 收藏门店接口支持门店名称模糊过滤与分页
 - 2026年7月24日

@@ -110,7 +110,7 @@ public class XiaochanHttp {
             storeInfo.setName(poi.getString("name"));
             storeInfo.setType(1);
             storeInfo.setIcon(poi.getString("picture"));
-            storeInfo.setDistance(poi.getString("delivery_distance"));
+            storeInfo.setDistanceStr(poi.getString("delivery_distance"));
             storeInfo.setUniqId(poi.getString("wm_poi_id"));
             JSONArray plans = poi.getJSONArray("plan_activity_info_list");
             for (int j = 0; j < plans.size(); j++) {
@@ -122,12 +122,10 @@ public class XiaochanHttp {
                 item.setRebateMax(activity.getBigDecimal("max_commission").divide(new BigDecimal(100)));
                 item.setLeftNumber(activity.getInteger("inventory"));
                 if (Objects.equals(activity.getInteger("plan_activity_type"), 1)) {
-                    item.setRebateCondition(99);
+                    item.setRebateConditionStr("无需评价");
                 }else if (Objects.equals(activity.getInteger("plan_activity_type"), 2)) {
-                    item.setRebateCondition(2);
+                    item.setRebateConditionStr("图文评价");
                 }
-                item.setIfNew(false);
-                item.setOpenHours("00:00-24:00");
                 item.setStartTime("00:00");
                 item.setEndTime("24:00");
                 item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ);
@@ -302,12 +300,12 @@ public class XiaochanHttp {
         List<StoreInfo> result = new ArrayList<>();
         StoreInfo storeInfo = new StoreInfo();
         storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
-        storeInfo.setOpenHours(jsonObject.getJSONObject("store").getString("opening_hours"));
         storeInfo.setPromotionId(jsonObject.getString("promotion_id"));
-        storeInfo.setRebateCondition(jsonObject.getInteger("rebate_condition"));
+        storeInfo.setRebateConditionStr(convertRebateCondition(jsonObject.getInteger("rebate_condition")));
         storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
         storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
-        storeInfo.setDistance(jsonObject.getString("distance") );
+        storeInfo.setDistance(jsonObject.getInteger("distance"));
+        storeInfo.setDistanceStr(storeInfo.getDistance() + "m");
         storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
         storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
         storeInfo.setUniqId(String.valueOf(storeInfo.getStoreId()));
@@ -393,6 +391,21 @@ public class XiaochanHttp {
 
     private static String formatStartEndTime(Integer hour, Integer minute){
         return String.format("%02d", hour) + ":" + String.format("%02d", minute);
+    }
+
+    /**
+     * 好评条件转文案
+     * 99：无需评价，2：图文评价
+     */
+    private static String convertRebateCondition(Integer rebateCondition){
+        if (rebateCondition == null) {
+            return null;
+        }
+        return switch (rebateCondition) {
+            case 99 -> "无需评价";
+            case 2 -> "图文评价";
+            default -> "其他";
+        };
     }
 
     private static BigDecimal safeDivide(BigDecimal b1, BigDecimal b2){

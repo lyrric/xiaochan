@@ -16,7 +16,7 @@ public interface StorePushedHistoryService extends IService<StorePushedHistoryEn
     Page<StorePushedHistoryVO> pageByUser(NotifyHistoryQueryDTO dto);
 
 
-    StorePushedHistoryEntity findByNotifyIdAndStoreIdToday(Integer notifyId, Integer storeId);
+    StorePushedHistoryEntity findByNotifyIdAndUniqIdToday(Integer notifyId, String uniqId);
 
-    StorePushedHistoryEntity findByNotifyIdAndStoreIdAll(Integer notifyId, Integer storeId);
+    StorePushedHistoryEntity findByNotifyIdAndUniqIdAll(Integer notifyId, String uniqId);
 }

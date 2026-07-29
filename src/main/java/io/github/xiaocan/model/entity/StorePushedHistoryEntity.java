@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -41,22 +42,19 @@ public class StorePushedHistoryEntity {
      */
     private String name;
     /**
-     * 门店id
+     * 门店唯一id
+     * storeId or wm_poi_id
      */
-    private Integer storeId;
+    private String uniqId;
     /**
-     * 是否是新店
+     * 门店类型
      */
-    private Boolean ifNew;
-    /**
-     * 营业时间 10:00-22:00
-     */
-    private String openHours;
+    private StoreTypeEnum storeTypeEnum;
     /**
      * 活动id
      * 同一个门店，这个活动id每天都是不一样的
      */
-    private Integer promotionId;
+    private String promotionId;
     /**
      * 平台类型 1:美团，2：饿了么，3京东
      */
@@ -80,6 +78,10 @@ public class StorePushedHistoryEntity {
      */
     private Integer distance;
     /**
+     * 距离自带单位
+     */
+    private String distanceStr;
+    /**
      * 满多少返
      */
     private BigDecimal price;
@@ -88,11 +90,17 @@ public class StorePushedHistoryEntity {
      */
     private BigDecimal rebatePrice;
     /**
-     * 好评条件
-     * 99：无需评价
-     * 2：图文评价
+     * 返现百分比（仅美团赏金）
      */
-    private Integer rebateCondition;
+    private BigDecimal rebateRatio;
+    /**
+     * 返现百分比-最高返金额（仅美团赏金）
+     */
+    private BigDecimal rebateMax;
+    /**
+     * 好评条件
+     */
+    private String rebateConditionStr;
     /**
      * 门店图片
      */
