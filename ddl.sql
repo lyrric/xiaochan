@@ -64,7 +64,6 @@ CREATE TABLE `store_pushed_history`  (
                                          `distance` int NULL DEFAULT NULL COMMENT '距离，单位米',
                                          `price` decimal(10, 2) NULL DEFAULT NULL COMMENT '满多少返',
                                          `rebate_price` decimal(10, 2) NULL DEFAULT NULL COMMENT '返的金额',
-                                         `rebate_condition_str` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '好评条件，如：无需评价、图文评价',
                                          `icon` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '门店图片URL',
                                          PRIMARY KEY (`id`) USING BTREE,
                                          INDEX `idx_user_id`(`user_id` ASC) USING BTREE,

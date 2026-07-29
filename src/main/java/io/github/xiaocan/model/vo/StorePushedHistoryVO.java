@@ -84,10 +84,6 @@ public class StorePushedHistoryVO {
      */
     private BigDecimal rebateMax;
     /**
-     * 好评条件
-     */
-    private String rebateConditionStr;
-    /**
      * 门店图片
      */
     private String icon;
