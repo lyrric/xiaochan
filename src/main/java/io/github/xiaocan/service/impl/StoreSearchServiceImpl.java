@@ -63,7 +63,6 @@ public class StoreSearchServiceImpl implements StoreSearchService {
         try {
             WmmtShopListDTO wmmtDto = new WmmtShopListDTO();
             wmmtDto.setName(dto.getName());
-            wmmtDto.setCityCode(dto.getCityCode());
             wmmtDto.setLatitude(dto.getLatitude());
             wmmtDto.setLongitude(dto.getLongitude());
             WmPageVO wmPageVO = wmmtService.getShopList(wmmtDto);

@@ -15,12 +15,6 @@ public class WmmtShopListDTO {
     private String name;
 
     /**
-     * 城市区编码
-     */
-    @NotNull(message = "cityCode不能为空")
-    private Integer cityCode;
-
-    /**
      * 纬度
      */
     @NotNull(message = "latitude不能为空")

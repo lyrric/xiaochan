@@ -449,11 +449,4 @@ public class WmmtHttp {
         }
         return sb.toString();
     }
-
-    public static void main(String[] args) {
-        fetchKeys(null, "成都");
-        WmPageVO wmPageVO = getShopList(null, "成都", "104.063049", "30.569082", null,null);
-        System.out.println("1111");
-
-    }
 }
