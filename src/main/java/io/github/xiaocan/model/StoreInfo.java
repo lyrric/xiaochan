@@ -6,7 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Builder
 @AllArgsConstructor
@@ -102,5 +105,49 @@ public class StoreInfo {
      * 门店是否仍存在（仅收藏门店模式有效）
      */
     private Boolean exists;
+
+    /**
+     * 设置distance时，若distanceStr为空则同步生成distanceStr
+     */
+    public void setDistance(Integer distance) {
+        this.distance = distance;
+        if (distance != null && StringUtils.isBlank(this.distanceStr)) {
+            if (distance >= 1000) {
+                BigDecimal km = BigDecimal.valueOf(distance)
+                        .divide(BigDecimal.valueOf(1000), 1, RoundingMode.HALF_UP)
+                        .stripTrailingZeros();
+                this.distanceStr = km.toPlainString() + "km";
+            } else {
+                this.distanceStr = distance + "m";
+            }
+        }
+    }
+
+    /**
+     * 设置distanceStr时，若distance为空则同步解析distance（单位：米）
+     * distanceStr格式如 "500m"、"1.5KM"（大小写均可）
+     */
+    public void setDistanceStr(String distanceStr) {
+        this.distanceStr = distanceStr;
+        if (StringUtils.isNotBlank(distanceStr) && this.distance == null) {
+            String lower = distanceStr.trim().toLowerCase();
+            try {
+                if (lower.endsWith("km")) {
+                    String num = lower.substring(0, lower.length() - 2).trim();
+                    this.distance = new BigDecimal(num)
+                            .multiply(BigDecimal.valueOf(1000))
+                            .setScale(0, RoundingMode.HALF_UP)
+                            .intValue();
+                } else if (lower.endsWith("m")) {
+                    String num = lower.substring(0, lower.length() - 1).trim();
+                    this.distance = new BigDecimal(num)
+                            .setScale(0, RoundingMode.HALF_UP)
+                            .intValue();
+                }
+            } catch (NumberFormatException ignored) {
+                // 解析失败不设置distance
+            }
+        }
+    }
 
 }
