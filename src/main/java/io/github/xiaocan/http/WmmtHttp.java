@@ -17,6 +17,8 @@ import org.springframework.beans.BeanUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
@@ -318,7 +320,7 @@ public class WmmtHttp {
                     skuStoreinfo.setRebatePrice(sku.getJSONObject("maxGradeRebate").getBigDecimal("rebateMoney"));
                     skuStoreinfo.setPromotionId(sku.getString("id"));
                 }else{
-                    skuStoreinfo.setRebateRatio(sku.getBigDecimal("meituanRatio"));
+                    skuStoreinfo.setRebateRatio(sku.getBigDecimal("meituanRatio").divide(new BigDecimal(100), 2, RoundingMode.HALF_DOWN));
                     //meituanVipRatio：会员返现比例
                     skuStoreinfo.setRebateMax(sku.getBigDecimal("maxReturnMoney"));
                     //美团赏金的没返，暂时用uniqId来替代
