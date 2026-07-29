@@ -110,10 +110,10 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
     }
 
     private String buildSkuName(StoreInfo storeInfo) {
-        if (Objects.equals(storeInfo.getStoreTypeEnum(), StoreTypeEnum.XC_MANJIAN)) {
+        if (Objects.equals(storeInfo.getStoreTypeEnum(), StoreTypeEnum.XC_MANJIAN) || Objects.equals(storeInfo.getStoreTypeEnum(), StoreTypeEnum.WM_MANJIAN)) {
             return "满" + stripTrailingZeros(storeInfo.getPrice()) + "返" + stripTrailingZeros(storeInfo.getRebatePrice());
         }
-        if (Objects.equals(storeInfo.getStoreTypeEnum(), StoreTypeEnum.XC_MTSJ)) {
+        if (Objects.equals(storeInfo.getStoreTypeEnum(), StoreTypeEnum.XC_MTSJ) || Objects.equals(storeInfo.getStoreTypeEnum(), StoreTypeEnum.WM_MTSJ)) {
             return "返" + stripTrailingZeros(storeInfo.getRebateRatio()) + "%最高" + stripTrailingZeros(storeInfo.getRebateMax());
         }
         return "未知";
