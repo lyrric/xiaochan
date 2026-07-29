@@ -3,6 +3,7 @@ package io.github.xiaocan.tasks;
 import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.http.MessageHttp;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.WmmtShopListDTO;
 import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
@@ -10,6 +11,7 @@ import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.vo.WmPageVO;
 import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +35,11 @@ import java.util.stream.Collectors;
 @Component
 public class BaseTask {
 
+    /**
+     * 歪麦门店列表最大拉取页数，防止游标翻页死循环
+     */
+    private static final int WM_MAX_PAGES = 5;
+
     @Resource
     private MonitoryConfigService monitoryConfigService;
     @Resource
@@ -42,6 +50,8 @@ public class BaseTask {
     private StorePushedHistoryService storePushedHistoryService;
     @Resource
     private UserService userService;
+    @Resource
+    private WmmtService wmmtService;
 
 
     void runSingle(MonitorConfigEntity notifyConfig) {
@@ -119,6 +129,33 @@ public class BaseTask {
         throw new UnsupportedOperationException("不支持的调用");
     }
 
+    /**
+     * 获取歪麦门店活动信息，列表混合了满减和美团赏金，按配置的门店类型过滤
+     *
+     * @param keyword 门店名模糊搜索，为空时拉取全量列表
+     */
+    protected List<StoreInfo> fetchWmStoreInfos(MonitorConfigEntity notifyConfig, LocationEntity location, String keyword) {
+        WmmtShopListDTO dto = new WmmtShopListDTO();
+        dto.setName(keyword);
+        dto.setLatitude(location.getLatitude());
+        dto.setLongitude(location.getLongitude());
+        List<StoreInfo> storeInfos = new ArrayList<>();
+        for (int page = 0; page < WM_MAX_PAGES; page++) {
+            WmPageVO vo = wmmtService.getShopList(dto);
+            if (vo.getStoreInfos() == null || vo.getStoreInfos().isEmpty()) {
+                break;
+            }
+            storeInfos.addAll(vo.getStoreInfos());
+            if (vo.getScrollPageData() == null) {
+                break;
+            }
+            dto.setScrollPageData(vo.getScrollPageData());
+        }
+        return storeInfos.stream()
+                .filter(storeInfo -> storeInfo.getStoreTypeEnum() == notifyConfig.getStoreType())
+                .toList();
+    }
+
     protected List<StoreInfo> filterStoreInfos(MonitorConfigEntity notifyConfig,
                                                List<StoreInfo> storeInfos){
         throw new UnsupportedOperationException("不支持的调用");
@@ -162,11 +199,12 @@ public class BaseTask {
     private static final String DEFAULT_BODY_TEMPLATE =
             "地点：${地点}<br/>" +
             "平台：${平台}<br/>" +
+            "门店类型：${门店类型}<br/>" +
             "店铺：${店铺}<br/>" +
             "时间范围：${开始时间}-${结束时间}<br/>" +
-            "距离：${距离}米<br/>" +
+            "距离：${距离}<br/>" +
             "库存：${库存}<br/>" +
-            "规则：满${满}返${返}<br/>" +
+            "规则：${规则}<br/>" +
             "是否需要评价：${评价条件}";
 
     /**
@@ -205,16 +243,34 @@ public class BaseTask {
 
     private String buildMessage(StoreInfo storeInfo, LocationEntity locationEntity) {
         String rebateConditionText = storeInfo.getRebateConditionStr() == null ? "未知" : storeInfo.getRebateConditionStr();
+        String storeTypeText = storeInfo.getStoreTypeEnum() == null ? "未知" : storeInfo.getStoreTypeEnum().getDescription();
         return BaseTask.DEFAULT_BODY_TEMPLATE
                 .replace("${地点}", locationEntity.getName())
                 .replace("${平台}", StorePlatformEnum.getByType(storeInfo.getType()).name)
+                .replace("${门店类型}", storeTypeText)
                 .replace("${店铺}", storeInfo.getName())
                 .replace("${开始时间}", storeInfo.getStartTime())
                 .replace("${结束时间}", storeInfo.getEndTime())
-                .replace("${距离}", String.valueOf(storeInfo.getDistanceStr()))
+                .replace("${距离}", storeInfo.getDistanceStr() == null ? "未知" : storeInfo.getDistanceStr())
                 .replace("${库存}", String.valueOf(storeInfo.getLeftNumber()))
-                .replace("${满}", storeInfo.getPrice().toPlainString())
-                .replace("${返}", storeInfo.getRebatePrice().toPlainString())
+                .replace("${规则}", buildRuleText(storeInfo))
                 .replace("${评价条件}", rebateConditionText);
+    }
+
+    /**
+     * 构建返现规则文案，兼容满减和百分比返现（美团赏金）两类数据
+     */
+    private String buildRuleText(StoreInfo storeInfo) {
+        if (storeInfo.getRebateRatio() != null) {
+            String ruleText = "返现" + storeInfo.getRebateRatio().stripTrailingZeros().toPlainString() + "%";
+            if (storeInfo.getRebateMax() != null) {
+                ruleText += "，最高返" + storeInfo.getRebateMax().stripTrailingZeros().toPlainString() + "元";
+            }
+            return ruleText;
+        }
+        if (storeInfo.getPrice() != null && storeInfo.getRebatePrice() != null) {
+            return "满" + storeInfo.getPrice().toPlainString() + "返" + storeInfo.getRebatePrice().toPlainString();
+        }
+        return "未知";
     }
 }

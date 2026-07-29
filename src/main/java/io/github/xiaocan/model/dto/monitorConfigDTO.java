@@ -4,6 +4,7 @@ import io.github.xiaocan.model.MinimumPayExtNotifyConfig;
 import io.github.xiaocan.model.StoreExtNotifyConfig;
 import io.github.xiaocan.model.StoreKeywordExtNotifyConfig;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -27,6 +28,11 @@ public class monitorConfigDTO {
      */
     @NotNull
     private Long locationId;
+    /**
+     * 门店类型
+     */
+    @NotNull
+    private StoreTypeEnum storeType = StoreTypeEnum.XC_MANJIAN;
     /**
      * 运行时间
      */

@@ -11,6 +11,7 @@ import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import io.github.xiaocan.model.enums.NotifyFrequencyEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.StorePushedHistoryService;
 import io.github.xiaocan.service.XiaoChanService;
@@ -121,6 +122,10 @@ public class StoreTask extends BaseTask {
             execHistory.setNotifyType(MonitorTypeEnums.STORE_KEYWORD);
             StoreKeywordExtNotifyConfig storeKeywordExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreKeywordExtNotifyConfig.class);
             keyword = storeKeywordExtNotifyConfig.getKeyword();
+        }
+        // 歪麦满减走歪麦接口，其余默认小蚕满减
+        if (notifyConfig.getStoreType() == StoreTypeEnum.WM_MANJIAN) {
+            return fetchWmStoreInfos(notifyConfig, location, keyword);
         }
         return xiaoChanService.searchList(keyword, location.getCityCode(), location.getLongitude(), location.getLatitude());
     }

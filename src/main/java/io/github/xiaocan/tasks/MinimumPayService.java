@@ -8,6 +8,7 @@ import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.StorePushedHistoryService;
 import io.github.xiaocan.service.XiaoChanService;
@@ -34,6 +35,10 @@ public class MinimumPayService extends BaseTask {
     @Override
     protected List<StoreInfo> fetchStoreInfos(MonitorConfigEntity notifyConfig, TaskExecHistoryEntity execHistory, LocationEntity location) {
         execHistory.setNotifyType(MonitorTypeEnums.MINIMUM_PAY);
+        // 歪麦满减走歪麦接口，其余默认小蚕满减
+        if (notifyConfig.getStoreType() == StoreTypeEnum.WM_MANJIAN) {
+            return fetchWmStoreInfos(notifyConfig, location, null);
+        }
         return xiaoChanService.getList(location.getCityCode(), location.getLongitude(), location.getLatitude(), 500);
     }
 

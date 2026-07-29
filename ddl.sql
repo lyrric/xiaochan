@@ -169,3 +169,8 @@ ALTER TABLE `store_pushed_history`
 -- 2026年7月29日 门店推送历史删除 distance 字段，统一使用 distance_str
 ALTER TABLE `store_pushed_history`
     DROP COLUMN `distance`;
+
+-- 2026年7月29日 监控配置添加门店类型字段，默认小蚕满减
+ALTER TABLE `monitor_config`
+    ADD COLUMN `store_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'XC_MANJIAN' COMMENT '门店类型：XC_MANJIAN-小蚕满减, WM_MANJIAN-歪卖满减'
+        AFTER `ext_config`;

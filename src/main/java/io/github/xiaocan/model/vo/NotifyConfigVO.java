@@ -5,6 +5,7 @@ import io.github.xiaocan.model.StoreExtNotifyConfig;
 import io.github.xiaocan.model.StoreKeywordExtNotifyConfig;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import lombok.Data;
 
 /**
@@ -25,6 +26,10 @@ public class NotifyConfigVO {
      * 位置信息
      */
     private Long locationId;
+    /**
+     * 门店类型
+     */
+    private StoreTypeEnum storeType;
     /**
      * 运行时间
      */

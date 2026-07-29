@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -53,6 +54,10 @@ public class MonitorConfigEntity {
      * 门店提醒扩展配置
      */
     private String extConfig;
+    /**
+     * 门店类型
+     */
+    private StoreTypeEnum storeType = StoreTypeEnum.XC_MANJIAN;
     /**
      * 状态
      */

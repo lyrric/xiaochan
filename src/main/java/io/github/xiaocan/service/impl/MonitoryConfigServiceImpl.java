@@ -12,6 +12,7 @@ import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.NotifyConfigVO;
 import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.UserService;
@@ -97,6 +98,10 @@ public class MonitoryConfigServiceImpl extends ServiceImpl<NotifyConfigMapper, M
     @Override
     public void addUpdateConfig(monitorConfigDTO dto) {
         log.info("保存通知配置请求: {}", dto);
+        // 门店类型校验，仅支持满减类型
+        if (dto.getStoreType() != StoreTypeEnum.XC_MANJIAN && dto.getStoreType() != StoreTypeEnum.WM_MANJIAN) {
+            throw new BusinessException("门店类型仅支持小蚕满减、歪卖满减");
+        }
         // cron 表达式校验
         String cron = dto.getCron();
         if (StringUtils.hasText(cron)) {
