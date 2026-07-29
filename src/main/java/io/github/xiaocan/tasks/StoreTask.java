@@ -1,6 +1,7 @@
 package io.github.xiaocan.tasks;
 
 import com.alibaba.fastjson2.JSON;
+import io.github.xiaocan.constant.StoreConstant;
 import io.github.xiaocan.model.StoreExtNotifyConfig;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.StoreKeywordExtNotifyConfig;
@@ -14,6 +15,7 @@ import io.github.xiaocan.model.enums.NotifyFrequencyEnums;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.service.MonitoryConfigService;
 import io.github.xiaocan.service.StorePushedHistoryService;
+import io.github.xiaocan.service.WmmtService;
 import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +40,8 @@ public class StoreTask extends BaseTask {
     private MonitoryConfigService monitoryConfigService;
     @Resource
     private StorePushedHistoryService storePushedHistoryService;
+    @Resource
+    private WmmtService wmmtService;
 
 
     /**
@@ -123,9 +127,9 @@ public class StoreTask extends BaseTask {
             StoreKeywordExtNotifyConfig storeKeywordExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreKeywordExtNotifyConfig.class);
             keyword = storeKeywordExtNotifyConfig.getKeyword();
         }
-        // 歪麦满减走歪麦接口，其余默认小蚕满减
+        // 歪麦满减走歪麦接口，关键字搜索一页结果已足够，无需翻页；其余默认小蚕满减
         if (notifyConfig.getStoreType() == StoreTypeEnum.WM_MANJIAN) {
-            return fetchWmStoreInfos(notifyConfig, location, keyword);
+            return wmmtService.fetchWmStoreInfos(notifyConfig.getStoreType(), location, keyword);
         }
         return xiaoChanService.searchList(keyword, location.getCityCode(), location.getLongitude(), location.getLatitude());
     }
@@ -150,7 +154,7 @@ public class StoreTask extends BaseTask {
                     .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
                     .filter(storeInfo -> storeKeywordExtNotifyConfig.getLimitDistance() == null
                             || !storeKeywordExtNotifyConfig.getLimitDistance()
-                            || (storeInfo.getDistance() != null && storeInfo.getDistance() <= 3500))
+                            || (storeInfo.getDistance() != null && storeInfo.getDistance() <= StoreConstant.MAX_DISTANCE))
                     .filter(storeInfo -> storePushedHistoryService
                             .findByNotifyIdAndUniqIdAll(notifyConfig.getId(), storeInfo.getUniqId()) == null)
                     .toList();

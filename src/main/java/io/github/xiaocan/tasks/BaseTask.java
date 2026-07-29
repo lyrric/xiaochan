@@ -3,7 +3,6 @@ package io.github.xiaocan.tasks;
 import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.http.MessageHttp;
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.dto.WmmtShopListDTO;
 import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
@@ -11,7 +10,6 @@ import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
-import io.github.xiaocan.model.vo.WmPageVO;
 import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -35,11 +32,6 @@ import java.util.stream.Collectors;
 @Component
 public class BaseTask {
 
-    /**
-     * 歪麦门店列表最大拉取页数，防止游标翻页死循环
-     */
-    private static final int WM_MAX_PAGES = 5;
-
     @Resource
     private MonitoryConfigService monitoryConfigService;
     @Resource
@@ -50,8 +42,6 @@ public class BaseTask {
     private StorePushedHistoryService storePushedHistoryService;
     @Resource
     private UserService userService;
-    @Resource
-    private WmmtService wmmtService;
 
 
     void runSingle(MonitorConfigEntity notifyConfig) {
@@ -127,33 +117,6 @@ public class BaseTask {
                                               TaskExecHistoryEntity execHistory,
                                               LocationEntity locationEntity){
         throw new UnsupportedOperationException("不支持的调用");
-    }
-
-    /**
-     * 获取歪麦门店活动信息，列表混合了满减和美团赏金，按配置的门店类型过滤
-     *
-     * @param keyword 门店名模糊搜索，为空时拉取全量列表
-     */
-    protected List<StoreInfo> fetchWmStoreInfos(MonitorConfigEntity notifyConfig, LocationEntity location, String keyword) {
-        WmmtShopListDTO dto = new WmmtShopListDTO();
-        dto.setName(keyword);
-        dto.setLatitude(location.getLatitude());
-        dto.setLongitude(location.getLongitude());
-        List<StoreInfo> storeInfos = new ArrayList<>();
-        for (int page = 0; page < WM_MAX_PAGES; page++) {
-            WmPageVO vo = wmmtService.getShopList(dto);
-            if (vo.getStoreInfos() == null || vo.getStoreInfos().isEmpty()) {
-                break;
-            }
-            storeInfos.addAll(vo.getStoreInfos());
-            if (vo.getScrollPageData() == null) {
-                break;
-            }
-            dto.setScrollPageData(vo.getScrollPageData());
-        }
-        return storeInfos.stream()
-                .filter(storeInfo -> storeInfo.getStoreTypeEnum() == notifyConfig.getStoreType())
-                .toList();
     }
 
     protected List<StoreInfo> filterStoreInfos(MonitorConfigEntity notifyConfig,

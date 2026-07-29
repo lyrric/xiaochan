@@ -1,5 +1,6 @@
 package io.github.xiaocan.service.impl;
 
+import io.github.xiaocan.constant.StoreConstant;
 import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
@@ -27,16 +28,6 @@ import java.util.List;
 @Slf4j
 public class XiaoChanServiceImpl implements XiaoChanService {
 
-    private static final int DEFAULT_PAGE_SIZE = 30;
-    /**
-     * 门店最大数量
-     */
-    public static final int MAX_SIZE = 500;
-    /**
-     * 门店最长距离
-     */
-    private static final int MAX_DISTANCE = 3500;
-
     @Resource
     private StoreInventoryHistoryService storeInventoryHistoryService;
 
@@ -59,7 +50,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 if (pageNum > 0) {
                     return Collections.emptyList();
                 }
-                result = getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), MAX_SIZE);
+                result = getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), StoreConstant.MAX_SIZE);
                 sortStoreList(result, queryListVO.getOrderType());
                 result = filter(result, queryListVO);
             }else{
@@ -92,7 +83,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (!hasNext(list)) {
                 break;
             }
-            offset += DEFAULT_PAGE_SIZE;
+            offset += StoreConstant.DEFAULT_PAGE_SIZE;
         }
         storeInventoryHistoryService.insertBatch(result);
         return result;
@@ -114,11 +105,11 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     }
 
     private boolean hasNext(List<StoreInfo> list){
-        if (list.size() < DEFAULT_PAGE_SIZE) {
+        if (list.size() < StoreConstant.DEFAULT_PAGE_SIZE) {
             return false;
         }
         long overDistanceCount = list.stream()
-                .filter(t -> t.getDistance() > MAX_DISTANCE)
+                .filter(t -> t.getDistance() > StoreConstant.MAX_DISTANCE)
                 .count();
         int size = list.size();
         //有一半的店距离超过MAX_DISTANCE，则不再查找下一页
