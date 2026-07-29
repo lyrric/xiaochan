@@ -222,7 +222,6 @@ public class WmmtHttp {
                     try {
                         String responseAesKey = rsaDecryptEncryptKey(responseEncryptKey, clientPrivateKey);
                         decryptedResponse = aesDecrypt(resBody, responseAesKey);
-                        log.info("getShopList 解密响应: {}", decryptedResponse);
                     } catch (Exception e) {
                         log.error("响应解密失败", e);
                         throw new BusinessException("响应解密失败: " + e.getMessage());
