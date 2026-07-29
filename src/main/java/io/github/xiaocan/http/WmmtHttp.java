@@ -141,13 +141,8 @@ public class WmmtHttp {
      * @return 解密后的响应
      */
     public static WmPageVO getShopList(String token, String city, WmmtShopListDTO dto) {
-        Object scrollPageData = null;
-        if (dto.getPvId() != null && !dto.getPvId().isEmpty()) {
-            JSONObject pageData = new JSONObject();
-            pageData.put("overbearScrollId", dto.getPvId());
-            scrollPageData = pageData;
-        }
-        return getShopList(token, city, dto.getLongitude(), dto.getLatitude(), scrollPageData, dto.getName());
+        // 前端原样传回的完整 scrollPageData，首页为 null，直接透传给上游接口
+        return getShopList(token, city, dto.getLongitude(), dto.getLatitude(), dto.getScrollPageData(), dto.getName());
     }
 
     /**
@@ -289,7 +284,8 @@ public class WmmtHttp {
             throw new BusinessException("获取数据失败: " + response.getString("msg"));
         }
         WmPageVO wmPageVO = new WmPageVO();
-        wmPageVO.setPagePvId(response.getJSONObject("data").getJSONObject("scrollPageData").getString("overbearScrollId"));
+        // 完整保留接口返回的 scrollPageData，原样返回给前端，翻页时前端原样传回
+        wmPageVO.setScrollPageData(response.getJSONObject("data").getJSONObject("scrollPageData"));
         JSONArray array = response.getJSONObject("data").getJSONArray("data");
         List<StoreInfo> storeInfoList = new ArrayList<>();
         wmPageVO.setStoreInfos(storeInfoList);
@@ -450,4 +446,10 @@ public class WmmtHttp {
         return sb.toString();
     }
 
+    public static void main(String[] args) {
+        fetchKeys(null, "成都");
+        WmPageVO wmPageVO = getShopList(null, "成都", "104.063049", "30.569082", null,null);
+        System.out.println("1111");
+
+    }
 }

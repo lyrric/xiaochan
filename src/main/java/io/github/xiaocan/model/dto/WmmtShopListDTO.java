@@ -33,9 +33,9 @@ public class WmmtShopListDTO {
     private String longitude;
 
     /**
-     * 翻页游标，上一页返回的pagePvId
-     * 第一页为空
+     * 分页游标数据，上一页接口返回的 scrollPageData，前端原样传回
+     * 第一页传 null
      */
-    private String pvId;
+    private Object scrollPageData;
 
 }

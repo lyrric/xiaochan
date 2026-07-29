@@ -14,9 +14,9 @@ import java.util.List;
 public class WmPageVO {
 
     /**
-     * 上一页pvid
+     * 分页游标数据，接口原样返回给前端，前端翻页时原样传回，不做任何修改
      */
-    private String pagePvId;
+    private Object scrollPageData;
 
     /**
      * 店铺信息列表
