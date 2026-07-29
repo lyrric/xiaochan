@@ -215,16 +215,17 @@ public class WmmtHttp {
                 }
 
                 String resBody = response.body();
+                String decryptedResponse;
                 if (responseEncryptKey != null && !responseEncryptKey.isEmpty()) {
                     try {
                         String responseAesKey = rsaDecryptEncryptKey(responseEncryptKey, clientPrivateKey);
-                        String decryptedResponse = aesDecrypt(resBody, responseAesKey);
+                        decryptedResponse = aesDecrypt(resBody, responseAesKey);
                         log.info("getShopList 解密响应: {}", decryptedResponse);
-                        return parseShopListResponse(JSONObject.parseObject(decryptedResponse));
                     } catch (Exception e) {
                         log.error("响应解密失败", e);
                         throw new BusinessException("响应解密失败: " + e.getMessage());
                     }
+                    return parseShopListResponse(JSONObject.parseObject(decryptedResponse));
                 }
 
                 // 没有 encrypt-key 头，尝试直接解析
