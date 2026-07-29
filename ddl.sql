@@ -165,3 +165,7 @@ ALTER TABLE `store_pushed_history`
     ADD COLUMN `rebate_ratio` decimal(10, 2) NULL DEFAULT NULL COMMENT '返现百分比（仅美团赏金）' AFTER `rebate_price`,
     ADD COLUMN `rebate_max` decimal(10, 2) NULL DEFAULT NULL COMMENT '返现最高返金额（仅美团赏金）' AFTER `rebate_ratio`,
     RENAME INDEX `idx_store_id` TO `idx_uniq_id`;
+
+-- 2026年7月29日 门店推送历史删除 distance 字段，统一使用 distance_str
+ALTER TABLE `store_pushed_history`
+    DROP COLUMN `distance`;

@@ -74,10 +74,6 @@ public class StorePushedHistoryEntity {
     private Integer leftNumber;
 
     /**
-     * 距离，单位米
-     */
-    private Integer distance;
-    /**
      * 距离自带单位
      */
     private String distanceStr;
