@@ -10,6 +10,8 @@ import io.github.xiaocan.service.StoreInventoryHistoryService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -17,36 +19,50 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventoryHistoryMapper, StoreInventoryHistoryEntity> implements StoreInventoryHistoryService {
 
+    private final ExecutorService inventoryExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "inventory-history-writer");
+        t.setDaemon(true);
+        return t;
+    });
 
     @Override
     public void insertBatch(List<StoreInfo> list) {
-        if (list == null || list.isEmpty()) {
-            return;
-        }
-        LocalDateTime now = LocalDateTime.now();
-        List<StoreInventoryHistoryEntity> entities = list.stream()
-                .filter(storeInfo -> Objects.nonNull(storeInfo.getLeftNumber()))
-                .map(storeInfo -> {
-                    StoreInventoryHistoryEntity entity = new StoreInventoryHistoryEntity();
-                    entity.setName(storeInfo.getName());
-                    entity.setUniqueId(storeInfo.getUniqId());
-                    entity.setInventory(storeInfo.getLeftNumber());
-                    entity.setStoreType(storeInfo.getStoreTypeEnum());
-                    entity.setSkuId(storeInfo.getPromotionId() != null ? storeInfo.getPromotionId() : "");
-                    entity.setSkuName(buildSkuName(storeInfo));
-                    entity.setCreateTime(now);
-                    return entity;
-                })
-                .toList();
-        if (entities.isEmpty()) {
-            return;
-        }
-        saveBatch(entities);
+        inventoryExecutor.execute(() -> {
+            try {
+                if (list == null || list.isEmpty()) {
+                    return;
+                }
+                LocalDateTime now = LocalDateTime.now();
+                List<StoreInventoryHistoryEntity> entities = list.stream()
+                        .filter(storeInfo -> Objects.nonNull(storeInfo.getLeftNumber()))
+                        .map(storeInfo -> {
+                            StoreInventoryHistoryEntity entity = new StoreInventoryHistoryEntity();
+                            entity.setName(storeInfo.getName());
+                            entity.setUniqueId(storeInfo.getUniqId());
+                            entity.setInventory(storeInfo.getLeftNumber());
+                            entity.setStoreType(storeInfo.getStoreTypeEnum());
+                            entity.setSkuId(storeInfo.getPromotionId() != null ? storeInfo.getPromotionId() : "");
+                            entity.setSkuName(buildSkuName(storeInfo));
+                            entity.setCreateTime(now);
+                            return entity;
+                        })
+                        .toList();
+                if (entities.isEmpty()) {
+                    return;
+                }
+                saveBatch(entities);
+            } catch (Exception e) {
+                log.error("异步保存库存历史失败", e);
+            }
+        });
     }
 
     @Override

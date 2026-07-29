@@ -10,8 +10,6 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-
 /**
  * 歪麦（waimaimingtang）门店服务实现
  */

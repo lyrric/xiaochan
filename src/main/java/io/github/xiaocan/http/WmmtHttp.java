@@ -6,6 +6,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaocan.config.BusinessException;
+import io.github.xiaocan.controller.ImageProxyController;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.WmmtShopListDTO;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
@@ -16,6 +17,7 @@ import org.springframework.beans.BeanUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -338,12 +340,23 @@ public class WmmtHttp {
                 String timeRange = sku.getString("releaseTimeQuantum");
                 skuStoreinfo.setStartTime(StringUtils.isBlank(timeRange) ? "00:00" : timeRange.substring(0, 5));
                 skuStoreinfo.setEndTime(StringUtils.isBlank(timeRange) ? "23:59" : timeRange.substring(9, 14));
+                rewriteIconToProxy(skuStoreinfo);
                 storeInfoList.add(skuStoreinfo);
             }
         }
+
         return wmPageVO;
     }
 
+    /**
+     * 将满减门店的原始 icon 拼接到图片中转接口上，前端直接访问中转接口
+     */
+    private static void rewriteIconToProxy(StoreInfo storeInfo) {
+        if (storeInfo.getStoreTypeEnum() == StoreTypeEnum.WM_MANJIAN && StringUtils.isNotBlank(storeInfo.getIcon())) {
+            storeInfo.setIcon(ImageProxyController.PROXY_PATH
+                    + URLEncoder.encode(storeInfo.getIcon(), StandardCharsets.UTF_8));
+        }
+    }
 
     private static int getType(String platformType){
         //1:美团，2：饿了么，3京东
