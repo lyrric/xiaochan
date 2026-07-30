@@ -174,3 +174,8 @@ ALTER TABLE `store_pushed_history`
 ALTER TABLE `monitor_config`
     ADD COLUMN `store_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL DEFAULT 'XC_MANJIAN' COMMENT '门店类型：XC_MANJIAN-小蚕满减, WM_MANJIAN-歪卖满减'
         AFTER `ext_config`;
+
+-- 2026年7月30日 user表添加歪麦token字段，默认为空
+ALTER TABLE `user`
+    ADD COLUMN `waimai_token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '歪麦token'
+        AFTER `spt`;

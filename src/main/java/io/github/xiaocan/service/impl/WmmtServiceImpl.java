@@ -5,9 +5,11 @@ import io.github.xiaocan.http.WmmtHttp;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.WmmtShopListDTO;
 import io.github.xiaocan.model.entity.LocationEntity;
+import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.WmPageVO;
 import io.github.xiaocan.service.StoreInventoryHistoryService;
+import io.github.xiaocan.service.UserService;
 import io.github.xiaocan.service.WmmtService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -32,9 +34,24 @@ public class WmmtServiceImpl implements WmmtService {
     @Resource
     private StoreInventoryHistoryService storeInventoryHistoryService;
 
+    @Resource
+    private UserService userService;
+
     @Override
     public WmPageVO getShopList(WmmtShopListDTO dto) {
-        WmPageVO vo = WmmtHttp.getShopList(null, CITY, dto);
+        String waimaiToken = userService.getByCurrentRequest().getWaimaiToken();
+        return getShopList(waimaiToken, dto);
+    }
+
+    /**
+     * 获取歪麦门店列表，使用指定的歪麦token
+     *
+     * @param waimaiToken 歪麦token
+     * @param dto         请求参数
+     * @return 门店列表 + 下一页游标
+     */
+    public WmPageVO getShopList(String waimaiToken, WmmtShopListDTO dto) {
+        WmPageVO vo = WmmtHttp.getShopList(waimaiToken, CITY, dto);
         if (vo.getStoreInfos() != null && !vo.getStoreInfos().isEmpty()) {
             storeInventoryHistoryService.insertBatch(vo.getStoreInfos());
         }
@@ -43,13 +60,15 @@ public class WmmtServiceImpl implements WmmtService {
 
     @Override
     public List<StoreInfo> fetchWmStoreInfos(StoreTypeEnum storeType, LocationEntity location, String keyword) {
+        UserEntity user = userService.getById(location.getUserId());
+        String waimaiToken = user.getWaimaiToken();
         WmmtShopListDTO dto = new WmmtShopListDTO();
         dto.setName(keyword);
         dto.setLatitude(location.getLatitude());
         dto.setLongitude(location.getLongitude());
         List<StoreInfo> storeInfos = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            WmPageVO vo = getShopList(dto);
+            WmPageVO vo = getShopList(waimaiToken, dto);
             if (vo.getStoreInfos() == null || vo.getStoreInfos().isEmpty()) {
                 break;
             }

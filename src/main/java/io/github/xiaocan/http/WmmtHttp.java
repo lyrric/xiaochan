@@ -60,16 +60,17 @@ public class WmmtHttp {
     private static final String BASE_URL_V2 = "https://wmapp-api-v2.waimaimingtang.com/api";
 
 
-    // 缓存的动态密钥
-    private static volatile String cachedPublicKey;
-    private static volatile String cachedPrivateKey;
-    private static volatile String cachedH5PublicKey;
+    // 缓存的动态密钥，按 token 隔离（token 可能为 null，用空字符串作为 key）
+    private static String publicKey;
+    private static String privateKey;
+    private static String h5PublicKey;
+
 
     // ====== 对外暴露的方法 ======
 
-    private static void checkAndFetchKeys(String token, String city) {
-        if (cachedPublicKey == null || cachedPrivateKey == null) {
-            fetchKeys(token, city);
+    private static void checkAndFetchKeys() {
+        if(StringUtils.isBlank(publicKey) || StringUtils.isBlank(privateKey) || StringUtils.isBlank(h5PublicKey)){
+            fetchKeys("", "长沙");
         }
     }
     /**
@@ -118,13 +119,11 @@ public class WmmtHttp {
             String decryptedData = aesDecrypt(encryptedData, LEGACY_AES_KEY);
             JSONObject data = JSONObject.parseObject(decryptedData);
 
-            cachedPrivateKey = data.getString("privateKey");
-            cachedPublicKey = data.getString("publicKey");
-            cachedH5PublicKey = data.getString("h5PublicKey");
+            privateKey = data.getString("privateKey");
+            publicKey = data.getString("publicKey");
+            h5PublicKey = data.getString("h5PublicKey");
 
-            log.info("密钥拉取成功, publicKey长度: {}, privateKey长度: {}",
-                    cachedPublicKey != null ? cachedPublicKey.length() : 0,
-                    cachedPrivateKey != null ? cachedPrivateKey.length() : 0);
+            log.info("密钥拉取成功");
 
         } catch (BusinessException e) {
             throw e;
@@ -157,89 +156,103 @@ public class WmmtHttp {
      * @param scrollPageData 上一页游标（首页传 null）
      * @return 解密后的响应 JSON
      */
-    public static WmPageVO getShopList(String token, String city, String longitude, String latitude,
+    private static WmPageVO getShopList(String token, String city, String longitude, String latitude,
                                          Object scrollPageData, String name) {
-        checkAndFetchKeys(token, city);
-        // 优先使用缓存的动态密钥，否则回退到源码兜底密钥
-        String publicKeyPem = cachedPublicKey != null ? cachedPublicKey : SOURCE_PUBLIC_KEY;
-        String privateKeyPem = cachedPrivateKey != null ? cachedPrivateKey : SOURCE_PRIVATE_KEY;
+
 
         try {
-            PublicKey serverPublicKey = loadPublicKey(publicKeyPem);
-            PrivateKey clientPrivateKey = loadPrivateKey(privateKeyPem);
 
-            // 构造请求参数
-            JSONObject params = new JSONObject();
-            params.put("userLongitude", longitude != null ? longitude : "104.08329");
-            params.put("userLatitude", latitude != null ? latitude : "30.65618");
-            params.put("city", city != null ? city : "长沙市");
-            params.put("limit", 15);
-            params.put("sortWay", "comprehensive");
-            params.put("categoryId", "");
-            params.put("shopName", name);
-            params.put("secKillFlag", 1);
-            params.put("signUpFlag", 2);
-            params.put("highRebatesFlag", 0);
-            params.put("noCommentFlag", 0);
-            params.put("takeawayPlatform", "");
-            params.put("userTypes", new int[]{1, 2, 3});
-            params.put("packageType", "");
-            params.put("scrollPageData", scrollPageData);
-            params.put("threeKmFlag", "");
-            params.put("tabType", "bwc");
-
+            JSONObject params = buildShopListParams(city, longitude, latitude, scrollPageData, name);
             // 生成随机 AES 密钥并加密请求体
             String aesKey = generateRandomString(32);
             String encryptedBody = aesEncrypt(params.toJSONString(), aesKey);
-            String encryptKey = rsaEncryptBase64Key(aesKey, serverPublicKey);
+            String encryptKey = rsaEncryptBase64Key(aesKey);
 
             // 构建请求头
             Map<String, String> headers = buildCommonHeaders(token, city);
             headers.put("content-type", "application/json");
             headers.put("encrypt-key", encryptKey);
 
-            final String SHOP_LIST_URL = BASE_URL_V2 + "/bwc/waimaimt-web-bwc/shopIndex/getShopList";
-            try (HttpResponse response = HttpUtil.createPost(SHOP_LIST_URL)
-                    .headerMap(headers, true)
-                    .timeout(10000)
-                    .body(encryptedBody)
-                    .execute()) {
-
-                if (!response.isOk()) {
-                    log.error("getShopList 请求失败, 状态码: {}, body: {}", response.getStatus(), response.body());
-                    throw new BusinessException("请求失败: " + response.getStatus());
-                }
-
-                // 解密响应
-                String responseEncryptKey = response.header("encrypt-key");
-                if (responseEncryptKey == null || responseEncryptKey.isEmpty()) {
-                    responseEncryptKey = response.header("Encrypt-Key");
-                }
-
-                String resBody = response.body();
-                String decryptedResponse;
-                if (responseEncryptKey != null && !responseEncryptKey.isEmpty()) {
-                    try {
-                        String responseAesKey = rsaDecryptEncryptKey(responseEncryptKey, clientPrivateKey);
-                        decryptedResponse = aesDecrypt(resBody, responseAesKey);
-                    } catch (Exception e) {
-                        log.error("响应解密失败", e);
-                        throw new BusinessException("响应解密失败: " + e.getMessage());
-                    }
-                    return parseShopListResponse(JSONObject.parseObject(decryptedResponse));
-                }
-
-                // 没有 encrypt-key 头，尝试直接解析
-                log.warn("响应无 encrypt-key 头, 直接返回原始 body");
-                return parseShopListResponse(JSONObject.parseObject(resBody));
-            }
-
+            return executeShopListRequest(encryptedBody, headers);
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
             log.error("getShopList 异常", e);
             throw new BusinessException("getShopList 异常: " + e.getMessage());
         }
+    }
+
+    /**
+     * 构造门店列表请求参数（对应小程序 mem.js#newStoreList）
+     */
+    private static JSONObject buildShopListParams(String city, String longitude, String latitude,
+                                                  Object scrollPageData, String name) {
+        JSONObject params = new JSONObject();
+        params.put("userLongitude", longitude != null ? longitude : "104.08329");
+        params.put("userLatitude", latitude != null ? latitude : "30.65618");
+        params.put("city", city != null ? city : "长沙市");
+        params.put("limit", 15);
+        params.put("sortWay", "comprehensive");
+        params.put("categoryId", "");
+        params.put("shopName", name);
+        params.put("secKillFlag", 1);
+        params.put("signUpFlag", 2);
+        params.put("highRebatesFlag", 0);
+        params.put("noCommentFlag", 0);
+        params.put("takeawayPlatform", "");
+        params.put("userTypes", new int[]{1, 2, 3});
+        params.put("packageType", "");
+        params.put("scrollPageData", scrollPageData);
+        params.put("threeKmFlag", "");
+        params.put("tabType", "bwc");
+        return params;
+    }
+
+    /**
+     * 执行加密的门店列表请求并解析解密后的响应
+     *
+     * @param encryptedBody    已加密的请求体
+     * @param headers          包含 encrypt-key 的请求头
+     */
+    private static WmPageVO executeShopListRequest(String encryptedBody, Map<String, String> headers) {
+        final String SHOP_LIST_URL = BASE_URL_V2 + "/bwc/waimaimt-web-bwc/shopIndex/getShopList";
+        try (HttpResponse response = HttpUtil.createPost(SHOP_LIST_URL)
+                .headerMap(headers, true)
+                .timeout(10000)
+                .body(encryptedBody)
+                .execute()) {
+
+            if (!response.isOk()) {
+                log.error("getShopList 请求失败, 状态码: {}, body: {}", response.getStatus(), response.body());
+                throw new BusinessException("请求失败: " + response.getStatus());
+            }
+
+            String resBody = response.body();
+            String responseEncryptKey = response.header("encrypt-key");
+            if (responseEncryptKey == null || responseEncryptKey.isEmpty()) {
+                responseEncryptKey = response.header("Encrypt-Key");
+            }
+
+            if (responseEncryptKey != null && !responseEncryptKey.isEmpty()) {
+                try {
+                    String decryptedResponse = decryptRes(resBody, responseEncryptKey);
+                    return parseShopListResponse(JSONObject.parseObject(decryptedResponse));
+                } catch (Exception e) {
+                    log.error("响应解密失败", e);
+                    throw new BusinessException("响应解密失败: " + e.getMessage());
+                }
+            }
+
+            // 没有 encrypt-key 头，尝试直接解析
+            log.warn("响应无 encrypt-key 头, 直接返回原始 body");
+            return parseShopListResponse(JSONObject.parseObject(resBody));
+        }
+    }
+
+    private static String decryptRes(String resBody, String responseEncryptKey) throws Exception {
+        PrivateKey clientPrivateKey = loadPrivateKey(privateKey);
+        String responseAesKey = rsaDecryptEncryptKey(responseEncryptKey, clientPrivateKey);
+        return aesDecrypt(resBody, responseAesKey);
     }
 
     // ====== 内部工具方法 ======
@@ -260,6 +273,8 @@ public class WmmtHttp {
         headers.put("sign", aesEncrypt(timestamp + nonce, SIGN_AES_KEY));
         headers.put("city", URLUtil.encode(city != null ? city : "长沙市"));
         headers.put("appversion", "1.1.175");
+        headers.put("Referer", "https://servicewechat.com/wx5762f23d920ad9e5/346/page-frame.html");
+        headers.put("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf2541c18) XWEB/25297");
         return headers;
     }
 
@@ -384,10 +399,11 @@ public class WmmtHttp {
     /**
      * 生成 encrypt-key：Base64(aesKey) -> RSA 公钥加密
      */
-    private static String rsaEncryptBase64Key(String aesKey, PublicKey publicKey) throws Exception {
+    private static String rsaEncryptBase64Key(String aesKey) throws Exception {
         String base64Key = Base64.getEncoder().encodeToString(aesKey.getBytes(StandardCharsets.UTF_8));
         Cipher cipher = Cipher.getInstance(RSA_TRANSFORMATION);
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        PublicKey serverPublicKey = loadPublicKey(publicKey);
+        cipher.init(Cipher.ENCRYPT_MODE, serverPublicKey);
         byte[] encrypted = cipher.doFinal(base64Key.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(encrypted);
     }
@@ -448,4 +464,17 @@ public class WmmtHttp {
         }
         return sb.toString();
     }
+
+
+
+    public static void main(String[] args) throws Exception {
+        checkAndFetchKeys();
+        System.out.println("请输入响应密钥：");
+        String responseKey = new Scanner(System.in).nextLine();
+        System.out.println("请输入响应字符串：");
+        String responseStr = new Scanner(System.in).nextLine();
+        String res = decryptRes(responseStr, responseKey);
+        System.out.println("res=" + res);
+    }
+
 }

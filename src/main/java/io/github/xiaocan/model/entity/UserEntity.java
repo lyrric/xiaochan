@@ -16,7 +16,9 @@ public class UserEntity {
 
     private String spt;
 
-
-
+    /**
+     * 歪麦token
+     */
+    private String waimaiToken;
 
 }
