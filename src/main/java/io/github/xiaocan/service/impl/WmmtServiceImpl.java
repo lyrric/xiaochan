@@ -94,8 +94,11 @@ public class WmmtServiceImpl implements WmmtService {
                 //距离解析失败为null时按0处理
                 .filter(t -> (t.getDistance() == null ? 0 : t.getDistance()) > StoreConstant.MAX_DISTANCE)
                 .count();
-        int size = list.size();
+        //排除距离为0或null的数据
+        long validCount = list.stream()
+                .filter(t -> t.getDistance() != null && t.getDistance() > 0)
+                .count();
         //有一半的店距离超过MAX_DISTANCE，则不再查找下一页
-        return overDistanceCount <= (size / 2);
+        return overDistanceCount <= (validCount / 2);
     }
 }

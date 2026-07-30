@@ -160,7 +160,6 @@ public class BaseTask {
      * 默认 body 模板
      */
     private static final String DEFAULT_BODY_TEMPLATE =
-            "地点：${地点}<br/>" +
             "平台：${平台}<br/>" +
             "门店类型：${门店类型}<br/>" +
             "店铺：${店铺}<br/>" +
