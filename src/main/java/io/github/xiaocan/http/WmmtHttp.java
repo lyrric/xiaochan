@@ -297,7 +297,7 @@ public class WmmtHttp {
 
     private static WmPageVO parseShopListResponse(JSONObject response) {
         if(response.getIntValue("code") != 200){
-            log.error("获取数据失败: {}", response);
+            log.error("获取数据失败: {}", response.toJSONString());
             throw new BusinessException("获取数据失败: " + response.getString("msg"));
         }
         WmPageVO wmPageVO = new WmPageVO();
