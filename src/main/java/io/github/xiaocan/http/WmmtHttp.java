@@ -161,7 +161,7 @@ public class WmmtHttp {
 
 
         try {
-
+            checkAndFetchKeys();
             JSONObject params = buildShopListParams(city, longitude, latitude, scrollPageData, name);
             // 生成随机 AES 密钥并加密请求体
             String aesKey = generateRandomString(32);
