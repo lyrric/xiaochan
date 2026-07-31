@@ -7,20 +7,13 @@ import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.mapper.FavoriteStoreMapper;
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.dto.FavoriteStoreListDTO;
-import io.github.xiaocan.model.dto.FavoriteStoreQueryDTO;
-import io.github.xiaocan.model.dto.RemoveFavoriteDTO;
-import io.github.xiaocan.model.dto.SaveFavoriteDTO;
-import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.dto.*;
 import io.github.xiaocan.model.entity.FavoriteStoreEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.FavoriteStoreVO;
-import io.github.xiaocan.service.FavoriteStoreService;
-import io.github.xiaocan.service.LocationService;
-import io.github.xiaocan.service.UserService;
-import io.github.xiaocan.service.XiaoChanService;
+import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -44,6 +37,8 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
     private LocationService locationService;
     @Resource
     private XiaoChanService xiaoChanService;
+    @Resource
+    private WmmtService wmmtService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -159,24 +154,27 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
             if (!StringUtils.hasText(name)) {
                 return Collections.emptyList();
             }
+            List<StoreInfo> storeInfos = Collections.emptyList();
             if (StoreTypeEnum.XC_MANJIAN.equals(storeType)) {
-                List<StoreInfo> list = xiaoChanService.searchList(name, location.getCityCode(), longitude, latitude);
-                return list.stream()
-                        .filter(item -> Objects.equals(item.getUniqId(), favorite.getUniqId()))
-                        .peek(item -> item.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN))
-                        .toList();
+                storeInfos = xiaoChanService.searchList(name, location.getCityCode(), longitude, latitude);
             } else if (StoreTypeEnum.XC_MTSJ.equals(storeType)) {
                 XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
                 dto.setLongitude(longitude);
                 dto.setLatitude(latitude);
                 dto.setName(name);
                 dto.setPvId("");
-                List<StoreInfo> meituanList = xiaoChanService.getXcMeituanshangjinPageVO(dto).getStoreInfos();
-                return meituanList.stream()
-                        .filter(item -> Objects.equals(item.getUniqId(), favorite.getUniqId()))
-                        .peek(item -> item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ))
-                        .toList();
+                storeInfos = xiaoChanService.getXcMeituanshangjinPageVO(dto).getStoreInfos();
+            }else if (StoreTypeEnum.WM_MANJIAN.equals(storeType) || StoreTypeEnum.WM_MTSJ.equals(storeType)) {
+                WmmtShopListDTO dto = new WmmtShopListDTO();
+                dto.setName(name);
+                dto.setLongitude(longitude);
+                dto.setLatitude(latitude);
+                storeInfos = wmmtService.getShopList(dto).getStoreInfos();
             }
+            return storeInfos.stream()
+                    .filter(item -> Objects.equals(item.getUniqId(), favorite.getUniqId()))
+                    .filter(item -> Objects.equals(item.getStoreTypeEnum(), favorite.getStoreType()))
+                    .toList();
         } catch (Exception e) {
             log.warn("刷新收藏门店信息失败, favoriteId={}, name={}, storeType={}", favorite.getId(), name, storeType, e);
         }
