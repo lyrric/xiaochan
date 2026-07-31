@@ -1,13 +1,10 @@
 package io.github.xiaocan.tasks;
 
-import io.github.xiaocan.constant.StorePlatformEnum;
-import io.github.xiaocan.http.MessageHttp;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.entity.TaskExecHistoryEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
-import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import io.github.xiaocan.service.*;
@@ -41,7 +38,7 @@ public class BaseTask {
     @Resource
     private StorePushedHistoryService storePushedHistoryService;
     @Resource
-    private UserService userService;
+    protected MessageService messageService;
 
 
     void runSingle(MonitorConfigEntity notifyConfig) {
@@ -152,87 +149,6 @@ public class BaseTask {
                                          LocationEntity location) {
         savePushedHistory(notifyConfig, availableStores);
         afterSuccess(notifyConfig, availableStores);
-        sendMessage(notifyConfig, availableStores, location);
-    }
-
-
-    /**
-     * 默认 body 模板
-     */
-    private static final String DEFAULT_BODY_TEMPLATE =
-            "平台：${平台}<br/>" +
-            "门店类型：${门店类型}<br/>" +
-            "店铺：${店铺}<br/>" +
-            "时间范围：${开始时间}-${结束时间}<br/>" +
-            "距离：${距离}<br/>" +
-            "库存：${库存}<br/>" +
-            "规则：${规则}<br/>" +
-            "是否需要评价：${评价条件}";
-
-    /**
-     * 不同类型监控的默认 summary 模板
-     */
-    private static final String DEFAULT_SUMMARY_STORE_ACTIVITY = "${地点}: 指定门店有${数量}个新返现活动";
-    private static final String DEFAULT_SUMMARY_STORE_KEYWORD = "${地点}: 关键字匹配到${数量}个新返现活动";
-    private static final String DEFAULT_SUMMARY_MINIMUM_PAY = "${地点}: 最小实付匹配到${数量}个新返现活动";
-
-
-    public void sendMessage(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos, LocationEntity locationEntity) {
-        String body = storeInfos.stream()
-                .map(storeInfo -> buildMessage(storeInfo, locationEntity))
-                .collect(Collectors.joining("<br/><br/>"));
-        UserEntity userEntity = userService.getById(locationEntity.getUserId());
-        try {
-            log.info("发送消息:{}", body);
-            String summary = buildSummary(notifyConfig, storeInfos, locationEntity);
-            MessageHttp.sendMessage(userEntity.getSpt(), body, summary);
-        }catch (Exception e){
-            log.error("发送消息失败", e);
-        }
-    }
-
-    private String buildSummary(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos, LocationEntity locationEntity) {
-        String summaryTemplate = switch (notifyConfig.getType()) {
-            case STORE_ACTIVITY -> DEFAULT_SUMMARY_STORE_ACTIVITY;
-            case STORE_KEYWORD -> DEFAULT_SUMMARY_STORE_KEYWORD;
-            case MINIMUM_PAY -> DEFAULT_SUMMARY_MINIMUM_PAY;
-        };
-        return summaryTemplate
-                .replace("${地点}", locationEntity.getName())
-                .replace("${数量}", String.valueOf(storeInfos.size()))
-                .replace("${类型}", notifyConfig.getType().getDescription());
-    }
-
-    private String buildMessage(StoreInfo storeInfo, LocationEntity locationEntity) {
-        String rebateConditionText = storeInfo.getRebateConditionStr() == null ? "未知" : storeInfo.getRebateConditionStr();
-        String storeTypeText = storeInfo.getStoreTypeEnum() == null ? "未知" : storeInfo.getStoreTypeEnum().getDescription();
-        return BaseTask.DEFAULT_BODY_TEMPLATE
-                .replace("${地点}", locationEntity.getName())
-                .replace("${平台}", StorePlatformEnum.getByType(storeInfo.getType()).name)
-                .replace("${门店类型}", storeTypeText)
-                .replace("${店铺}", storeInfo.getName())
-                .replace("${开始时间}", storeInfo.getStartTime())
-                .replace("${结束时间}", storeInfo.getEndTime())
-                .replace("${距离}", storeInfo.getDistanceStr() == null ? "未知" : storeInfo.getDistanceStr())
-                .replace("${库存}", String.valueOf(storeInfo.getLeftNumber()))
-                .replace("${规则}", buildRuleText(storeInfo))
-                .replace("${评价条件}", rebateConditionText);
-    }
-
-    /**
-     * 构建返现规则文案，兼容满减和百分比返现（美团赏金）两类数据
-     */
-    private String buildRuleText(StoreInfo storeInfo) {
-        if (storeInfo.getRebateRatio() != null) {
-            String ruleText = "返现" + storeInfo.getRebateRatio().stripTrailingZeros().toPlainString() + "%";
-            if (storeInfo.getRebateMax() != null) {
-                ruleText += "，最高返" + storeInfo.getRebateMax().stripTrailingZeros().toPlainString() + "元";
-            }
-            return ruleText;
-        }
-        if (storeInfo.getPrice() != null && storeInfo.getRebatePrice() != null) {
-            return "满" + storeInfo.getPrice().toPlainString() + "返" + storeInfo.getRebatePrice().toPlainString();
-        }
-        return "未知";
+        messageService.queueMessage(notifyConfig, availableStores, location);
     }
 }

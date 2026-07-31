@@ -109,7 +109,7 @@ public class StoreTask extends BaseTask {
         }
         savePushedHistory(notifyConfig, availableStores);
         afterSuccess(notifyConfig, availableStores);
-        sendMessage(notifyConfig, availableStores, location);
+        messageService.queueMessage(notifyConfig, availableStores, location);
     }
 
     /**

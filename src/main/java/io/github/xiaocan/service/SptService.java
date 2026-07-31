@@ -25,6 +25,17 @@ public class SptService {
     private static final int CODE_LENGTH = 6;
 
     /**
+     * 发送消息
+     *
+     * @param spt     用户spt标识
+     * @param content 消息内容
+     * @param summary 消息摘要
+     */
+    public void sendMessage(String spt, String content, String summary) {
+        MessageHttp.sendMessage(spt, content, summary);
+    }
+
+    /**
      * 发送验证码
      *
      * @param spt 用户spt标识
@@ -40,7 +51,7 @@ public class SptService {
         // 发送消息
         String content = "您的验证码是: " + code + "，有效期5分钟，请勿泄露给他人。";
         String summary = "验证码通知";
-        MessageHttp.sendMessage(spt, content, summary);
+        sendMessage(spt, content, summary);
 
         log.info("已向 spt:{} 发送验证码", spt);
     }
