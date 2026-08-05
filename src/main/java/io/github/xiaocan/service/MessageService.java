@@ -56,18 +56,41 @@ public class MessageService {
     });
 
     /**
-     * 默认 body 模板
+     * 默认 body 卡片模板（内联 CSS，兼容微信推送 HTML 渲染）
      */
     private static final String DEFAULT_BODY_TEMPLATE =
-            "地址：${地址}<br/>" +
-            "平台：${平台}<br/>" +
-            "门店类型：${门店类型}<br/>" +
-            "店铺：${店铺}<br/>" +
-            "时间范围：${开始时间}-${结束时间}<br/>" +
-            "距离：${距离}<br/>" +
-            "库存：${库存}<br/>" +
-            "规则：${规则}<br/>" +
-            "是否需要评价：${评价条件}";
+            "<div style=\"background:#f7f8fa;border-radius:12px;padding:16px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;\">" +
+            "  <div style=\"display:flex;align-items:center;margin-bottom:12px;\">" +
+            "    <span style=\"font-size:15px;font-weight:600;color:#1a1a2e;\">${店铺}</span>" +
+            "    <span style=\"margin-left:auto;font-size:12px;color:#fff;background:#ff6b6b;border-radius:10px;padding:2px 8px;\">${平台}</span>" +
+            "  </div>" +
+            "  <div style=\"background:#fff;border-radius:8px;padding:12px;\">" +
+            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
+            "      <span style=\"font-size:13px;color:#8c8c8c;\">返现规则</span>" +
+            "      <span style=\"font-size:13px;color:#ff6b6b;font-weight:600;\">${规则}</span>" +
+            "    </div>" +
+            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
+            "      <span style=\"font-size:13px;color:#8c8c8c;\">剩余库存</span>" +
+            "      <span style=\"font-size:13px;color:#1a1a2e;font-weight:500;\">${库存}</span>" +
+            "    </div>" +
+            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
+            "      <span style=\"font-size:13px;color:#8c8c8c;\">活动时间</span>" +
+            "      <span style=\"font-size:13px;color:#1a1a2e;\">${开始时间} ~ ${结束时间}</span>" +
+            "    </div>" +
+            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
+            "      <span style=\"font-size:13px;color:#8c8c8c;\">距离</span>" +
+            "      <span style=\"font-size:13px;color:#1a1a2e;\">${距离}</span>" +
+            "    </div>" +
+            "    <div style=\"display:flex;justify-content:space-between;\">" +
+            "      <span style=\"font-size:13px;color:#8c8c8c;\">评价要求</span>" +
+            "      <span style=\"font-size:13px;color:#1a1a2e;\">${评价条件}</span>" +
+            "    </div>" +
+            "  </div>" +
+            "  <div style=\"margin-top:10px;display:flex;align-items:center;\">" +
+            "    <span style=\"font-size:12px;color:#b0b0b0;\">📍 ${地址}</span>" +
+            "    <span style=\"margin-left:8px;font-size:11px;color:#b0b0b0;background:#f0f0f0;border-radius:4px;padding:1px 6px;\">${门店类型}</span>" +
+            "  </div>" +
+            "</div>";
     /**
      * 合并发送时的 summary 模板
      */
