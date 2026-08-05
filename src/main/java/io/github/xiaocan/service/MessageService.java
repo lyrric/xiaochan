@@ -57,38 +57,36 @@ public class MessageService {
 
     /**
      * 默认 body 卡片模板（内联 CSS，兼容微信推送 HTML 渲染）
+     * <p>
+     * 参考前端 HomeView.vue 门店卡片设计：
+     * 店铺名 + 平台/门店类型标签 → 规则红色突出 → 活动信息 chip 标签 → 地址
      */
     private static final String DEFAULT_BODY_TEMPLATE =
-            "<div style=\"background:#f7f8fa;border-radius:12px;padding:16px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;\">" +
-            "  <div style=\"display:flex;align-items:center;margin-bottom:12px;\">" +
-            "    <span style=\"font-size:15px;font-weight:600;color:#1a1a2e;\">${店铺}</span>" +
-            "    <span style=\"margin-left:auto;font-size:12px;color:#fff;background:#ff6b6b;border-radius:10px;padding:2px 8px;\">${平台}</span>" +
-            "  </div>" +
-            "  <div style=\"background:#fff;border-radius:8px;padding:12px;\">" +
-            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
-            "      <span style=\"font-size:13px;color:#8c8c8c;\">返现规则</span>" +
-            "      <span style=\"font-size:13px;color:#ff6b6b;font-weight:600;\">${规则}</span>" +
+            "<div style=\"border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;\">" +
+            "  <div style=\"height:4px;background:linear-gradient(90deg,#4f6ef7,#a78bfa,#f472b6);\"></div>" +
+            "  <div style=\"padding:16px;\">" +
+            "    <table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"border-collapse:collapse;margin-bottom:12px;\"><tr>" +
+            "      <td style=\"vertical-align:top;padding:0;padding-right:12px;\">" +
+            "        <img src=\"${图标}\" width=\"48\" height=\"48\" style=\"display:block !important;max-width:48px !important;width:48px !important;height:48px !important;margin:0 !important;border-radius:8px !important;object-fit:cover !important;\" />" +
+            "      </td>" +
+            "      <td style=\"vertical-align:top;padding:0;\">" +
+            "        <div style=\"font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:6px;line-height:1.4;\">${店铺}</div>" +
+            "        <div>" +
+            "          <span style=\"display:inline-block;font-size:11px;color:#856404;background:#fff3cd;border-radius:999px;padding:2px 8px;\">${平台}</span>" +
+            "          <span style=\"display:inline-block;font-size:11px;color:#7c3aed;background:#f3e8ff;border-radius:999px;padding:2px 8px;margin-left:4px;\">${门店类型}</span>" +
+            "          <span style=\"display:inline-block;font-size:11px;color:#9ca3af;margin-left:6px;\">📍 ${距离} · ${地址}</span>" +
+            "        </div>" +
+            "      </td>" +
+            "    </tr></table>" +
+            "    <div style=\"background:#fef2f2;border-radius:8px;padding:10px 12px;margin-bottom:12px;\">" +
+            "      <span style=\"font-size:12px;color:#991b1b;\">🏷️ </span>" +
+            "      <span style=\"font-size:20px;font-weight:700;color:#ef4444;\">${规则}</span>" +
             "    </div>" +
-            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
-            "      <span style=\"font-size:13px;color:#8c8c8c;\">剩余库存</span>" +
-            "      <span style=\"font-size:13px;color:#1a1a2e;font-weight:500;\">${库存}</span>" +
+            "    <div style=\"border-top:1px solid #f3f4f6;padding-top:10px;margin-bottom:8px;\">" +
+            "      <span style=\"display:inline-block;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:999px;padding:3px 8px;white-space:nowrap;\">🕐 ${开始时间}-${结束时间}</span>" +
+            "      <span style=\"display:inline-block;font-size:12px;color:#166534;background:#dcfce7;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;\">📦 ${库存}</span>" +
+            "      <span style=\"display:inline-block;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;\">📝 ${评价条件}</span>" +
             "    </div>" +
-            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
-            "      <span style=\"font-size:13px;color:#8c8c8c;\">活动时间</span>" +
-            "      <span style=\"font-size:13px;color:#1a1a2e;\">${开始时间} ~ ${结束时间}</span>" +
-            "    </div>" +
-            "    <div style=\"display:flex;justify-content:space-between;margin-bottom:8px;\">" +
-            "      <span style=\"font-size:13px;color:#8c8c8c;\">距离</span>" +
-            "      <span style=\"font-size:13px;color:#1a1a2e;\">${距离}</span>" +
-            "    </div>" +
-            "    <div style=\"display:flex;justify-content:space-between;\">" +
-            "      <span style=\"font-size:13px;color:#8c8c8c;\">评价要求</span>" +
-            "      <span style=\"font-size:13px;color:#1a1a2e;\">${评价条件}</span>" +
-            "    </div>" +
-            "  </div>" +
-            "  <div style=\"margin-top:10px;display:flex;align-items:center;\">" +
-            "    <span style=\"font-size:12px;color:#b0b0b0;\">📍 ${地址}</span>" +
-            "    <span style=\"margin-left:8px;font-size:11px;color:#b0b0b0;background:#f0f0f0;border-radius:4px;padding:1px 6px;\">${门店类型}</span>" +
             "  </div>" +
             "</div>";
     /**
@@ -177,7 +175,9 @@ public class MessageService {
     private String buildStoreMessage(StoreInfo storeInfo, LocationEntity locationEntity) {
         String rebateConditionText = storeInfo.getRebateConditionStr() == null ? "未知" : storeInfo.getRebateConditionStr();
         String storeTypeText = storeInfo.getStoreTypeEnum() == null ? "未知" : storeInfo.getStoreTypeEnum().getDescription();
+        String iconUrl = storeInfo.getIcon() == null ? "" : storeInfo.getIcon();
         return DEFAULT_BODY_TEMPLATE
+                .replace("${图标}", iconUrl)
                 .replace("${地址}", locationEntity.getName())
                 .replace("${平台}", StorePlatformEnum.getByType(storeInfo.getType()).name)
                 .replace("${门店类型}", storeTypeText)
@@ -185,10 +185,11 @@ public class MessageService {
                 .replace("${开始时间}", storeInfo.getStartTime())
                 .replace("${结束时间}", storeInfo.getEndTime())
                 .replace("${距离}", storeInfo.getDistanceStr() == null ? "未知" : storeInfo.getDistanceStr())
-                .replace("${库存}", String.valueOf(storeInfo.getLeftNumber()))
+                .replace("${库存}", "剩余 " + storeInfo.getLeftNumber())
                 .replace("${规则}", buildRuleText(storeInfo))
                 .replace("${评价条件}", rebateConditionText);
     }
+
 
     /**
      * 构建返现规则文案，兼容满减和百分比返现（美团赏金）两类数据
