@@ -200,7 +200,7 @@ public class MessageService {
             return ruleText;
         }
         if (storeInfo.getPrice() != null && storeInfo.getRebatePrice() != null) {
-            return "满" + storeInfo.getPrice().toPlainString() + "返" + storeInfo.getRebatePrice().toPlainString();
+            return "满" + storeInfo.getPrice().stripTrailingZeros().toPlainString() + "返" + storeInfo.getRebatePrice().stripTrailingZeros().toPlainString();
         }
         return "未知";
     }

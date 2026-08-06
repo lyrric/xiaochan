@@ -305,7 +305,7 @@ public class XiaochanHttp {
         storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
         storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
         storeInfo.setDistance(jsonObject.getInteger("distance"));
-        storeInfo.setDistanceStr(storeInfo.getDistance() + "m");
+        storeInfo.setDistanceStr(formatDistance(storeInfo.getDistance()));
         storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
         storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
         storeInfo.setUniqId(String.valueOf(storeInfo.getStoreId()));
@@ -391,6 +391,22 @@ public class XiaochanHttp {
 
     private static String formatStartEndTime(Integer hour, Integer minute){
         return String.format("%02d", hour) + ":" + String.format("%02d", minute);
+    }
+
+    /**
+     * 距离格式化：小于1000m显示m，大于等于1000m显示km
+     */
+    private static String formatDistance(Integer distance){
+        if (distance == null) {
+            return null;
+        }
+        if (distance >= 1000) {
+            BigDecimal km = BigDecimal.valueOf(distance)
+                    .divide(BigDecimal.valueOf(1000), 1, RoundingMode.HALF_UP)
+                    .stripTrailingZeros();
+            return km.toPlainString() + "km";
+        }
+        return distance + "m";
     }
 
     /**
