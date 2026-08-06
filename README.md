@@ -15,15 +15,28 @@
 - [x] 通知历史  
 - [x] 以及再次通知
 ## 截图
+
 ### 活动列表页
-![image](images/首页.jpg)
-![image](images/折线图.png)
+
+| 首页 | 折线图 |
+| :---: | :---: |
+| ![首页](images/首页.jpg) | ![折线图](images/折线图.png) |
+
 ### 地址管理
-![image](images/location.png)
+
+| 地址管理 |
+| :---: |
+| ![地址管理](images/location.png) |
+
 ### 通知管理
-![image](images/监控列表页.jpg)
-![image](images/monitor-list-task.png)
+
+| 监控列表 | 任务详情 |
+| :---: | :---: |
+| ![监控列表](images/监控列表页.jpg) | ![任务详情](images/monitor-list-task.png) |
+
 ### 推送记录
-![image](images/push-store.png)
-![image](images/wxpusher推送.jpg)
+
+| 推送记录 | WxPusher 推送 |
+| :---: | :---: |
+| ![推送记录](images/push-store.png) | ![WxPusher推送](images/wxpusher推送.jpg) |
 

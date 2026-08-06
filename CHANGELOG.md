@@ -1,5 +1,6 @@
 # 更新记录
-
+- 2026年8月6日
+  - 美化了spt推送的内容样式
 - 2026年7月29日
   - 门店推送历史（store_pushed_history）字段对齐 StoreInfo：storeId 改为 uniqId（字符串），兼容美团赏金无 storeId 的场景；promotionId 改为字符串
   - 移除 ifNew、openHours 字段，新增 storeTypeEnum、distanceStr、rebateRatio、rebateMax 字段，推送历史支持记录赏金类活动信息
