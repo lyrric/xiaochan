@@ -25,3 +25,5 @@
 ![image](images/monitor-list-task.png)
 ### 推送记录
 ![image](images/push-store.png)
+![image](images/wxpusher推送.jpg)
+
