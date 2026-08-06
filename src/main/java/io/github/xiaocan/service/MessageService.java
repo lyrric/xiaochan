@@ -56,39 +56,36 @@ public class MessageService {
     });
 
     /**
-     * 默认 body 卡片模板（内联 CSS，兼容微信推送 HTML 渲染）
-     * <p>
-     * 参考前端 HomeView.vue 门店卡片设计：
-     * 店铺名 + 平台/门店类型标签 → 规则红色突出 → 活动信息 chip 标签 → 地址
+     * 卡片模板（与 MessageService 中一致）
      */
-    private static final String DEFAULT_BODY_TEMPLATE =
-            "<div style=\"border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;\">" +
-            "  <div style=\"height:4px;background:linear-gradient(90deg,#4f6ef7,#a78bfa,#f472b6);\"></div>" +
-            "  <div style=\"padding:16px;\">" +
-            "    <table cellspacing=\"0\" cellpadding=\"0\" border=\"0\" style=\"border-collapse:collapse;margin-bottom:12px;\"><tr>" +
-            "      <td style=\"vertical-align:top;padding:0;padding-right:12px;\">" +
-            "        <img src=\"${图标}\" width=\"48\" height=\"48\" style=\"display:block !important;max-width:48px !important;width:48px !important;height:48px !important;margin:0 !important;border-radius:8px !important;object-fit:cover !important;\" />" +
-            "      </td>" +
-            "      <td style=\"vertical-align:top;padding:0;\">" +
-            "        <div style=\"font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:6px;line-height:1.4;\">${店铺}</div>" +
-            "        <div>" +
-            "          <span style=\"display:inline-block;font-size:11px;color:#856404;background:#fff3cd;border-radius:999px;padding:2px 8px;\">${平台}</span>" +
-            "          <span style=\"display:inline-block;font-size:11px;color:#7c3aed;background:#f3e8ff;border-radius:999px;padding:2px 8px;margin-left:4px;\">${门店类型}</span>" +
-            "          <span style=\"display:inline-block;font-size:11px;color:#9ca3af;margin-left:6px;\">📍 ${距离} · ${地址}</span>" +
-            "        </div>" +
-            "      </td>" +
-            "    </tr></table>" +
-            "    <div style=\"background:#fef2f2;border-radius:8px;padding:10px 12px;margin-bottom:12px;\">" +
-            "      <span style=\"font-size:12px;color:#991b1b;\">🏷️ </span>" +
-            "      <span style=\"font-size:20px;font-weight:700;color:#ef4444;\">${规则}</span>" +
-            "    </div>" +
-            "    <div style=\"border-top:1px solid #f3f4f6;padding-top:10px;margin-bottom:8px;\">" +
-            "      <span style=\"display:inline-block;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:999px;padding:3px 8px;white-space:nowrap;\">🕐 ${开始时间}-${结束时间}</span>" +
-            "      <span style=\"display:inline-block;font-size:12px;color:#166534;background:#dcfce7;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;\">📦 ${库存}</span>" +
-            "      <span style=\"display:inline-block;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;\">📝 ${评价条件}</span>" +
-            "    </div>" +
-            "  </div>" +
-            "</div>";
+    public static final String DEFAULT_BODY_TEMPLATE =
+            """
+            <div style="border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+              <div style="height:4px;background:linear-gradient(90deg,#4f6ef7,#a78bfa,#f472b6);"></div>
+              <div style="padding:16px;">
+                <table cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>
+                  <td style="vertical-align:top;padding:0;padding-right:12px;">
+                    <img src="${图标}" width="48" height="48" style="display:block !important;max-width:48px !important;width:48px !important;height:48px !important;margin:0 !important;border-radius:8px !important;object-fit:cover !important;" />
+                  </td>
+                  <td style="vertical-align:top;padding:0;">
+                    <div style="font-size:16px;font-weight:700;color:#1a1a2e;margin-bottom:6px;line-height:1.4;">${店铺}</div>
+                    <div>
+                      <span style="display:inline-block;font-size:11px;color:#856404;background:#fff3cd;border-radius:999px;padding:2px 8px;">${平台}</span>
+                      <span style="display:inline-block;font-size:11px;color:#7c3aed;background:#f3e8ff;border-radius:999px;padding:2px 8px;margin-left:4px;">${门店类型}</span>
+                      <span style="display:inline-block;font-size:11px;color:#9ca3af;margin-left:6px;">📍 ${距离} · ${地址}</span>
+                    </div>
+                  </td>
+                </tr></table>
+                <div style="border-top:1px solid #f3f4f6;padding-top:10px;margin-bottom:8px;">
+                  <span style="display:inline-block;font-size:12px;color:#92400e;background:#fef3c7;border-radius:999px;padding:3px 8px;white-space:nowrap;">🏷️ ${规则}</span>
+                  <span style="display:inline-block;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;">🕐 ${开始时间}-${结束时间}</span>
+                  <span style="display:inline-block;font-size:12px;color:#166534;background:#dcfce7;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;">📦 ${库存}</span>
+                  <span style="display:inline-block;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:999px;padding:3px 8px;margin-left:4px;white-space:nowrap;">📝 ${评价条件}</span>
+                </div>
+              </div>
+            </div>
+            """;
+
     /**
      * 合并发送时的 summary 模板
      */
@@ -196,9 +193,9 @@ public class MessageService {
      */
     private String buildRuleText(StoreInfo storeInfo) {
         if (storeInfo.getRebateRatio() != null) {
-            String ruleText = "返现" + storeInfo.getRebateRatio().stripTrailingZeros().toPlainString() + "%";
+            String ruleText = "返" + storeInfo.getRebateRatio().stripTrailingZeros().toPlainString() + "%";
             if (storeInfo.getRebateMax() != null) {
-                ruleText += "，最高返" + storeInfo.getRebateMax().stripTrailingZeros().toPlainString() + "元";
+                ruleText += "最高" + storeInfo.getRebateMax().stripTrailingZeros().toPlainString() ;
             }
             return ruleText;
         }
