@@ -8,6 +8,7 @@ import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.WmPageVO;
+import io.github.xiaocan.service.FavoriteStoreService;
 import io.github.xiaocan.service.StoreInventoryHistoryService;
 import io.github.xiaocan.service.UserService;
 import io.github.xiaocan.service.WmmtService;
@@ -37,10 +38,18 @@ public class WmmtServiceImpl implements WmmtService {
     @Resource
     private UserService userService;
 
+    @Resource
+    private FavoriteStoreService favoriteStoreService;
+
     @Override
     public WmPageVO getShopList(WmmtShopListDTO dto) {
-        String waimaiToken = userService.getByCurrentRequest().getWaimaiToken();
-        return getShopList(waimaiToken, dto);
+        UserEntity currentUser = userService.getByCurrentRequest();
+        String waimaiToken = currentUser.getWaimaiToken();
+        WmPageVO vo = getShopList(waimaiToken, dto);
+        if (dto.getLocationId() != null && vo.getStoreInfos() != null) {
+            favoriteStoreService.fillFavoriteIds(vo.getStoreInfos(), currentUser.getId(), dto.getLocationId());
+        }
+        return vo;
     }
 
     /**

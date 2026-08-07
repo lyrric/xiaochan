@@ -8,6 +8,7 @@ import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.vo.StorePushedHistoryVO;
 import io.github.xiaocan.service.StorePushedHistoryService;
 import io.github.xiaocan.service.UserService;
+import io.github.xiaocan.service.FavoriteStoreService;
 import io.github.xiaocan.utils.PageConvertUtil;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,8 @@ public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistor
 
     @Resource
     private UserService userService;
+    @Resource
+    private FavoriteStoreService favoriteStoreService;
 
     @Override
     public Page<StorePushedHistoryVO> pageByUser(NotifyHistoryQueryDTO dto) {
@@ -34,7 +37,9 @@ public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistor
                 .eq(dto.getNotifyType() != null, StorePushedHistoryEntity::getNotifyType, dto.getNotifyType())
                 .orderByDesc(StorePushedHistoryEntity::getId)
                 .page(new Page<>(dto.getPageNum(), dto.getPageSize()));
-        return PageConvertUtil.convert(page, StorePushedHistoryVO.class);
+        Page<StorePushedHistoryVO> voPage = PageConvertUtil.convert(page, StorePushedHistoryVO.class);
+        favoriteStoreService.fillFavoriteIdsForPushedHistory(voPage.getRecords(), userId);
+        return voPage;
     }
 
     @Override

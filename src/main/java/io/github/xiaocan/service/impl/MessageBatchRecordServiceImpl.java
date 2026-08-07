@@ -9,6 +9,7 @@ import io.github.xiaocan.model.vo.StorePushedHistoryVO;
 import io.github.xiaocan.service.MessageBatchRecordService;
 import io.github.xiaocan.service.StorePushedHistoryService;
 import io.github.xiaocan.service.UserService;
+import io.github.xiaocan.service.FavoriteStoreService;
 import io.github.xiaocan.utils.PageConvertUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ public class MessageBatchRecordServiceImpl extends ServiceImpl<MessageBatchRecor
     private UserService userService;
     @Resource
     private StorePushedHistoryService storePushedHistoryService;
+    @Resource
+    private FavoriteStoreService favoriteStoreService;
 
     @Override
     public Long recordBatch(Integer userId, String batchIds) {
@@ -66,6 +69,9 @@ public class MessageBatchRecordServiceImpl extends ServiceImpl<MessageBatchRecor
                 .list();
 
         // 5. 转换为VO
-        return PageConvertUtil.convertList(entities, StorePushedHistoryVO.class);
+        List<StorePushedHistoryVO> voList = PageConvertUtil.convertList(entities, StorePushedHistoryVO.class);
+        // 6. 填充收藏ID
+        favoriteStoreService.fillFavoriteIdsForPushedHistory(voList, currentUserId);
+        return voList;
     }
 }

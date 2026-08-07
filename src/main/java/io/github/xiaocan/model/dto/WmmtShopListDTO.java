@@ -27,6 +27,11 @@ public class WmmtShopListDTO {
     private String longitude;
 
     /**
+     * 位置ID，用于查询收藏状态
+     */
+    private Long locationId;
+
+    /**
      * 分页游标数据，上一页接口返回的 scrollPageData，前端原样传回
      * 第一页传 null
      */

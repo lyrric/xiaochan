@@ -93,5 +93,9 @@ public class StorePushedHistoryVO {
      */
     private String rebateConditionStr;
 
+    /**
+     * 收藏记录ID
+     */
+    private Long favoriteId;
 
 }

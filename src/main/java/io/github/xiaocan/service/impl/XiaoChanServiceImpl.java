@@ -8,6 +8,8 @@ import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.service.StoreInventoryHistoryService;
 import io.github.xiaocan.service.XiaoChanService;
+import io.github.xiaocan.service.FavoriteStoreService;
+import io.github.xiaocan.service.UserService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +32,13 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Resource
     private StoreInventoryHistoryService storeInventoryHistoryService;
+
+    @Lazy
+    @Resource
+    private FavoriteStoreService favoriteStoreService;
+
+    @Resource
+    private UserService userService;
 
 
     @Override
@@ -57,6 +66,11 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 //排序为空，则走官方分页接口
                 result = getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
             }
+        }
+        // 填充收藏ID
+        if (queryListVO.getLocationId() != null) {
+            Integer userId = userService.getByCurrentRequest().getId();
+            favoriteStoreService.fillFavoriteIds(result, userId, queryListVO.getLocationId());
         }
         return result;
     }
@@ -97,11 +111,19 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public XcMeituanshangjinPageVO getXcMeituanshangjinPageVO(XcMeituanshangjinDTO dto) {
+        XcMeituanshangjinPageVO vo;
         if (StringUtils.isNotBlank(dto.getName())) {
             //走搜索接口
-            return XiaochanHttp.searchMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getName(), dto.getPvId());
+            vo = XiaochanHttp.searchMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getName(), dto.getPvId());
+        } else {
+            vo = XiaochanHttp.getMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getPvId());
         }
-        return XiaochanHttp.getMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getPvId());
+        // 填充收藏ID
+        if (dto.getLocationId() != null && vo.getStoreInfos() != null) {
+            Integer userId = userService.getByCurrentRequest().getId();
+            favoriteStoreService.fillFavoriteIds(vo.getStoreInfos(), userId, dto.getLocationId());
+        }
+        return vo;
     }
 
     private boolean hasNext(List<StoreInfo> list){

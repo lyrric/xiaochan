@@ -11,7 +11,7 @@ import io.github.xiaocan.model.entity.FavoriteStoreEntity;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
-import io.github.xiaocan.model.vo.FavoriteStoreVO;
+import io.github.xiaocan.model.vo.StorePushedHistoryVO;
 import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +24,9 @@ import org.springframework.util.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -41,7 +43,7 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveFavorite(SaveFavoriteDTO dto) {
+    public Long saveFavorite(SaveFavoriteDTO dto) {
         UserEntity currentUser = userService.getByCurrentRequest();
         StoreTypeEnum storeTypeEnum = dto.getStoreType();
 
@@ -59,6 +61,7 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
         entity.setStoreType(storeTypeEnum);
         entity.setUniqId(dto.getUniqueId());
         this.save(entity);
+        return entity.getId();
     }
 
     @Override
@@ -76,18 +79,16 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
     }
 
     @Override
-    public List<FavoriteStoreVO> listFavorites(FavoriteStoreListDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public void removeFavoriteById(Long favoriteId) {
+        if (favoriteId == null) {
+            throw new BusinessException("favoriteId不能为空");
+        }
         UserEntity currentUser = userService.getByCurrentRequest();
         LambdaQueryWrapper<FavoriteStoreEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(FavoriteStoreEntity::getUserId, currentUser.getId());
-        if (dto.getLocationId() != null) {
-            wrapper.eq(FavoriteStoreEntity::getLocationId, dto.getLocationId());
-        }
-        if (!CollectionUtils.isEmpty(dto.getStoreTypes())) {
-            wrapper.in(FavoriteStoreEntity::getStoreType, dto.getStoreTypes());
-        }
-        wrapper.orderByDesc(FavoriteStoreEntity::getCreateTime);
-        return this.list(wrapper).stream().map(this::convertToVO).toList();
+        wrapper.eq(FavoriteStoreEntity::getId, favoriteId)
+                .eq(FavoriteStoreEntity::getUserId, currentUser.getId());
+        this.remove(wrapper);
     }
 
     @Override
@@ -180,15 +181,6 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
         return Collections.emptyList();
     }
 
-    private FavoriteStoreVO convertToVO(FavoriteStoreEntity entity) {
-        FavoriteStoreVO vo = new FavoriteStoreVO();
-        vo.setUniqueId(entity.getUniqId());
-        if (entity.getStoreType() != null) {
-            vo.setStoreType(entity.getStoreType().name());
-        }
-        return vo;
-    }
-
     private StoreTypeEnum parseStoreType(String storeType) {
         if (!StringUtils.hasText(storeType)) {
             throw new BusinessException("storeType不能为空");
@@ -197,6 +189,67 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
             return StoreTypeEnum.valueOf(storeType);
         } catch (IllegalArgumentException e) {
             throw new BusinessException("storeType不合法");
+        }
+    }
+
+    @Override
+    public Map<String, FavoriteStoreEntity> batchQueryFavoriteIds(Integer userId, Long locationId, java.util.Collection<String> uniqIds) {
+        if (userId == null || locationId == null || CollectionUtils.isEmpty(uniqIds)) {
+            return Collections.emptyMap();
+        }
+        LambdaQueryWrapper<FavoriteStoreEntity> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(FavoriteStoreEntity::getUserId, userId)
+                .eq(FavoriteStoreEntity::getLocationId, locationId)
+                .in(FavoriteStoreEntity::getUniqId, uniqIds);
+        return this.list(wrapper).stream()
+                .collect(Collectors.toMap(FavoriteStoreEntity::getUniqId, e -> e, (a, b) -> a));
+    }
+
+    @Override
+    public void fillFavoriteIds(List<StoreInfo> storeInfos, Integer userId, Long locationId) {
+        if (CollectionUtils.isEmpty(storeInfos) || userId == null || locationId == null) {
+            return;
+        }
+        List<String> uniqIds = storeInfos.stream()
+                .map(StoreInfo::getUniqId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (uniqIds.isEmpty()) return;
+        Map<String, FavoriteStoreEntity> favMap = batchQueryFavoriteIds(userId, locationId, uniqIds);
+        for (StoreInfo store : storeInfos) {
+            FavoriteStoreEntity fav = favMap.get(store.getUniqId());
+            if (fav != null && Objects.equals(fav.getStoreType(), store.getStoreTypeEnum())) {
+                store.setFavoriteId(fav.getId());
+            }
+        }
+    }
+
+    @Override
+    public void fillFavoriteIdsForPushedHistory(List<StorePushedHistoryVO> voList, Integer userId) {
+        if (CollectionUtils.isEmpty(voList) || userId == null) {
+            return;
+        }
+        // 按locationId分组，每个分组单独查询
+        Map<Long, List<StorePushedHistoryVO>> byLocation = voList.stream()
+                .filter(vo -> vo.getLocationId() != null)
+                .collect(Collectors.groupingBy(StorePushedHistoryVO::getLocationId));
+        for (Map.Entry<Long, List<StorePushedHistoryVO>> entry : byLocation.entrySet()) {
+            Long locationId = entry.getKey();
+            List<StorePushedHistoryVO> group = entry.getValue();
+            List<String> uniqIds = group.stream()
+                    .map(StorePushedHistoryVO::getUniqId)
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .toList();
+            if (uniqIds.isEmpty()) continue;
+            Map<String, FavoriteStoreEntity> favMap = batchQueryFavoriteIds(userId, locationId, uniqIds);
+            for (StorePushedHistoryVO vo : group) {
+                FavoriteStoreEntity fav = favMap.get(vo.getUniqId());
+                if (fav != null && Objects.equals(fav.getStoreType(), vo.getStoreTypeEnum())) {
+                    vo.setFavoriteId(fav.getId());
+                }
+            }
         }
     }
 }

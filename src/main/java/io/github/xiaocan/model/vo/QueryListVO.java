@@ -36,6 +36,10 @@ public class QueryListVO {
      */
     private Boolean onlyAvailable;
     /**
+     * 位置ID，用于查询收藏状态
+     */
+    private Long locationId;
+    /**
      * 页码
      */
     @NotNull(message = "pageNum不能为空")

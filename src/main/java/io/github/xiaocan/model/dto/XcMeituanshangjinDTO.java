@@ -30,6 +30,11 @@ public class XcMeituanshangjinDTO {
      */
     private String pvId;
 
+    /**
+     * 位置ID，用于查询收藏状态
+     */
+    private Long locationId;
+
 
 
 
