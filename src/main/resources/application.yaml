@@ -29,4 +29,4 @@ mybatis-plus:
       logic-not-delete-value: 0
 
 system:
-  web-url: #web url，末尾不带 /
+  web-url: ${SYSTEM_WEB_URL:} # web url，末尾不带 /

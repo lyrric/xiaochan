@@ -92,7 +92,9 @@ public class MessageService {
               </div>
             </div>
             """;
-
+    String IFRAME_BODY = """
+                <iframe src="${WEB_URL}/s/${TOKEN}/${MSG_ID}" width="100%" height="1000px" frameborder="0" allowfullscreen></iframe>
+                """;
     /**
      * 合并发送时的 summary 模板
      */
@@ -113,6 +115,7 @@ public class MessageService {
             return;
         }
         String spt = userEntity.getSpt();
+        String token = userEntity.getToken();
         MonitorTypeEnums monitorType = notifyConfig.getType();
         String batchKey = spt + ":" + monitorType.name();
 
@@ -126,7 +129,7 @@ public class MessageService {
         synchronized (pendingBatches) {
             MessageBatch batch = pendingBatches.get(batchKey);
             if (batch == null) {
-                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId());
+                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token);
                 pendingBatches.put(batchKey, batch);
                 shouldSchedule = true;
             } else {
@@ -151,18 +154,28 @@ public class MessageService {
         if (batch == null || batch.isEmpty()) {
             return;
         }
+        // 记录消息批次
+        String batchIds = String.join(",", batch.batchIds);
+        Long msgId = messageBatchRecordService.recordBatch(batch.userId, batchIds);
 
         // 合并所有消息内容
-        String body = String.join("<br/><br/>", batch.messageParts);
+        String body;
+        if (StringUtils.hasText(systemConfig.getWebUrl())) {
+            log.info("使用iframe方式发送消息 msgId:{} webUrl:{}", msgId, systemConfig.getWebUrl());
+            body = IFRAME_BODY.replace("${WEB_URL}", systemConfig.getWebUrl())
+                    .replace("${TOKEN}", batch.token)
+                    .replace("${MSG_ID}", String.valueOf(msgId));
+        }else{
+            body = String.join("<br/><br/>", batch.messageParts);
+        }
+
         String summary = buildMergedSummary(batch);
 
         try {
             log.info("批量发送消息 spt:{}, monitorType:{}, 共{}个门店",
                     batch.spt, batch.monitorType, batch.storeCount);
             sptService.sendMessage(batch.spt, body, summary);
-            // 记录消息批次
-            String batchIds = String.join(",", batch.batchIds);
-            messageBatchRecordService.recordBatch(batch.userId, batchIds);
+
         } catch (Exception e) {
             log.error("批量发送消息失败 spt:{}, monitorType:{}", batch.spt, batch.monitorType, e);
         }
@@ -225,12 +238,14 @@ public class MessageService {
         final Integer userId;
         final List<String> messageParts = new ArrayList<>();
         final Set<String> batchIds = new HashSet<>();
+        final String token;
         int storeCount = 0;
 
-        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId) {
+        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId,String token) {
             this.spt = spt;
             this.monitorType = monitorType;
             this.userId = userId;
+            this.token = token;
         }
 
         void add(List<String> parts, int count, String batchId) {
