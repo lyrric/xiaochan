@@ -36,4 +36,20 @@ public class PageConvertUtil {
         result.setRecords(list);
         return result;
     }
+
+    public static <T> List<T> convertList(List<?> sourceList, Class<T> clazz) {
+        List<T> list = new ArrayList<>();
+        sourceList.forEach(item -> {
+            try {
+                T t = clazz.getDeclaredConstructor().newInstance();
+                BeanUtils.copyProperties(item, t);
+                list.add(t);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                     NoSuchMethodException e) {
+                log.error(e.getMessage(), e);
+                throw new BusinessException("数据转换失败");
+            }
+        });
+        return list;
+    }
 }

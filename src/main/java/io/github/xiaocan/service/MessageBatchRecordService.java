@@ -2,6 +2,9 @@ package io.github.xiaocan.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import io.github.xiaocan.model.entity.MessageBatchRecordEntity;
+import io.github.xiaocan.model.vo.StorePushedHistoryVO;
+
+import java.util.List;
 
 public interface MessageBatchRecordService extends IService<MessageBatchRecordEntity> {
 
@@ -12,4 +15,11 @@ public interface MessageBatchRecordService extends IService<MessageBatchRecordEn
      * @return 插入记录的ID
      */
     Long recordBatch(Integer userId, String batchIds);
+
+    /**
+     * 根据消息批次记录ID查询关联的门店推送历史
+     * @param id 消息批次记录ID
+     * @return 门店推送历史列表
+     */
+    List<StorePushedHistoryVO> getPushedHistoryByRecordId(Long id);
 }

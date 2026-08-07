@@ -19,6 +19,11 @@ public class StorePushedHistoryVO {
     private Integer userId;
 
     private MonitorTypeEnums notifyType;
+
+    /**
+     * 位置id
+     */
+    private Long locationId;
     /**
      * 创建时间
      */

@@ -37,6 +37,11 @@ public class StorePushedHistoryEntity {
 
     private Integer notifyConfigId;
 
+    /**
+     * 位置信息ID
+     */
+    private Long locationId;
+
     private MonitorTypeEnums notifyType;
     /**
      * 创建时间

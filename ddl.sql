@@ -200,3 +200,8 @@ CREATE TABLE `message_batch_record` (
     INDEX `idx_create_time` (`create_time` ASC)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息批次记录';
 
+-- 2026年8月7日 门店推送历史新增 location_id 字段
+ALTER TABLE `store_pushed_history`
+    ADD COLUMN `location_id` bigint NULL DEFAULT NULL COMMENT '位置信息ID' AFTER `notify_config_id`,
+    ADD INDEX `idx_location_id` (`location_id` ASC);
+

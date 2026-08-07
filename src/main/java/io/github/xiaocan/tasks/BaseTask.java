@@ -136,6 +136,7 @@ public class BaseTask {
             entity.setId(null);
             entity.setUserId(notifyConfig.getUserId());
             entity.setNotifyConfigId(notifyConfig.getId());
+            entity.setLocationId(notifyConfig.getLocationId());
             entity.setNotifyType(notifyConfig.getType());
             return entity;
         }).toList();
