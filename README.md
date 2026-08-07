@@ -1,6 +1,7 @@
 ## 小蚕
 使用spring boot + vue3开发
 ## tips
+- 若服务可被公网访问，可在application.yaml里配置`system:web-url`，配置后wxpusher推送将会采用iframe方式，可直接在wxpusher里面收藏该门店。
 - 浏览器收藏网址时直接带上token参数，会自动识别，避免token丢失,例如：http://xxxx.com/?token=xxxxxxxxx
 ## [前端 github](https://github.com/lyrric/xiaocan-front)
 ## 更新记录
@@ -35,8 +36,9 @@
 | ![监控列表](images/监控列表页.jpg) | ![任务详情](images/monitor-list-task.png) |
 
 ### 推送记录
-
-| 推送记录 | WxPusher 推送 |
-| :---: | :---: |
-| ![推送记录](images/push-store.png) | ![WxPusher推送](images/wxpusher推送.jpg) |
+ ![推送记录](images/push-store.png) 
+## wxpusher 普通模式
+ ![WxPusher推送](images/wxpusher推送.jpg) 
+## wxpusher iframe模式
+ ![WxPusher推送](images/spt推送iframe.jpg) 
 
