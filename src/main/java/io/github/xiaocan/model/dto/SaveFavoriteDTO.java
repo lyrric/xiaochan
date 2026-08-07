@@ -14,7 +14,7 @@ public class SaveFavoriteDTO {
     @NotBlank(message = "uniqueId不能为空")
     private String uniqueId;
 
-    @NotBlank(message = "storeType不能为空")
+    @NotNull(message = "storeType不能为空")
     private StoreTypeEnum storeType;
 
     private String icon;
