@@ -83,5 +83,10 @@ public class StorePushedHistoryVO {
      * 门店图片
      */
     private String icon;
+    /**
+     * 好评条件
+     */
+    private String rebateConditionStr;
+
 
 }

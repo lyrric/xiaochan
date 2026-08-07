@@ -6,6 +6,8 @@ import io.github.xiaocan.model.dto.NotifyHistoryQueryDTO;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.vo.StorePushedHistoryVO;
 
+import java.util.List;
+
 public interface StorePushedHistoryService extends IService<StorePushedHistoryEntity> {
 
     /**
@@ -19,4 +21,11 @@ public interface StorePushedHistoryService extends IService<StorePushedHistoryEn
     StorePushedHistoryEntity findByNotifyIdAndUniqIdToday(Integer notifyId, String uniqId);
 
     StorePushedHistoryEntity findByNotifyIdAndUniqIdAll(Integer notifyId, String uniqId);
+
+    /**
+     * 批量保存并返回批次ID
+     * @param entities 实体列表
+     * @return 批次ID（UUID去-）
+     */
+    String saveBatchAndReturnBatchId(List<StorePushedHistoryEntity> entities);
 }

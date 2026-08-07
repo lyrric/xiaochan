@@ -1,5 +1,6 @@
 package io.github.xiaocan.service;
 
+import io.github.xiaocan.config.SystemConfig;
 import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.entity.LocationEntity;
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,6 +38,10 @@ public class MessageService {
     private UserService userService;
     @Resource
     private SptService sptService;
+    @Resource
+    private SystemConfig systemConfig;
+    @Resource
+    private MessageBatchRecordService messageBatchRecordService;
 
     /**
      * 延迟发送时间（秒）
@@ -97,8 +104,9 @@ public class MessageService {
      * @param notifyConfig   监控配置
      * @param storeInfos     满足条件的门店列表
      * @param locationEntity 位置信息
+     * @param batchId        推送批次ID
      */
-    public void queueMessage(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos, LocationEntity locationEntity) {
+    public void queueMessage(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos, LocationEntity locationEntity, String batchId) {
         UserEntity userEntity = userService.getById(locationEntity.getUserId());
         if (userEntity == null || !StringUtils.hasText(userEntity.getSpt())) {
             log.warn("用户不存在或spt为空，跳过消息入队 userId:{}", locationEntity.getUserId());
@@ -118,13 +126,13 @@ public class MessageService {
         synchronized (pendingBatches) {
             MessageBatch batch = pendingBatches.get(batchKey);
             if (batch == null) {
-                batch = new MessageBatch(spt, monitorType);
+                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId());
                 pendingBatches.put(batchKey, batch);
                 shouldSchedule = true;
             } else {
                 shouldSchedule = false;
             }
-            batch.add(parts, count);
+            batch.add(parts, count, batchId);
         }
 
         if (shouldSchedule) {
@@ -152,6 +160,9 @@ public class MessageService {
             log.info("批量发送消息 spt:{}, monitorType:{}, 共{}个门店",
                     batch.spt, batch.monitorType, batch.storeCount);
             sptService.sendMessage(batch.spt, body, summary);
+            // 记录消息批次
+            String batchIds = String.join(",", batch.batchIds);
+            messageBatchRecordService.recordBatch(batch.userId, batchIds);
         } catch (Exception e) {
             log.error("批量发送消息失败 spt:{}, monitorType:{}", batch.spt, batch.monitorType, e);
         }
@@ -211,17 +222,23 @@ public class MessageService {
     private static class MessageBatch {
         final String spt;
         final MonitorTypeEnums monitorType;
+        final Integer userId;
         final List<String> messageParts = new ArrayList<>();
+        final Set<String> batchIds = new HashSet<>();
         int storeCount = 0;
 
-        MessageBatch(String spt, MonitorTypeEnums monitorType) {
+        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId) {
             this.spt = spt;
             this.monitorType = monitorType;
+            this.userId = userId;
         }
 
-        void add(List<String> parts, int count) {
+        void add(List<String> parts, int count, String batchId) {
             messageParts.addAll(parts);
             storeCount += count;
+            if (batchId != null) {
+                batchIds.add(batchId);
+            }
         }
 
         boolean isEmpty() {

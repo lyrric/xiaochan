@@ -13,6 +13,8 @@ import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistoryMapper, StorePushedHistoryEntity> implements StorePushedHistoryService {
@@ -57,5 +59,16 @@ public class StorePushedHistoryServiceImpl extends ServiceImpl<StorePushedHistor
                 .eq(StorePushedHistoryEntity::getUniqId, uniqId)
                 .last("limit 1")
                 .one();
+    }
+
+    @Override
+    public String saveBatchAndReturnBatchId(List<StorePushedHistoryEntity> entities) {
+        // 生成UUID并去除-
+        String batchId = UUID.randomUUID().toString().replace("-", "");
+        // 为每个实体设置批次ID
+        entities.forEach(entity -> entity.setBatchId(batchId));
+        // 批量保存
+        saveBatch(entities);
+        return batchId;
     }
 }

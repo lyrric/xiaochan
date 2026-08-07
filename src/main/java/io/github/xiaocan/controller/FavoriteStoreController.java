@@ -44,4 +44,5 @@ public class FavoriteStoreController {
     public BaseResult<Page<StoreInfo>> queryFavoriteStores(@RequestBody @Validated FavoriteStoreQueryDTO dto) {
         return BaseResult.ok(favoriteStoreService.queryFavoriteStores(dto));
     }
+
 }

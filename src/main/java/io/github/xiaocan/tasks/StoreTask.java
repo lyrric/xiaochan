@@ -107,9 +107,9 @@ public class StoreTask extends BaseTask {
                 return;
             }
         }
-        savePushedHistory(notifyConfig, availableStores);
+        String batchId = savePushedHistory(notifyConfig, availableStores);
         afterSuccess(notifyConfig, availableStores);
-        messageService.queueMessage(notifyConfig, availableStores, location);
+        messageService.queueMessage(notifyConfig, availableStores, location, batchId);
     }
 
     /**

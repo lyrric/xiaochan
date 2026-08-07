@@ -56,6 +56,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserEntity> impleme
         }
         HttpServletRequest request = requestAttributes.getRequest();
         String token = request.getHeader("token");
+        if (!StringUtils.hasText(token)) {
+            token = request.getParameter("token");
+        }
         if(StringUtils.hasText(token)) {
             return getByToken(token);
         }

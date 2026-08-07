@@ -179,3 +179,24 @@ ALTER TABLE `monitor_config`
 ALTER TABLE `user`
     ADD COLUMN `waimai_token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT NULL COMMENT '歪麦token'
         AFTER `spt`;
+
+
+-- 2026年8月6日 新增rebate_condition_str字段
+ALTER TABLE `store_pushed_history`
+    ADD COLUMN `rebate_condition_str` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '返现条件字符串' AFTER `uniq_id`;
+
+-- 2026年8月7日 新增batch_id字段，用于标识批量插入的批次
+ALTER TABLE `store_pushed_history`
+    ADD COLUMN `batch_id` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '批量插入批次ID（UUID去-）' AFTER `id`;
+
+-- 2026年8月7日 新增消息批次记录表
+CREATE TABLE `message_batch_record` (
+    `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+    `user_id` int NOT NULL COMMENT '用户ID',
+    `batch_ids` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '批次ID（多个以逗号分割，已去重）',
+    `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    PRIMARY KEY (`id`),
+    INDEX `idx_user_id` (`user_id` ASC),
+    INDEX `idx_create_time` (`create_time` ASC)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '消息批次记录';
+

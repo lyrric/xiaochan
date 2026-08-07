@@ -129,7 +129,7 @@ public class BaseTask {
         //默认为空
     }
 
-    protected void savePushedHistory(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos){
+    protected String savePushedHistory(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos){
         List<StorePushedHistoryEntity> entities = storeInfos.stream().map(storeInfo -> {
             StorePushedHistoryEntity entity = new StorePushedHistoryEntity();
             BeanUtils.copyProperties(storeInfo, entity);
@@ -139,7 +139,7 @@ public class BaseTask {
             entity.setNotifyType(notifyConfig.getType());
             return entity;
         }).toList();
-        storePushedHistoryService.saveBatch(entities);
+        return storePushedHistoryService.saveBatchAndReturnBatchId(entities);
     }
 
     /**
@@ -147,8 +147,8 @@ public class BaseTask {
      */
     protected void handleAvailableStores(MonitorConfigEntity notifyConfig, List<StoreInfo> availableStores,
                                          LocationEntity location) {
-        savePushedHistory(notifyConfig, availableStores);
+        String batchId = savePushedHistory(notifyConfig, availableStores);
         afterSuccess(notifyConfig, availableStores);
-        messageService.queueMessage(notifyConfig, availableStores, location);
+        messageService.queueMessage(notifyConfig, availableStores, location, batchId);
     }
 }

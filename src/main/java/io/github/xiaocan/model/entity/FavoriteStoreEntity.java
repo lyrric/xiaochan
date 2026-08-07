@@ -29,6 +29,9 @@ public class FavoriteStoreEntity {
 
     private String name;
 
+    /**
+     * 平台类型 1:美团，2：饿了么，3京东
+     */
     private Integer type;
 
     private String distance;

@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.xiaocan.config.BusinessException;
-import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.mapper.FavoriteStoreMapper;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.*;
@@ -44,7 +43,7 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
     @Transactional(rollbackFor = Exception.class)
     public void saveFavorite(SaveFavoriteDTO dto) {
         UserEntity currentUser = userService.getByCurrentRequest();
-        StoreTypeEnum storeTypeEnum = parseStoreType(dto.getStoreType());
+        StoreTypeEnum storeTypeEnum = dto.getStoreType();
 
         // 幂等：先删除同用户、同地址、同门店、同类型的收藏
         LambdaQueryWrapper<FavoriteStoreEntity> wrapper = new LambdaQueryWrapper<>();

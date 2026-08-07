@@ -1,5 +1,6 @@
 package io.github.xiaocan.model.dto;
 
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -14,7 +15,7 @@ public class SaveFavoriteDTO {
     private String uniqueId;
 
     @NotBlank(message = "storeType不能为空")
-    private String storeType;
+    private StoreTypeEnum storeType;
 
     private String icon;
 
