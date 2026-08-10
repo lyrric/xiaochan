@@ -6,6 +6,8 @@ package io.github.xiaochan;
  */
 
 import io.github.xiaocan.http.WmmtHttp;
+import io.github.xiaocan.model.dto.WmmtShopListDTO;
+import io.github.xiaocan.model.vo.WmPageVO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,9 @@ public class WaiMaiTest {
 
     @Test
     public void testGetStoreList(){
-        WmmtHttp.getShopList("", "传给你都市", null);
+        WmmtShopListDTO dto = new WmmtShopListDTO();
+        dto.setLongitude("");
+        dto.setLatitude("");
+        WmPageVO wmPageVO = WmmtHttp.getShopList("", "成都市", dto);
     }
 }

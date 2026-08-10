@@ -331,7 +331,14 @@ public class WmmtHttp {
                 //releaseNumber 发布数量
                 if (skuStoreinfo.getStoreTypeEnum() == StoreTypeEnum.WM_MANJIAN) {
                     skuStoreinfo.setPrice(sku.getJSONObject("maxGradeRebate").getBigDecimal("fullMoney"));
-                    skuStoreinfo.setRebatePrice(sku.getJSONObject("maxGradeRebate").getBigDecimal("rebateMoney"));
+                    BigDecimal rebatePrice = sku.getJSONObject("maxGradeRebate").getBigDecimal("rebateMoney");
+                    //vipCompensationMoney 会员补偿金额
+                    BigDecimal vipCompensationMoney = sku.getBigDecimal("vipCompensationMoney");
+                    if (vipCompensationMoney == null) {
+                        vipCompensationMoney = BigDecimal.ZERO;
+                    }
+                    //普通用户返现需要减去会员补偿金额
+                    skuStoreinfo.setRebatePrice(rebatePrice.subtract(vipCompensationMoney));
                     skuStoreinfo.setPromotionId(sku.getString("id"));
                 }else{
                     BigDecimal meituanRatio = sku.getBigDecimal("meituanRatio");
