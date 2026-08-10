@@ -338,7 +338,7 @@ public class WmmtHttp {
                     if (meituanRatio != null) {
                         skuStoreinfo.setRebateRatio(meituanRatio.divide(new BigDecimal(100), 2, RoundingMode.HALF_DOWN));
                     }else{
-                        log.error("数据异常: {}", sku.toJSONString());
+                        log.error("数据异常: {}", item.toJSONString());
                         skuStoreinfo.setRebateRatio(BigDecimal.ZERO);
                     }
                     //meituanVipRatio：会员返现比例
