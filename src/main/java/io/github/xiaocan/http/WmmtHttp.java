@@ -334,7 +334,13 @@ public class WmmtHttp {
                     skuStoreinfo.setRebatePrice(sku.getJSONObject("maxGradeRebate").getBigDecimal("rebateMoney"));
                     skuStoreinfo.setPromotionId(sku.getString("id"));
                 }else{
-                    skuStoreinfo.setRebateRatio(sku.getBigDecimal("meituanRatio").divide(new BigDecimal(100), 2, RoundingMode.HALF_DOWN));
+                    BigDecimal meituanRatio = sku.getBigDecimal("meituanRatio");
+                    if (meituanRatio != null) {
+                        skuStoreinfo.setRebateRatio(meituanRatio.divide(new BigDecimal(100), 2, RoundingMode.HALF_DOWN));
+                    }else{
+                        log.error("数据异常: {}", sku.toJSONString());
+                        skuStoreinfo.setRebateRatio(BigDecimal.ZERO);
+                    }
                     //meituanVipRatio：会员返现比例
                     skuStoreinfo.setRebateMax(sku.getBigDecimal("maxReturnMoney"));
                     //美团赏金的没返，暂时用uniqId来替代

@@ -35,10 +35,8 @@
 | :---: | :---: |
 | ![监控列表](images/监控列表页.jpg) | ![任务详情](images/monitor-list-task.png) |
 
-### 推送记录
- ![推送记录](images/push-store.png) 
-## wxpusher 普通模式
- ![WxPusher推送](images/wxpusher推送.jpg) 
-## wxpusher iframe模式
- ![WxPusher推送](images/spt推送iframe.jpg) 
+### 推送
 
+| 推送记录 | WxPusher 推送 | wxpusher iframe模式 |
+| :---: | :---: | :---: |
+| ![推送记录](images/push-store.png) | ![WxPusher推送](images/wxpusher推送.jpg) | ![wxpusher iframe模式](images/spt推送iframe.jpg) |
