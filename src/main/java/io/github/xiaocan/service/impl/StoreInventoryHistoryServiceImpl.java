@@ -11,6 +11,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,6 +35,7 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
     });
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void insertBatch(List<StoreInfo> list) {
         inventoryExecutor.execute(() -> {
             try {
