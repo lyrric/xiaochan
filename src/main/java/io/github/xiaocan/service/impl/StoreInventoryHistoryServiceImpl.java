@@ -7,19 +7,15 @@ import io.github.xiaocan.model.entity.StoreInventoryHistoryEntity;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.StoreInventoryHistoryVO;
 import io.github.xiaocan.service.StoreInventoryHistoryService;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -28,6 +24,9 @@ import java.util.stream.Collectors;
 @Service
 public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventoryHistoryMapper, StoreInventoryHistoryEntity> implements StoreInventoryHistoryService {
 
+    @Resource
+    private TransactionTemplate transactionTemplate;
+
     private final ExecutorService inventoryExecutor = Executors.newSingleThreadExecutor(r -> {
         Thread t = new Thread(r, "inventory-history-writer");
         t.setDaemon(true);
@@ -35,8 +34,8 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
     });
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void insertBatch(List<StoreInfo> list) {
+
         inventoryExecutor.execute(() -> {
             try {
                 if (list == null || list.isEmpty()) {
@@ -60,7 +59,7 @@ public class StoreInventoryHistoryServiceImpl extends ServiceImpl<StoreInventory
                 if (entities.isEmpty()) {
                     return;
                 }
-                saveBatch(entities);
+                transactionTemplate.execute(status -> saveBatch(entities));
             } catch (Exception e) {
                 log.error("异步保存库存历史失败", e);
             }
