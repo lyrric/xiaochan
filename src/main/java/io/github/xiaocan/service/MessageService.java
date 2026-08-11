@@ -93,6 +93,7 @@ public class MessageService {
             </div>
             """;
     String IFRAME_BODY = """
+                <H2>${LOCATION_NAME}</H2>
                 <iframe src="${WEB_URL}/s/${TOKEN}/${MSG_ID}" width="100%" height="1000px" frameborder="0" allowfullscreen></iframe>
                 """;
     /**
@@ -129,7 +130,7 @@ public class MessageService {
         synchronized (pendingBatches) {
             MessageBatch batch = pendingBatches.get(batchKey);
             if (batch == null) {
-                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token);
+                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token, locationEntity.getName());
                 pendingBatches.put(batchKey, batch);
                 shouldSchedule = true;
             } else {
@@ -164,6 +165,7 @@ public class MessageService {
             log.info("使用iframe方式发送消息 msgId:{} webUrl:{}", msgId, systemConfig.getWebUrl());
             body = IFRAME_BODY.replace("${WEB_URL}", systemConfig.getWebUrl())
                     .replace("${TOKEN}", batch.token)
+                    .replace("${LOCATION_NAME}", batch.locationName)
                     .replace("${MSG_ID}", String.valueOf(msgId));
         }else{
             body = String.join("<br/><br/>", batch.messageParts);
@@ -239,13 +241,15 @@ public class MessageService {
         final List<String> messageParts = new ArrayList<>();
         final Set<String> batchIds = new HashSet<>();
         final String token;
+        final String locationName;
         int storeCount = 0;
 
-        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId,String token) {
+        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId,String token, String locationName) {
             this.spt = spt;
             this.monitorType = monitorType;
             this.userId = userId;
             this.token = token;
+            this.locationName = locationName;
         }
 
         void add(List<String> parts, int count, String batchId) {
