@@ -93,13 +93,12 @@ public class MessageService {
             </div>
             """;
     String IFRAME_BODY = """
-                <H2>${LOCATION_NAME}</H2>
                 <iframe src="${WEB_URL}/s/${TOKEN}/${MSG_ID}" width="100%" height="1000px" frameborder="0" allowfullscreen></iframe>
                 """;
     /**
      * 合并发送时的 summary 模板
      */
-    private static final String MERGED_SUMMARY_TEMPLATE = "${类型}共有${数量}个新返现活动";
+    private static final String MERGED_SUMMARY_TEMPLATE = "${LOCATION_NAME} ${类型}共有${数量}个新返现活动";
 
     /**
      * 将消息加入缓冲队列，延迟1分钟后按 spt + MonitorTypeEnums 分组合并发送。
@@ -188,6 +187,7 @@ public class MessageService {
      */
     private String buildMergedSummary(MessageBatch batch) {
         return MERGED_SUMMARY_TEMPLATE
+                .replace("${LOCATION_NAME}", batch.locationName)
                 .replace("${类型}", batch.monitorType.getDescription())
                 .replace("${数量}", String.valueOf(batch.storeCount));
     }
