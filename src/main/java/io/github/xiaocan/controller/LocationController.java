@@ -8,6 +8,7 @@ import io.github.xiaocan.model.dto.LocationDTO;
 import io.github.xiaocan.model.vo.AddressVO;
 import io.github.xiaocan.model.vo.CityCodeVO;
 import io.github.xiaocan.model.vo.LocationVO;
+import io.github.xiaocan.model.vo.RegionItemVO;
 import io.github.xiaocan.service.LocationService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/location")
@@ -78,6 +81,53 @@ public class LocationController {
         List<CityCodeVO> data = JSONObject.parseObject(json, new TypeReference<List<CityCodeVO>>() {
         });
         return BaseResult.ok(data);
+    }
+
+    /**
+     * 搜索省市区（扁平化列表，按key模糊匹配）
+     * @param key 搜索关键字
+     * @return 匹配的省市区列表
+     */
+    @GetMapping(value = "/searchRegion")
+    public BaseResult<List<RegionItemVO>> searchRegion(@RequestParam(required = false, defaultValue = "") String key) throws IOException {
+        String json = readCityCode();
+        List<CityCodeVO> tree = JSONObject.parseObject(json, new TypeReference<List<CityCodeVO>>() {
+        });
+        List<RegionItemVO> allItems = flattenRegion(tree);
+        if (key == null || key.trim().isEmpty()) {
+            return BaseResult.ok(allItems.size() > 10 ? allItems.subList(0, 10) : allItems);
+        }
+        String lowerKey = key.trim().toLowerCase();
+        List<RegionItemVO> filtered = allItems.stream()
+                .filter(item -> item.getName().toLowerCase().contains(lowerKey))
+                .limit(10)
+                .collect(Collectors.toList());
+        return BaseResult.ok(filtered);
+    }
+
+    /**
+     * 将省市区树形结构扁平化为列表
+     */
+    private List<RegionItemVO> flattenRegion(List<CityCodeVO> provinces) {
+        List<RegionItemVO> result = new ArrayList<>();
+        if (provinces == null) return result;
+        for (CityCodeVO province : provinces) {
+            if (province.getChild() == null || province.getChild().isEmpty()) {
+                result.add(new RegionItemVO(province.getName(), province.getCode()));
+                continue;
+            }
+            for (CityCodeVO city : province.getChild()) {
+                if (city.getChild() == null || city.getChild().isEmpty()) {
+                    result.add(new RegionItemVO(province.getName() + " " + city.getName(), city.getCode()));
+                    continue;
+                }
+                for (CityCodeVO district : city.getChild()) {
+                    String name = province.getName() + " " + city.getName() + " " + district.getName();
+                    result.add(new RegionItemVO(name, district.getCode()));
+                }
+            }
+        }
+        return result;
     }
 
     private String readCityCode() throws IOException {
