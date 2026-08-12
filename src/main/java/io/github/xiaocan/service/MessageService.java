@@ -98,7 +98,7 @@ public class MessageService {
     /**
      * 合并发送时的 summary 模板
      */
-    private static final String MERGED_SUMMARY_TEMPLATE = "${LOCATION_NAME} ${类型}共有${数量}个新返现活动";
+    private static final String MERGED_SUMMARY_TEMPLATE = "${类型}共有${数量}个新返现活动";
 
     /**
      * 将消息加入缓冲队列，延迟1分钟后按 spt + MonitorTypeEnums 分组合并发送。
@@ -129,7 +129,7 @@ public class MessageService {
         synchronized (pendingBatches) {
             MessageBatch batch = pendingBatches.get(batchKey);
             if (batch == null) {
-                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token, locationEntity.getName());
+                batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token);
                 pendingBatches.put(batchKey, batch);
                 shouldSchedule = true;
             } else {
@@ -164,7 +164,6 @@ public class MessageService {
             log.info("使用iframe方式发送消息 msgId:{} webUrl:{}", msgId, systemConfig.getWebUrl());
             body = IFRAME_BODY.replace("${WEB_URL}", systemConfig.getWebUrl())
                     .replace("${TOKEN}", batch.token)
-                    .replace("${LOCATION_NAME}", batch.locationName)
                     .replace("${MSG_ID}", String.valueOf(msgId));
         }else{
             body = String.join("<br/><br/>", batch.messageParts);
@@ -187,7 +186,6 @@ public class MessageService {
      */
     private String buildMergedSummary(MessageBatch batch) {
         return MERGED_SUMMARY_TEMPLATE
-                .replace("${LOCATION_NAME}", batch.locationName)
                 .replace("${类型}", batch.monitorType.getDescription())
                 .replace("${数量}", String.valueOf(batch.storeCount));
     }
@@ -241,15 +239,13 @@ public class MessageService {
         final List<String> messageParts = new ArrayList<>();
         final Set<String> batchIds = new HashSet<>();
         final String token;
-        final String locationName;
         int storeCount = 0;
 
-        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId,String token, String locationName) {
+        MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId,String token) {
             this.spt = spt;
             this.monitorType = monitorType;
             this.userId = userId;
             this.token = token;
-            this.locationName = locationName;
         }
 
         void add(List<String> parts, int count, String batchId) {

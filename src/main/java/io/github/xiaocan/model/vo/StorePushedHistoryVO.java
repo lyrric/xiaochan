@@ -25,6 +25,10 @@ public class StorePushedHistoryVO {
      */
     private Long locationId;
     /**
+     * 地址名称
+     */
+    private String locationName;
+    /**
      * 创建时间
      */
     private LocalDateTime createTime;

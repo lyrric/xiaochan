@@ -3,9 +3,11 @@ package io.github.xiaocan.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.mapper.MessageBatchRecordMapper;
+import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MessageBatchRecordEntity;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
 import io.github.xiaocan.model.vo.StorePushedHistoryVO;
+import io.github.xiaocan.service.LocationService;
 import io.github.xiaocan.service.MessageBatchRecordService;
 import io.github.xiaocan.service.StorePushedHistoryService;
 import io.github.xiaocan.service.UserService;
@@ -14,11 +16,16 @@ import io.github.xiaocan.utils.PageConvertUtil;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,6 +37,8 @@ public class MessageBatchRecordServiceImpl extends ServiceImpl<MessageBatchRecor
     private StorePushedHistoryService storePushedHistoryService;
     @Resource
     private FavoriteStoreService favoriteStoreService;
+    @Resource
+    private LocationService locationService;
 
     @Override
     public Long recordBatch(Integer userId, String batchIds) {
@@ -70,8 +79,34 @@ public class MessageBatchRecordServiceImpl extends ServiceImpl<MessageBatchRecor
 
         // 5. 转换为VO
         List<StorePushedHistoryVO> voList = PageConvertUtil.convertList(entities, StorePushedHistoryVO.class);
-        // 6. 填充收藏ID
+        // 6. 填充地址名称
+        fillLocationNames(voList);
+        // 7. 填充收藏ID
         favoriteStoreService.fillFavoriteIdsForPushedHistory(voList, currentUserId);
         return voList;
+    }
+
+    /**
+     * 批量填充地址名称
+     */
+    private void fillLocationNames(List<StorePushedHistoryVO> voList) {
+        if (CollectionUtils.isEmpty(voList)) {
+            return;
+        }
+        Set<Long> locationIds = voList.stream()
+                .map(StorePushedHistoryVO::getLocationId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (locationIds.isEmpty()) {
+            return;
+        }
+        Map<Long, String> locationNameMap = locationService.listByIds(locationIds).stream()
+                .filter(loc -> loc.getName() != null)
+                .collect(Collectors.toMap(LocationEntity::getId, LocationEntity::getName, (a, b) -> a));
+        for (StorePushedHistoryVO vo : voList) {
+            if (vo.getLocationId() != null) {
+                vo.setLocationName(locationNameMap.get(vo.getLocationId()));
+            }
+        }
     }
 }
