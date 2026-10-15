@@ -117,6 +117,17 @@ public class MessageService {
         String spt = userEntity.getSpt();
         String token = userEntity.getToken();
         MonitorTypeEnums monitorType = notifyConfig.getType();
+
+        if (MonitorTypeEnums.STORE_ACTIVITY == monitorType) {
+            List<String> parts = storeInfos.stream()
+                    .map(storeInfo -> buildStoreMessage(storeInfo, locationEntity))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            MessageBatch batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token);
+            batch.add(parts, storeInfos.size(), batchId);
+            flushBatch(batch);
+            return;
+        }
+
         String batchKey = spt + ":" + monitorType.name();
 
         // 构建当前批次的消息内容
@@ -154,6 +165,13 @@ public class MessageService {
         if (batch == null || batch.isEmpty()) {
             return;
         }
+        flushBatch(batch);
+    }
+
+    /**
+     * 发送指定批次的消息
+     */
+    private void flushBatch(MessageBatch batch) {
         // 记录消息批次
         String batchIds = String.join(",", batch.batchIds);
         Long msgId = messageBatchRecordService.recordBatch(batch.userId, batchIds);
