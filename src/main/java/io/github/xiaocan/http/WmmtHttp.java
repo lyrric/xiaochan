@@ -315,7 +315,7 @@ public class WmmtHttp {
                     .icon(item.getString("logoAddress"))
                     .distanceStr(item.getString("distance")).build();
                     //shopPlatformType 1满减，2：百分比返现
-            if (item.getInteger("shopPlatformType") == 1) {
+            if (item.getInteger("shopPlatformType") == 1 || item.getInteger("shopPlatformType") == 3) {
                 storeInfo.setStoreTypeEnum(StoreTypeEnum.WM_MANJIAN);
             }else{
                 storeInfo.setStoreTypeEnum(StoreTypeEnum.WM_MTSJ);

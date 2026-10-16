@@ -1,19 +1,17 @@
 package io.github.xiaocan.service.impl;
 
+import io.github.xiaocan.config.XieQuProxyConfig;
 import io.github.xiaocan.constant.StoreConstant;
 import io.github.xiaocan.http.XiaochanHttp;
+import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
-import io.github.xiaocan.service.StoreInventoryHistoryService;
-import io.github.xiaocan.service.XiaoChanService;
-import io.github.xiaocan.service.FavoriteStoreService;
-import io.github.xiaocan.service.UserService;
+import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -32,13 +30,40 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Resource
     private StoreInventoryHistoryService storeInventoryHistoryService;
-
     @Lazy
     @Resource
     private FavoriteStoreService favoriteStoreService;
-
     @Resource
     private UserService userService;
+    @Resource
+    private XieQuProxyConfig xieQuProxyConfig;
+    @Resource
+    private ProxyService proxyService;
+
+    /**
+     * 封禁冷却时间：10分钟
+     */
+    private static final long BLOCK_COOLDOWN_MILLIS = 10 * 60 * 1000L;
+
+    /**
+     * 被封禁的时间戳，null表示未被封禁
+     */
+    private volatile Long blockedTime = null;
+
+    /**
+     * 是否处于封禁状态，距封禁超过10分钟则自动解封
+     */
+    private boolean isBlocked() {
+        Long time = blockedTime;
+        if (time == null) {
+            return false;
+        }
+        if (System.currentTimeMillis() - time > BLOCK_COOLDOWN_MILLIS) {
+            blockedTime = null;
+            return false;
+        }
+        return true;
+    }
 
 
     @Override
@@ -89,7 +114,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         int offset = 0;
         List<StoreInfo> result = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            List<StoreInfo> list = doGetList(cityCode, longitude, latitude, offset);
+            List<StoreInfo> list = getListByOffset(cityCode, longitude, latitude, offset);
             result.addAll(list);
             if (result.size() >= maxSize) {
                 break;
@@ -105,7 +130,34 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
-        return doGetList(cityCode, longitude, latitude, offset);
+        if (!isBlocked()) {
+            try {
+                return XiaochanHttp.getList(cityCode, longitude, latitude, offset);
+            }catch (Exception e){
+                if (e.getMessage().contains("状态码错误: 403")) {
+                    blockedTime = System.currentTimeMillis();
+                }
+                log.error("请求小产列表时发生错误 {}",e.getMessage());
+            }
+        }
+        if (!xieQuProxyConfig.getEnable()) {
+            return Collections.emptyList();
+        }
+        for (int i = 0; i < 5; i++) {
+            HttpProxyInfo proxyInfo = null;
+            try {
+                proxyInfo = proxyService.getOne();
+                log.info("使用代理 {} 请求小产列表", proxyInfo);
+                return XiaochanHttp.getList(cityCode, longitude, latitude, offset, proxyInfo);
+            }catch (Exception e){
+                log.error("proxy 请求小产列表时发生错误 {} {}", proxyInfo, e.getMessage());
+                if (proxyInfo != null) {
+                    proxyService.removeProxy(proxyInfo);
+                }
+            }
+        }
+
+        return Collections.emptyList();
     }
 
 
@@ -141,17 +193,6 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
 
 
-    private List<StoreInfo> doGetList(Integer cityCode, String longitude, String latitude, int offset){
-        try {
-            List<StoreInfo> list = XiaochanHttp.getList(cityCode, longitude, latitude, offset);
-            return list;
-        } catch (Exception e) {
-            log.error("请求小产列表时发生错误 ",e);
-        }
-        return Collections.emptyList();
-    }
-
-
     /**
      * 根据排序类型对门店列表进行排序
      * @param list 门店列表
@@ -174,7 +215,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         if (StringUtils.isNotBlank(queryListVO.getName())) {
             list = list.stream().filter(storeInfo -> storeInfo.getName().contains(queryListVO.getName())).toList();
         }
-        
+
         // 只看可抢过滤（剩余数量大于0且活动时间在当前时间范围内）
         if (queryListVO.getOnlyAvailable() != null && queryListVO.getOnlyAvailable()) {
             list = list.stream().filter(storeInfo -> {
@@ -182,11 +223,11 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 boolean hasStock = storeInfo.getLeftNumber() != null && storeInfo.getLeftNumber() > 0;
                 // 检查活动时间
                 boolean inActiveTime = isInActiveTime(storeInfo);
-                
+
                 return hasStock && inActiveTime;
             }).toList();
         }
-        
+
         return list;
     }
 
@@ -200,12 +241,12 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             // 如果没有设置活动时间，默认认为可用
             return true;
         }
-        
+
         try {
             LocalTime now = LocalTime.now();
             LocalTime startTime = LocalTime.parse(storeInfo.getStartTime(), DateTimeFormatter.ofPattern("HH:mm"));
             LocalTime endTime = LocalTime.parse(storeInfo.getEndTime(), DateTimeFormatter.ofPattern("HH:mm"));
-            
+
             // 处理跨日的情况（如：23:00-02:00）
             if (endTime.isBefore(startTime)) {
                 // 跨日情况：当前时间在开始时间之后或结束时间之前

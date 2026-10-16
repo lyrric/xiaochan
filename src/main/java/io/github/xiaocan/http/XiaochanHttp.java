@@ -1,11 +1,13 @@
 package io.github.xiaocan.http;
 
 import cn.hutool.crypto.digest.MD5;
+import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaocan.config.BusinessException;
+import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.AddressVO;
@@ -40,8 +42,11 @@ public class XiaochanHttp {
 
 
     public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
+        return getList(cityCode, longitude, latitude, offset, null);
+    }
+    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, HttpProxyInfo httpProxyInfo){
         String reqBody = getBody(cityCode, longitude, latitude, offset, 0, 0);
-        String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME);
+        String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME, httpProxyInfo);
         return parseListBody(resBody);
     }
 
@@ -156,13 +161,21 @@ public class XiaochanHttp {
     }
 
     private static String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName) {
+        return postWithRes(url, body, cityCode, serverName, methodName, null);
+    }
+
+    private static String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName, HttpProxyInfo httpProxyInfo) {
         Long timeMillis = System.currentTimeMillis();
         String nami = getNami();
         String ashe = getAshe(timeMillis, serverName, methodName,nami);
-        HttpResponse response = HttpUtil.createPost(url)
+        HttpRequest httpRequest = HttpUtil.createPost(url)
                 .headerMap(getHeaders(timeMillis, ashe, cityCode, serverName, methodName, nami), true)
                 .timeout(3000)
-                .body(body)
+                .body(body);
+        if (httpProxyInfo != null) {
+            httpRequest.setHttpProxy(httpProxyInfo.getIp(), httpProxyInfo.getPort());
+        }
+        HttpResponse response = httpRequest
                 .execute();
         if (!response.isOk()) {
             log.error("状态码错误: {}, body: {}", response.getStatus(), response.body());

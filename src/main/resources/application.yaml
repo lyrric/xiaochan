@@ -30,3 +30,10 @@ mybatis-plus:
 
 system:
   web-url: ${SYSTEM_WEB_URL:} # web url，末尾不带 /
+
+proxy:
+  xiequ:
+    enable: ${PROXY_XIEQU_ENABLE:false}
+    ukey: ${PROXY_XIEQU_UKEY:}
+    uid: ${PROXY_XIEQU_UID:}
+    get-ip-params: ${PROXY_XIEQU_GET_IP_PARAMS:}
