@@ -88,6 +88,7 @@ public class XieQuProxyServiceImpl implements ProxyService {
             if (json.contains(ip)) {
                 return;
             }
+            log.info("当前ip不在白名单，开始添加ip：{}", ip);
             String res = XieQuHttp.addIp(ip, xieQuProxyConfig);
             if (res.contains("ERR")) {
                 //可能是ip上限了，删除所有ip重新添加
