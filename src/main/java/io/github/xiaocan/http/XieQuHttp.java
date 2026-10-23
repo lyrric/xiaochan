@@ -9,6 +9,7 @@ import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.config.XieQuProxyConfig;
 import io.github.xiaocan.model.HttpProxyInfo;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -28,6 +29,7 @@ import java.util.*;
 /**
  * 携趣 HTTP 请求工具
  */
+@Slf4j
 public final class XieQuHttp {
 
     private static final int TIMEOUT = 10000;
@@ -45,6 +47,7 @@ public final class XieQuHttp {
     public static List<HttpProxyInfo> getIp(XieQuProxyConfig config) throws IOException {
 
         String json = get(config.getGetIpParams(), null);
+        log.info("获取ip代理列表: {}", json);
         JSONObject jsonObject = JSONObject.parseObject(json);
         JSONArray jsonArray = jsonObject.getJSONArray("data");
         List<ProxyInfo> proxyInfoList = jsonArray.toList(ProxyInfo.class);
