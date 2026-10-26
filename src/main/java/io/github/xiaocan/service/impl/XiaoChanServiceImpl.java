@@ -150,7 +150,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 log.info("使用代理 {} 请求小产列表", proxyInfo);
                 return XiaochanHttp.getList(cityCode, longitude, latitude, offset, proxyInfo);
             }catch (Exception e){
-                log.error("proxy 请求小产列表时发生错误 {} {}", proxyInfo, e.getMessage());
+                log.error("proxy 请求小产列表时发生错误 {} ", proxyInfo, e);
                 if (proxyInfo != null) {
                     proxyService.removeProxy(proxyInfo);
                 }
