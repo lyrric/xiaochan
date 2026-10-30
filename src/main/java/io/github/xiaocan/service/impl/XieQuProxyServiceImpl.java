@@ -1,5 +1,6 @@
 package io.github.xiaocan.service.impl;
 
+import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.config.XieQuProxyConfig;
 import io.github.xiaocan.http.XieQuHttp;
 import io.github.xiaocan.model.HttpProxyInfo;
@@ -59,16 +60,20 @@ public class XieQuProxyServiceImpl implements ProxyService {
             HttpProxyInfo proxyInfo = iterator.next();
             if (proxyInfo.getExpiry().before(new Date())) {
                 log.info("代理过期被移除：{}", proxyInfo);
-                iterator.remove();
+                httpProxyInfos.remove(proxyInfo);
                 continue;
             }
             if (proxyInfo.getRateLimiter().tryAcquire()) {
                 return proxyInfo;
             }
         }
-        HttpProxyInfo proxyInfo = getList().get(0);
-        httpProxyInfos.add(proxyInfo);
-        return proxyInfo;
+        List<HttpProxyInfo> newProxyInfos = getList();
+        if (newProxyInfos.isEmpty()) {
+            throw new BusinessException("获取代理失败");
+        }
+        HttpProxyInfo newProxyInfo = newProxyInfos.get(0);
+        httpProxyInfos.add(newProxyInfo);
+        return newProxyInfo;
     }
 
 

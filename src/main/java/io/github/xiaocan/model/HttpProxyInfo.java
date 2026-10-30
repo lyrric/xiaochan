@@ -30,5 +30,5 @@ public class HttpProxyInfo {
      */
     private String scheme;
 
-    private RateLimiter rateLimiter = RateLimiter.create(6);
+    private RateLimiter rateLimiter = RateLimiter.create(10);
 }
