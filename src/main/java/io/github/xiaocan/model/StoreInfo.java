@@ -107,6 +107,16 @@ public class StoreInfo {
     private Boolean exists;
 
     /**
+     * 美团pvId（仅美团赏金）
+     */
+    private String mtPvId;
+
+    /**
+     * 页面pvId（仅美团赏金）
+     */
+    private String pagePvId;
+
+    /**
      * 设置distance时，若distanceStr为空则同步生成distanceStr
      */
     public void setDistance(Integer distance) {

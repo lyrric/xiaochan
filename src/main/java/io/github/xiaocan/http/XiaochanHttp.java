@@ -13,9 +13,9 @@ import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.AddressVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -25,11 +25,15 @@ public class XiaochanHttp {
 
 
     private static final String BASE_URL = "https://gw.xiaocantech.com/rpc";
-    private static final String SERVER_NAME = "SilkwormRec";
-    private static final String METHOD_NAME = "RecService.GetStorePromotionList";
+    private static final String VERSION = "3.21.7.82";
+    private static final String APP_ID = "20";
+    private static final String SERVER_NAME = "SilkwormFusion";
+    private static final String METHOD_NAME = "FusionService.GetFeedPromotions";
 
 
     private static final int PAGE_SIZE = 30;
+    private static final int SILK_ID_TEEMO = 0;
+    private static final int USER_ID = 0;
 
     /**
      * 获取Ashe
@@ -43,10 +47,11 @@ public class XiaochanHttp {
 
 
     public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
-        return getList(cityCode, longitude, latitude, offset, null);
+        return getList(cityCode, longitude, latitude, offset, null, null);
     }
-    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, HttpProxyInfo httpProxyInfo){
-        String reqBody = getBody(cityCode, longitude, latitude, offset, 0, 0);
+
+    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, HttpProxyInfo httpProxyInfo) {
+        String reqBody = getBody(longitude, latitude, offset, pagePvId);
         String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME, httpProxyInfo);
         return parseListBody(resBody);
     }
@@ -62,7 +67,7 @@ public class XiaochanHttp {
         Map<String, Object> body = new HashMap<>();
         body.put("lat", new BigDecimal(latitude));
         body.put("lon", new BigDecimal(longitude));
-        body.put("silk_id", 897154359);
+        body.put("silk_id", SILK_ID_TEEMO);
         body.put("pv_id", pvId);
         body.put("scene", 1);
         body.put("app_id", 20);
@@ -88,7 +93,7 @@ public class XiaochanHttp {
         Map<String, Object> body = new HashMap<>();
         body.put("lat", new BigDecimal(latitude));
         body.put("lng", new BigDecimal(longitude));
-        body.put("silk_id", 897154359);
+        body.put("silk_id", SILK_ID_TEEMO);
         body.put("pv_id", pvId);
         body.put("sort_type", 3);
         body.put("search_word", keyword);
@@ -112,40 +117,46 @@ public class XiaochanHttp {
         List<StoreInfo> storeInfos = new ArrayList<>();
         for (int i = 0; i < poiList.size(); i++) {
             JSONObject poi = poiList.getJSONObject(i);
-            StoreInfo storeInfo = new StoreInfo();
-            storeInfo.setName(poi.getString("name"));
-            storeInfo.setType(1);
-            storeInfo.setIcon(poi.getString("picture"));
-            storeInfo.setDistanceStr(poi.getString("delivery_distance"));
-            storeInfo.setUniqId(poi.getString("wm_poi_id"));
-            JSONArray plans = poi.getJSONArray("plan_activity_info_list");
-            for (int j = 0; j < plans.size(); j++) {
-                StoreInfo item = new StoreInfo();
-                BeanUtils.copyProperties(storeInfo, item);
-                JSONObject activity = plans.getJSONObject(j);
-                item.setPromotionId(activity.getString("poi_event_id"));
-                item.setRebateRatio(activity.getBigDecimal("ratio").divide(new BigDecimal(100)));
-                item.setRebateMax(activity.getBigDecimal("max_commission").divide(new BigDecimal(100)));
-                item.setLeftNumber(activity.getInteger("inventory"));
-                if (Objects.equals(activity.getInteger("plan_activity_type"), 1)) {
-                    item.setRebateConditionStr("无需评价");
-                }else if (Objects.equals(activity.getInteger("plan_activity_type"), 2)) {
-                    item.setRebateConditionStr("图文评价");
-                }
-                item.setStartTime("00:00");
-                item.setEndTime("24:00");
-                item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ);
-                storeInfos.add(item);
-            }
+            storeInfos.addAll(parseMeituanStoreActivities(poi));
         }
         return storeInfos;
 
     }
 
+    private static List<StoreInfo> parseMeituanStoreActivities(JSONObject poi) {
+        List<StoreInfo> storeInfos = new ArrayList<>();
+        StoreInfo storeInfo = new StoreInfo();
+        storeInfo.setName(poi.getString("name"));
+        storeInfo.setType(1);
+        storeInfo.setIcon(poi.getString("picture"));
+        storeInfo.setDistanceStr(poi.getString("delivery_distance"));
+        storeInfo.setUniqId(poi.getString("wm_poi_id"));
+        JSONArray plans = poi.getJSONArray("plan_activity_info_list");
+        for (int j = 0; j < plans.size(); j++) {
+            StoreInfo item = new StoreInfo();
+            BeanUtils.copyProperties(storeInfo, item);
+            JSONObject activity = plans.getJSONObject(j);
+            item.setPromotionId(activity.getString("poi_event_id"));
+            item.setRebateRatio(activity.getBigDecimal("ratio").divide(new BigDecimal(100)));
+            item.setRebateMax(activity.getBigDecimal("max_commission").divide(new BigDecimal(100)));
+            item.setLeftNumber(activity.getInteger("inventory"));
+            if (Objects.equals(activity.getInteger("plan_activity_type"), 1)) {
+                item.setRebateConditionStr("无需评价");
+            } else if (Objects.equals(activity.getInteger("plan_activity_type"), 2)) {
+                item.setRebateConditionStr("图文评价");
+            }
+            item.setStartTime("00:00");
+            item.setEndTime("24:00");
+            item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ);
+            storeInfos.add(item);
+        }
+        return storeInfos;
+    }
+
 
     public static List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude, int offset, Integer number) {
         HashMap<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("silk_id", 0);
+        bodyMap.put("silk_id", SILK_ID_TEEMO);
         bodyMap.put("latitude", new BigDecimal(latitude));
         bodyMap.put("longitude", new BigDecimal(longitude));
         bodyMap.put("promotion_sort", 1);
@@ -194,8 +205,8 @@ public class XiaochanHttp {
     public static List<AddressVO> searchAddress(Integer cityCode, String keyword){
         final String serverName = "SilkwormLbs";
         final String methodName = "SilkwormLbsService.Suggestion";
-        Map<String, Object> bodyMap = Map.of("silk_id", 0, "keyword", keyword,
-                "region", "", "page_size", 20, "page", 1, "app_id", 20);
+        Map<String, Object> bodyMap = Map.of("silk_id", SILK_ID_TEEMO, "keyword", keyword,
+                "region", "", "page_size", 20, "page", 1, "app_id", APP_ID);
         try {
             Long timeMillis = System.currentTimeMillis();
             String nami = getNami();
@@ -228,8 +239,7 @@ public class XiaochanHttp {
                 "app_id", 20);
         String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(reqMap), null, "Silkworm", "SilkwormService.GetStorePromotionDetail");
         JSONObject jsonObject = checkResult(resBody);
-        List<StoreInfo> storeInfos = parsePromotion(jsonObject.getJSONObject("promotion_detail"));
-        return storeInfos.get(0);
+        return parsePromotion(jsonObject.getJSONObject("promotion_detail"));
     }
     private static List<AddressVO> parseBodyToAddress(String body) {
         JSONObject jsonObject = JSONObject.parseObject(body);
@@ -261,103 +271,69 @@ public class XiaochanHttp {
     private static String getNami(){
         String uuid = generateUuid();
         uuid = uuid.replace("-", "");
-        String silkId = "0";
-        return uuid.substring(0, 4) + silkId + uuid.substring(4, 20 - silkId.length() - 4);
+        return uuid.substring(0, 4) + SILK_ID_TEEMO + uuid.substring(4, 20 - String.valueOf(SILK_ID_TEEMO).length() - 4);
     }
 
-    private static String getBody(Integer cityCode, String longitude, String latitude, int offset, int promotionCategory, int storeCategory) {
+    private static String getBody(String longitude, String latitude, int offset, String pagePvId) {
         Map<String, Object> body = new HashMap<>();
-        body.put("latitude", new BigDecimal(latitude));
-        body.put("longitude", new BigDecimal(longitude));
-        body.put("promotion_sort", 3);
-        body.put("store_type", 0);
-        body.put("offset", offset);
+        body.put("lat", new BigDecimal(latitude));
+        body.put("lon", new BigDecimal(longitude));
         body.put("number", PAGE_SIZE);
-        body.put("silk_id", 0);
-        body.put("promotion_filter", 0);
-        body.put("promotion_category", promotionCategory);
-        body.put("city_code", cityCode);
-        body.put("store_category", storeCategory);
-        body.put("store_platform", 0);
-        body.put("app_id", 20);
+        body.put("silk_id", SILK_ID_TEEMO);
+        body.put("sort", 0);
+        body.put("offset", offset);
+        body.put("app_id", APP_ID);
+        body.put("scene", 1);
+        body.put("is_show_mt", StringUtils.isNotBlank(pagePvId));
+        body.put("page_pv_id", pagePvId);
         return JSONObject.toJSONString(body);
     }
 
 
     private static Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName, String nami){
         Map<String, String> headers = new HashMap<>();
-        headers.put("x-City", String.valueOf(cityCode));
+        headers.put("serverName", serverName);
+        headers.put("methodName", methodName);
+        headers.put("version", VERSION);
+        headers.put("X-Version", VERSION);
+        headers.put("X-Nami", nami);
         headers.put("X-Garen", String.valueOf(timeMillis));
-        headers.put("X-Nami",nami);
-        headers.put("X-Platform","mini");
-        headers.put("version", "3.15.9.10");
-        headers.put("X-Version", "3.15.9.10");
-        headers.put("appid", "20");
-        headers.put("X-Model", "microsoft microsoft");
-        headers.put("x-Annie", "XC");
-        headers.put("xweb_xhr", "1");
-        headers.put("Accept-Encoding", "gzip, deflate, br");
-        headers.put("Accept-Language", "zh-CN,zh;q=0.9");
-        headers.put("Sec-Fetch-Site", "cross-site");
-        headers.put("Sec-Fetch-Mode", "cors");
-        headers.put("Sec-Fetch-Dest", "empty");
-        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027");
-        headers.put("servername", serverName);
-        headers.put("methodname", methodName);
         headers.put("X-Ashe", ashe);
-        headers.put("Referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
+        headers.put("x-Annie", "XC");
+        headers.put("X-Platform", "mini");
+        headers.put("x-Teemo", String.valueOf(SILK_ID_TEEMO));
+        headers.put("x-Vayne", String.valueOf(USER_ID));
+        headers.put("X-Model", "microsoft microsoft");
+        headers.put("X-Session-Id", generateUuid());
+        headers.put("x-City", String.valueOf(cityCode == null ? 0 : cityCode));
+        headers.put("X-App-Sr", APP_ID);
         headers.put("Content-Type", "application/json");
+        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027");
+        headers.put("Referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
         return headers;
     }
 
-    private static List<StoreInfo> parsePromotion(JSONObject jsonObject){
-        List<StoreInfo> result = new ArrayList<>();
+
+
+    private static StoreInfo parsePromotion(JSONObject jsonObject){
         StoreInfo storeInfo = new StoreInfo();
+        //1为满减
+        storeInfo.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN);
         storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
         storeInfo.setPromotionId(jsonObject.getString("promotion_id"));
         storeInfo.setRebateConditionStr(convertRebateCondition(jsonObject.getInteger("rebate_condition")));
-        storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
-        storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
+        storeInfo.setStartTime(jsonObject.getString("start_time_hour"));
+        storeInfo.setEndTime(jsonObject.getString("end_time_hour"));
         storeInfo.setDistance(jsonObject.getInteger("distance"));
         storeInfo.setDistanceStr(formatDistance(storeInfo.getDistance()));
         storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
-        storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
+        storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("id") );
         storeInfo.setUniqId(String.valueOf(storeInfo.getStoreId()));
-        storeInfo.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN);
-        //美团
-        if (jsonObject.getInteger("meituan_status") == 1) {
-            StoreInfo meituanStoreInfo = new StoreInfo();
-            BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
-            meituanStoreInfo.setType(1);
-            meituanStoreInfo.setLeftNumber(jsonObject.getInteger("meituan_left_number"));
-            meituanStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("meituan_order_money"), BigDecimal.valueOf(100)));
-            meituanStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("meituan_user_rebate"), BigDecimal.valueOf(100)));
-            result.add(meituanStoreInfo);
-        }
-        //饿了么
-        if (jsonObject.getInteger("eleme_status") == 1) {
-            StoreInfo eleStoreInfo = new StoreInfo();
-            BeanUtils.copyProperties(storeInfo, eleStoreInfo);
-            eleStoreInfo.setType(2);
-            eleStoreInfo.setLeftNumber(jsonObject.getInteger("eleme_left_number"));
-            eleStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("eleme_order_money"), BigDecimal.valueOf(100)));
-            eleStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("eleme_user_rebate"),BigDecimal.valueOf(100)));
-            result.add(eleStoreInfo);
-        }
-        // 京东
-        if (jsonObject.containsKey("tp_promotion")) {
-            JSONObject tpPromotion = jsonObject.getJSONObject("tp_promotion");
-            if (tpPromotion.getInteger("tp_status") == 1) {
-                StoreInfo eleStoreInfo = new StoreInfo();
-                BeanUtils.copyProperties(storeInfo, eleStoreInfo);
-                eleStoreInfo.setType(3);
-                eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
-                eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
-                eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
-                result.add(eleStoreInfo);
-            }
-        }
-        return result;
+        storeInfo.setType(jsonObject.getInteger("store_platform"));
+        storeInfo.setLeftNumber(jsonObject.getInteger("left_number"));
+        storeInfo.setPrice(safeDivide(jsonObject.getBigDecimal("order_money"), BigDecimal.valueOf(100)));
+        storeInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("user_rebate"),BigDecimal.valueOf(100)));
+        return storeInfo;
     }
 
     private static JSONObject checkResult(String body){
@@ -372,14 +348,20 @@ public class XiaochanHttp {
     private static List<StoreInfo> parseListBody(String body){
         JSONObject jsonBody = checkResult(body);
         List<StoreInfo> result = new ArrayList<>();
-        JSONArray promotionList = jsonBody.getJSONArray("promotion_list");
+        JSONArray promotionList = jsonBody.getJSONArray("feed_items");
         if (promotionList == null) {
             return result;
         }
         for (int i = 0; i < promotionList.size(); i++) {
             JSONObject jsonObject =  promotionList.getJSONObject(i);
-            List<StoreInfo> storeInfos = parsePromotion(jsonObject);
-            result.addAll(storeInfos);
+            if (jsonObject.getInteger("source") == 1) {
+                //满减
+                result.add(parsePromotion(jsonObject));
+            }else if (jsonObject.getInteger("source") == 5) {
+                //比例返
+                result.addAll(parseMeituanStoreActivities(jsonObject));
+            }
+
         }
         return result;
     }
