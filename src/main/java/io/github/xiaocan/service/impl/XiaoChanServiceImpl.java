@@ -1,5 +1,7 @@
 package io.github.xiaocan.service.impl;
 
+import cn.hutool.core.io.IORuntimeException;
+import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.config.XieQuProxyConfig;
 import io.github.xiaocan.constant.StoreConstant;
 import io.github.xiaocan.http.XiaochanHttp;
@@ -143,12 +145,17 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         if (!xieQuProxyConfig.getEnable()) {
             return Collections.emptyList();
         }
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             HttpProxyInfo proxyInfo = null;
             try {
                 proxyInfo = proxyService.getOne();
                 log.info("使用代理 {} 请求小产列表", proxyInfo);
                 return XiaochanHttp.getList(cityCode, longitude, latitude, offset, proxyInfo);
+            }catch (IORuntimeException | BusinessException e){
+                log.error("proxy 获取小产列表时发生错误 {} {}", proxyInfo, e.getMessage());
+                if (proxyInfo != null) {
+                    proxyService.removeProxy(proxyInfo);
+                }
             }catch (Exception e){
                 log.error("proxy 请求小产列表时发生错误 {} ", proxyInfo, e);
                 if (proxyInfo != null) {
