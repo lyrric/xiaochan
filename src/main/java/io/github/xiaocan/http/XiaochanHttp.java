@@ -168,8 +168,74 @@ public class XiaochanHttp {
         bodyMap.put("promotion_category", 0);
         bodyMap.put("app_id",20);
         String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(bodyMap), cityCode, "SilkwormRec", "RecService.SearchStorePromotionList");
-        return parseListBody(resBody);
+        return parseListBodyOld(resBody);
 
+    }
+
+    private static List<StoreInfo> parseListBodyOld(String resBody) {
+        JSONObject jsonBody = checkResult(resBody);
+        List<StoreInfo> result = new ArrayList<>();
+        JSONArray promotionList = jsonBody.getJSONArray("promotion_list");
+        if (promotionList == null) {
+            return result;
+        }
+        for (int i = 0; i < promotionList.size(); i++) {
+            JSONObject jsonObject =  promotionList.getJSONObject(i);
+            List<StoreInfo> storeInfos = parsePromotionOld(jsonObject);
+            result.addAll(storeInfos);
+
+        }
+        return result;
+    }
+
+    private static List<StoreInfo> parsePromotionOld(JSONObject jsonObject){
+        List<StoreInfo> result = new ArrayList<>();
+        StoreInfo storeInfo = new StoreInfo();
+        storeInfo.setName(jsonObject.getJSONObject("store").getString("name"));
+        storeInfo.setPromotionId(jsonObject.getString("promotion_id"));
+        storeInfo.setRebateConditionStr(convertRebateCondition(jsonObject.getInteger("rebate_condition")));
+        storeInfo.setStartTime(formatStartEndTime(jsonObject.getInteger("start_time_hour"), jsonObject.getInteger("start_time_minute")));
+        storeInfo.setEndTime(formatStartEndTime(jsonObject.getInteger("end_time_hour") ,jsonObject.getInteger("end_time_minute")));
+        storeInfo.setDistance(jsonObject.getInteger("distance"));
+        storeInfo.setDistanceStr(formatDistance(storeInfo.getDistance()));
+        storeInfo.setIcon(jsonObject.getJSONObject("store").getString("icon") );
+        storeInfo.setStoreId(jsonObject.getJSONObject("store").getInteger("store_id") );
+        storeInfo.setUniqId(String.valueOf(storeInfo.getStoreId()));
+        storeInfo.setStoreTypeEnum(StoreTypeEnum.XC_MANJIAN);
+        //美团
+        if (jsonObject.getInteger("meituan_status") == 1) {
+            StoreInfo meituanStoreInfo = new StoreInfo();
+            BeanUtils.copyProperties(storeInfo, meituanStoreInfo);
+            meituanStoreInfo.setType(1);
+            meituanStoreInfo.setLeftNumber(jsonObject.getInteger("meituan_left_number"));
+            meituanStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("meituan_order_money"), BigDecimal.valueOf(100)));
+            meituanStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("meituan_user_rebate"), BigDecimal.valueOf(100)));
+            result.add(meituanStoreInfo);
+        }
+        //饿了么
+        if (jsonObject.getInteger("eleme_status") == 1) {
+            StoreInfo eleStoreInfo = new StoreInfo();
+            BeanUtils.copyProperties(storeInfo, eleStoreInfo);
+            eleStoreInfo.setType(2);
+            eleStoreInfo.setLeftNumber(jsonObject.getInteger("eleme_left_number"));
+            eleStoreInfo.setPrice(safeDivide(jsonObject.getBigDecimal("eleme_order_money"), BigDecimal.valueOf(100)));
+            eleStoreInfo.setRebatePrice(safeDivide(jsonObject.getBigDecimal("eleme_user_rebate"),BigDecimal.valueOf(100)));
+            result.add(eleStoreInfo);
+        }
+        // 京东
+        if (jsonObject.containsKey("tp_promotion")) {
+            JSONObject tpPromotion = jsonObject.getJSONObject("tp_promotion");
+            if (tpPromotion.getInteger("tp_status") == 1) {
+                StoreInfo eleStoreInfo = new StoreInfo();
+                BeanUtils.copyProperties(storeInfo, eleStoreInfo);
+                eleStoreInfo.setType(3);
+                eleStoreInfo.setLeftNumber(tpPromotion.getInteger("tp_left_number"));
+                eleStoreInfo.setPrice(safeDivide(tpPromotion.getBigDecimal("tp_order_money"), BigDecimal.valueOf(100)));
+                eleStoreInfo.setRebatePrice(safeDivide(tpPromotion.getBigDecimal("tp_user_rebate"),BigDecimal.valueOf(100)));
+                result.add(eleStoreInfo);
+            }
+        }
+        return result;
     }
 
     private static String postWithRes(String url, String body, Integer cityCode, String serverName, String methodName) {
