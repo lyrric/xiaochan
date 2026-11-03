@@ -81,18 +81,8 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             }
             result = searchList(queryListVO.getName(), queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude());
         }else{
-            if (queryListVO.getOrderType() != null && queryListVO.getOrderType() != 1) {
-                //排序不为空，则获取所有活动再排序过滤
-                if (pageNum > 0) {
-                    return Collections.emptyList();
-                }
-                result = getList(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), StoreConstant.MAX_SIZE);
-                sortStoreList(result, queryListVO.getOrderType());
-                result = filter(result, queryListVO);
-            }else{
-                //排序为空，则走官方分页接口
-                result = getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
-            }
+            //走官方分页接口
+            result = getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
         }
         // 填充收藏ID
         if (queryListVO.getLocationId() != null) {
@@ -150,7 +140,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             try {
                 proxyInfo = proxyService.getOne();
                 log.info("使用代理 {} 请求小产列表", proxyInfo);
-                return XiaochanHttp.getList(cityCode, longitude, latitude, offset, null, proxyInfo);
+                return XiaochanHttp.getList(cityCode, longitude, latitude, offset, proxyInfo);
             }catch (IORuntimeException | BusinessException e){
                 log.error("proxy 获取小产列表时发生错误 {} {}", proxyInfo, e.getMessage());
                 if (proxyInfo != null) {
