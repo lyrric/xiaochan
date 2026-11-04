@@ -262,7 +262,6 @@ public class XiaochanHttp {
             throw new BusinessException("状态码错误:" + response.getStatus());
         }
         String resBody = response.body();
-        log.info("resBody: {}", resBody);
         response.close();
         return resBody;
     }
