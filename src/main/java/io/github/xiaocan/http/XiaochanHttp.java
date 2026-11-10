@@ -378,9 +378,24 @@ public class XiaochanHttp {
         headers.put("x-City", String.valueOf(cityCode == null ? 0 : cityCode));
         headers.put("X-App-Sr", APP_ID);
         headers.put("Content-Type", "application/json");
-        headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/19027");
+        headers.put("User-Agent", getRandomUserAgent());
         headers.put("Referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
         return headers;
+    }
+
+    /**
+     * 每次生成随机的 Windows 微信小程序 User-Agent。
+     */
+    private static String getRandomUserAgent() {
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        String chromeVersion = random.nextInt(130, 133) + ".0."
+                + random.nextInt(6_500, 7_000) + "." + random.nextInt(0, 200);
+        int xwebVersion = random.nextInt(19_000, 20_000);
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/"
+                + chromeVersion
+                + " Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows"
+                + " WindowsWechat/WMPF WindowsWechat(0x63090a13) UnifiedPCWindowsWechat(0xf254173b) XWEB/"
+                + xwebVersion;
     }
 
 
