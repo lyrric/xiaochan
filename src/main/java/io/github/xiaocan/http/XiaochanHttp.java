@@ -33,7 +33,7 @@ public class XiaochanHttp {
 
     private static final int PAGE_SIZE = 20;
     private static final int SILK_ID_TEEMO = ThreadLocalRandom.current().nextInt(890_000_000, 900_000_000);
-    private static final int USER_ID = ThreadLocalRandom.current().nextInt(5_100_000, 5_200_000);
+    private static final int USER_ID = 5103123;//ThreadLocalRandom.current().nextInt(5_100_000, 5_200_000);
 
     /**
      * 获取Ashe
