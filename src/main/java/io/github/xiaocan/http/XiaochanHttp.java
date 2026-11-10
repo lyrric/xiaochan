@@ -18,6 +18,7 @@ import org.springframework.beans.BeanUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 public class XiaochanHttp {
@@ -31,8 +32,8 @@ public class XiaochanHttp {
 
 
     private static final int PAGE_SIZE = 20;
-    private static final int SILK_ID_TEEMO = 897153333;
-    private static final int USER_ID = 5146222;
+    private static final int SILK_ID_TEEMO = ThreadLocalRandom.current().nextInt(890_000_000, 900_000_000);
+    private static final int USER_ID = ThreadLocalRandom.current().nextInt(5_100_000, 5_200_000);
 
     /**
      * 获取Ashe
