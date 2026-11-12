@@ -1,6 +1,7 @@
 package io.github.xiaocan.service;
 
 import io.github.xiaocan.config.SystemConfig;
+import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.entity.LocationEntity;
@@ -155,6 +156,21 @@ public class MessageService {
     }
 
     /**
+     * 立即发送手动推送批次，跳过一分钟合并等待，发送失败交由调用方处理。
+     */
+    public void sendImmediately(MonitorConfigEntity config, List<StoreInfo> stores,
+                                LocationEntity location, String batchId) {
+        UserEntity user = userService.getById(location.getUserId());
+        if (user == null || !StringUtils.hasText(user.getSpt())) {
+            throw new BusinessException("请先配置推送 SPT");
+        }
+        List<String> parts = stores.stream().map(store -> buildStoreMessage(store, location)).toList();
+        MessageBatch batch = new MessageBatch(user.getSpt(), config.getType(), user.getId(), user.getToken());
+        batch.add(parts, stores.size(), batchId);
+        flushBatch(batch, true);
+    }
+
+    /**
      * 刷新指定分组的缓冲消息，合并后发送
      */
     private void flushBatch(String batchKey) {
@@ -172,6 +188,10 @@ public class MessageService {
      * 发送指定批次的消息
      */
     private void flushBatch(MessageBatch batch) {
+        flushBatch(batch, false);
+    }
+
+    private void flushBatch(MessageBatch batch, boolean propagateFailure) {
         // 记录消息批次
         String batchIds = String.join(",", batch.batchIds);
         Long msgId = messageBatchRecordService.recordBatch(batch.userId, batchIds);
@@ -192,10 +212,17 @@ public class MessageService {
         try {
             log.info("批量发送消息 spt:{}, monitorType:{}, 共{}个门店",
                     batch.spt, batch.monitorType, batch.storeCount);
-            sptService.sendMessage(batch.spt, body, summary);
+            if (propagateFailure) {
+                sptService.sendMessageOrThrow(batch.spt, body, summary);
+            } else {
+                sptService.sendMessage(batch.spt, body, summary);
+            }
 
         } catch (Exception e) {
             log.error("批量发送消息失败 spt:{}, monitorType:{}", batch.spt, batch.monitorType, e);
+            if (propagateFailure) {
+                throw new BusinessException("推送发送失败，请稍后重试");
+            }
         }
     }
 

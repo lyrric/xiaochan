@@ -36,6 +36,13 @@ public class SptService {
     }
 
     /**
+     * 立即发送手动消息，发送失败时抛出异常。
+     */
+    public void sendMessageOrThrow(String spt, String content, String summary) {
+        MessageHttp.sendMessageOrThrow(spt, content, summary);
+    }
+
+    /**
      * 发送验证码
      *
      * @param spt 用户spt标识

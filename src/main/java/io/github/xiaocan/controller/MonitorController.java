@@ -5,6 +5,7 @@ import io.github.xiaocan.model.dto.monitorConfigDTO;
 import io.github.xiaocan.model.enums.MonitorConfigStatusEnums;
 import io.github.xiaocan.model.vo.NotifyConfigVO;
 import io.github.xiaocan.service.MonitoryConfigService;
+import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,17 @@ public class MonitorController {
 
     @Resource
     private MonitoryConfigService monitoryConfigService;
+
+    @Resource
+    private XiaoChanService xiaoChanService;
+
+    /**
+     * 手动查询并立即推送小蚕满减与美团赏金的同名门店活动。
+     */
+    @PostMapping("/config/push-same-name")
+    public BaseResult<Integer> pushSameNameStores(@RequestParam Integer configId) {
+        return BaseResult.ok(xiaoChanService.pushSameNameStores(configId));
+    }
 
     /**
      * 保存监控配置

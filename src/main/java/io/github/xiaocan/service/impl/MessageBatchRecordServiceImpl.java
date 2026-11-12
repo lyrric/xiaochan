@@ -6,6 +6,8 @@ import io.github.xiaocan.mapper.MessageBatchRecordMapper;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MessageBatchRecordEntity;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
+import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.StorePushedHistoryVO;
 import io.github.xiaocan.service.LocationService;
 import io.github.xiaocan.service.MessageBatchRecordService;
@@ -21,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -76,6 +79,15 @@ public class MessageBatchRecordServiceImpl extends ServiceImpl<MessageBatchRecor
                 .in(StorePushedHistoryEntity::getBatchId, batchIdList)
                 .orderByDesc(StorePushedHistoryEntity::getId)
                 .list();
+
+        // 最小实付批次中包含小蚕赏金时，来自同名门店手动推送，恢复保存时的名称及活动顺序。
+        boolean sameNamePush = entities.stream().anyMatch(entity ->
+                entity.getNotifyType() == MonitorTypeEnums.MINIMUM_PAY
+                        && entity.getStoreTypeEnum() == StoreTypeEnum.XC_MTSJ);
+        if (sameNamePush) {
+            entities.sort(Comparator.comparing(StorePushedHistoryEntity::getName)
+                    .thenComparing(StorePushedHistoryEntity::getId));
+        }
 
         // 5. 转换为VO
         List<StorePushedHistoryVO> voList = PageConvertUtil.convertList(entities, StorePushedHistoryVO.class);

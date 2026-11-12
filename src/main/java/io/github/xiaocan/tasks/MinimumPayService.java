@@ -33,8 +33,6 @@ public class MinimumPayService extends BaseTask {
     @Resource
     private WmmtService wmmtService;
 
-
-
     @Override
     protected List<StoreInfo> fetchStoreInfos(MonitorConfigEntity notifyConfig, TaskExecHistoryEntity execHistory, LocationEntity location) {
         execHistory.setNotifyType(MonitorTypeEnums.MINIMUM_PAY);

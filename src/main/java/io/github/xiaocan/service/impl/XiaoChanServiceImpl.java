@@ -4,16 +4,24 @@ import cn.hutool.core.io.IORuntimeException;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.config.XieQuProxyConfig;
 import io.github.xiaocan.constant.StoreConstant;
+import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.entity.LocationEntity;
+import io.github.xiaocan.model.entity.MonitorConfigEntity;
+import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
+import io.github.xiaocan.model.entity.UserEntity;
+import io.github.xiaocan.model.enums.MonitorTypeEnums;
+import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -24,7 +32,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -41,6 +52,118 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     private XieQuProxyConfig xieQuProxyConfig;
     @Resource
     private ProxyService proxyService;
+
+    @Resource
+    private MonitoryConfigService monitoryConfigService;
+    @Resource
+    private LocationService locationService;
+    // 历史和消息服务会经收藏服务依赖本服务，延迟注入避免循环依赖。
+    @Lazy
+    @Resource
+    private StorePushedHistoryService storePushedHistoryService;
+    @Lazy
+    @Resource
+    private MessageService messageService;
+
+    /**
+     * 按当前用户监控位置查询美团满减与赏金活动，按名称完全相同匹配并按名称排序推送。
+     * 手动推送不应用实付金额、库存、时间窗口及历史去重条件。
+     *
+     * @param configId 当前用户的最小实付、小蚕满减监控配置ID
+     * @return 匹配并提交推送的活动条数（包含两类活动）
+     */
+    @Override
+    public int pushSameNameStores(Integer configId) {
+        UserEntity user = userService.getByCurrentRequest();
+        MonitorConfigEntity config = monitoryConfigService.getById(configId);
+        if (config == null || !user.getId().equals(config.getUserId())) {
+            throw new BusinessException("监控配置不存在或无权操作");
+        }
+        if (config.getType() != MonitorTypeEnums.MINIMUM_PAY || config.getStoreType() != StoreTypeEnum.XC_MANJIAN) {
+            throw new BusinessException("仅最小实付类型的小蚕满减监控支持同名门店推送");
+        }
+        LocationEntity location = locationService.getById(config.getLocationId());
+        if (location == null || !user.getId().equals(location.getUserId())) {
+            throw new BusinessException("监控位置不存在或无权操作");
+        }
+        if (StringUtils.isBlank(user.getSpt())) {
+            throw new BusinessException("请先配置推送 SPT");
+        }
+
+        List<StoreInfo> manjianStores = fetchManjianStores(location).stream()
+                .filter(store -> Integer.valueOf(StorePlatformEnum.MEITUAN.type).equals(store.getType()))
+                .toList();
+        List<StoreInfo> bountyStores = fetchBountyStores(location);
+        Set<String> manjianNames = manjianStores.stream().map(StoreInfo::getName)
+                .filter(StringUtils::isNotBlank).collect(Collectors.toSet());
+        Set<String> matchedNames = bountyStores.stream().map(StoreInfo::getName)
+                .filter(manjianNames::contains).collect(Collectors.toSet());
+        List<StoreInfo> matchedStores = new ArrayList<>();
+        manjianStores.stream().filter(store -> matchedNames.contains(store.getName())).forEach(matchedStores::add);
+        bountyStores.stream().filter(store -> matchedNames.contains(store.getName())).forEach(matchedStores::add);
+        if (matchedStores.isEmpty()) {
+            return 0;
+        }
+        // 稳定排序，使同一门店的满减活动与赏金活动相邻，满减在前、赏金在后。
+        matchedStores.sort(Comparator.comparing(StoreInfo::getName));
+        String batchId = savePushedHistory(config, matchedStores);
+        messageService.sendImmediately(config, matchedStores, location, batchId);
+        return matchedStores.size();
+    }
+
+    private List<StoreInfo> fetchManjianStores(LocationEntity location) {
+        List<StoreInfo> stores = new ArrayList<>();
+        for (int offset = 0; stores.size() < 500;) {
+            List<StoreInfo> page = getListByOffset(location.getCityCode(),
+                    location.getLongitude(), location.getLatitude(), offset);
+            if (page.isEmpty()) {
+                break;
+            }
+            stores.addAll(page);
+            if (!hasNext(page)) {
+                break;
+            }
+
+            offset += page.size();
+        }
+        return stores;
+    }
+
+    private List<StoreInfo> fetchBountyStores(LocationEntity location) {
+        List<StoreInfo> stores = new ArrayList<>();
+        XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
+        dto.setLongitude(location.getLongitude());
+        dto.setLatitude(location.getLatitude());
+        Set<String> visitedCursors = new HashSet<>();
+        while (stores.size() < 50) {
+            XcMeituanshangjinPageVO page = getXcMeituanshangjinPageVO(dto);
+            if (page == null || page.getStoreInfos() == null || page.getStoreInfos().isEmpty()) {
+                break;
+            }
+            List<StoreInfo> items = page.getStoreInfos();
+            stores.addAll(items);
+            String cursor = page.getPagePvId();
+            if (StringUtils.isBlank(cursor) || !visitedCursors.add(cursor)) {
+                break;
+            }
+            dto.setPvId(cursor);
+        }
+        return stores;
+    }
+
+    private String savePushedHistory(MonitorConfigEntity notifyConfig, List<StoreInfo> storeInfos){
+        List<StorePushedHistoryEntity> entities = storeInfos.stream().map(storeInfo -> {
+            StorePushedHistoryEntity entity = new StorePushedHistoryEntity();
+            BeanUtils.copyProperties(storeInfo, entity);
+            entity.setId(null);
+            entity.setUserId(notifyConfig.getUserId());
+            entity.setNotifyConfigId(notifyConfig.getId());
+            entity.setLocationId(notifyConfig.getLocationId());
+            entity.setNotifyType(notifyConfig.getType());
+            return entity;
+        }).toList();
+        return storePushedHistoryService.saveBatchAndReturnBatchId(entities);
+    }
 
     /**
      * 封禁冷却时间：10分钟
@@ -188,86 +311,4 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     }
 
-
-
-    /**
-     * 根据排序类型对门店列表进行排序
-     * @param list 门店列表
-     * @param orderType 排序类型，1：默认，2：返现金额排序，3：返现比例排序
-     */
-    private void sortStoreList(List<StoreInfo> list, Integer orderType) {
-        if (orderType == null || orderType == 1) {
-            // 默认排序，不处理
-            //list.sort(Comparator.comparing(StoreInfo::getDistance));
-        }else if (orderType == 2) {
-            // 按返现金额倒序排序
-            list.sort(Comparator.comparing(StoreInfo::getRebatePrice, Comparator.nullsLast(Comparator.reverseOrder())));
-        } else if (orderType == 3) {
-            // 按返现比例倒序排序
-            list.sort(Comparator.comparing(this::calculateRebateRatio, Comparator.nullsLast(Comparator.reverseOrder())));
-        }
-    }
-
-    private List<StoreInfo> filter(List<StoreInfo> list, QueryListVO queryListVO) {
-        if (StringUtils.isNotBlank(queryListVO.getName())) {
-            list = list.stream().filter(storeInfo -> storeInfo.getName().contains(queryListVO.getName())).toList();
-        }
-
-        // 只看可抢过滤（剩余数量大于0且活动时间在当前时间范围内）
-        if (queryListVO.getOnlyAvailable() != null && queryListVO.getOnlyAvailable()) {
-            list = list.stream().filter(storeInfo -> {
-                // 检查剩余数量
-                boolean hasStock = storeInfo.getLeftNumber() != null && storeInfo.getLeftNumber() > 0;
-                // 检查活动时间
-                boolean inActiveTime = isInActiveTime(storeInfo);
-
-                return hasStock && inActiveTime;
-            }).toList();
-        }
-
-        return list;
-    }
-
-    /**
-     * 判断门店活动时间是否在当前时间范围内
-     * @param storeInfo 门店信息
-     * @return true表示在活动时间内，false表示不在活动时间内
-     */
-    private boolean isInActiveTime(StoreInfo storeInfo) {
-        if (StringUtils.isBlank(storeInfo.getStartTime()) || StringUtils.isBlank(storeInfo.getEndTime())) {
-            // 如果没有设置活动时间，默认认为可用
-            return true;
-        }
-
-        try {
-            LocalTime now = LocalTime.now();
-            LocalTime startTime = LocalTime.parse(storeInfo.getStartTime(), DateTimeFormatter.ofPattern("HH:mm"));
-            LocalTime endTime = LocalTime.parse(storeInfo.getEndTime(), DateTimeFormatter.ofPattern("HH:mm"));
-
-            // 处理跨日的情况（如：23:00-02:00）
-            if (endTime.isBefore(startTime)) {
-                // 跨日情况：当前时间在开始时间之后或结束时间之前
-                return now.isAfter(startTime) || now.isBefore(endTime) || now.equals(startTime) || now.equals(endTime);
-            } else {
-                // 正常情况：当前时间在开始和结束时间之间
-                return (now.isAfter(startTime) || now.equals(startTime)) && (now.isBefore(endTime) || now.equals(endTime));
-            }
-        } catch (Exception e) {
-            log.warn("解析活动时间失败，门店: {}, 开始时间: {}, 结束时间: {}", storeInfo.getName(), storeInfo.getStartTime(), storeInfo.getEndTime(), e);
-            // 解析失败时默认认为可用
-            return true;
-        }
-    }
-
-    /**
-     * 计算返现比例
-     * @param storeInfo 门店信息
-     * @return 返现比例 (rebatePrice/price)
-     */
-    private BigDecimal calculateRebateRatio(StoreInfo storeInfo) {
-        if (storeInfo.getPrice() == null || storeInfo.getRebatePrice() == null || storeInfo.getPrice().compareTo(BigDecimal.ZERO) == 0) {
-            return null;
-        }
-        return storeInfo.getRebatePrice().divide(storeInfo.getPrice(), 4, RoundingMode.DOWN);
-    }
 }

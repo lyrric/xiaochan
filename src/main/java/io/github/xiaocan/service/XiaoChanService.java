@@ -10,6 +10,14 @@ import java.util.List;
 
 public interface XiaoChanService {
 
+    /**
+     * 查询当前用户监控位置的小蚕美团满减和赏金活动，按同名门店匹配、排序并立即推送。
+     *
+     * @param configId 当前用户的最小实付、小蚕满减监控配置ID
+     * @return 推送的活动条数，包含满减与赏金活动
+     */
+    int pushSameNameStores(Integer configId);
+
 
     /**
      * 获取列表
