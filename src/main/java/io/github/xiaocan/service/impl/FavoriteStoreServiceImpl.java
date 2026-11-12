@@ -161,6 +161,7 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
                 storeInfos = xiaoChanService.searchList(name, location.getCityCode(), longitude, latitude);
             } else if (StoreTypeEnum.XC_MTSJ.equals(storeType)) {
                 XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
+                dto.setCityCode(location.getCityCode());
                 dto.setLongitude(longitude);
                 dto.setLatitude(latitude);
                 dto.setName(name);

@@ -47,6 +47,7 @@ public class StoreSearchServiceImpl implements StoreSearchService {
         if (dto.getStoreTypeEnum() != StoreTypeEnum.XC_MTSJ) {
             try {
                 XcMeituanshangjinDTO mtsjDto = new XcMeituanshangjinDTO();
+                mtsjDto.setCityCode(dto.getCityCode());
                 mtsjDto.setName(dto.getName());
                 mtsjDto.setLatitude(dto.getLatitude());
                 mtsjDto.setLongitude(dto.getLongitude());

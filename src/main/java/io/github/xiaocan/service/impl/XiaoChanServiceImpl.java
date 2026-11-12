@@ -25,10 +25,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -132,6 +128,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     private List<StoreInfo> fetchBountyStores(LocationEntity location) {
         List<StoreInfo> stores = new ArrayList<>();
         XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
+        dto.setCityCode(location.getCityCode());
         dto.setLongitude(location.getLongitude());
         dto.setLatitude(location.getLatitude());
         Set<String> visitedCursors = new HashSet<>();
@@ -147,6 +144,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 break;
             }
             dto.setPvId(cursor);
+            dto.setPageNum(dto.getPageNum() + 1);
         }
         return stores;
     }
@@ -283,18 +281,17 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public XcMeituanshangjinPageVO getXcMeituanshangjinPageVO(XcMeituanshangjinDTO dto) {
-        XcMeituanshangjinPageVO vo;
-        if (StringUtils.isNotBlank(dto.getName())) {
-            //走搜索接口
-            vo = XiaochanHttp.searchMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getName(), dto.getPvId());
-        } else {
-            vo = XiaochanHttp.getMeituanList(dto.getLongitude(), dto.getLatitude(), dto.getPvId());
-        }
+        XcMeituanshangjinPageVO vo = new XcMeituanshangjinPageVO();
+        int offset = (dto.getPageNum() - 1) * dto.getPageSize();
+        List<StoreInfo> list = XiaochanHttp.getRebateList(dto.getCityCode(), dto.getLongitude(), dto.getLatitude(), offset, dto.getPvId(), dto.getPageSize());
         // 填充收藏ID
-        if (dto.getLocationId() != null && vo.getStoreInfos() != null) {
+        if (dto.getLocationId() != null) {
             Integer userId = userService.getByCurrentRequest().getId();
-            favoriteStoreService.fillFavoriteIds(vo.getStoreInfos(), userId, dto.getLocationId());
+            favoriteStoreService.fillFavoriteIds(list, userId, dto.getLocationId());
         }
+        vo.setStoreInfos(list);
+        vo.setPagePvId(list.isEmpty() ? null : list.get(list.size() - 1).getPagePvId());
+        vo.setMeituanPvId(list.isEmpty() ? null : list.get(list.size() - 1).getMtPvId());
         return vo;
     }
 

@@ -11,7 +11,6 @@ import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.AddressVO;
-import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 
@@ -49,82 +48,28 @@ public class XiaochanHttp {
     public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
         return getList(cityCode, longitude, latitude, offset, null, 1,null);
     }
+
+    public static List<StoreInfo> getRebateList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId) {
+        return getRebateList(cityCode, longitude, latitude, offset, pagePvId, PAGE_SIZE);
+    }
+
+    public static List<StoreInfo> getRebateList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, int pageSize) {
+        return getList(cityCode, longitude, latitude, offset, pagePvId, 2, null, pageSize);
+    }
     public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, HttpProxyInfo httpProxyInfo){
         return getList(cityCode, longitude, latitude, offset, null, 1, httpProxyInfo);
     }
 
     public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, Integer rebateType, HttpProxyInfo httpProxyInfo) {
-        String reqBody = getBody(longitude, latitude, offset, pagePvId, rebateType);
+        return getList(cityCode, longitude, latitude, offset, pagePvId, rebateType, httpProxyInfo, PAGE_SIZE);
+    }
+
+    private static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, Integer rebateType, HttpProxyInfo httpProxyInfo, int pageSize) {
+        String reqBody = getBody(longitude, latitude, offset, pagePvId, rebateType, pageSize);
         String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME, httpProxyInfo);
         return parseListBody(resBody);
     }
 
-    /**
-     * 获取小蚕美团赏金数据
-     * @param longitude
-     * @param latitude
-     * @param pvId 上一页的id
-     * @return
-     */
-    public static XcMeituanshangjinPageVO getMeituanList(String longitude, String latitude, String pvId){
-        Map<String, Object> body = new HashMap<>();
-        body.put("lat", new BigDecimal(latitude));
-        body.put("lon", new BigDecimal(longitude));
-        body.put("silk_id", SILK_ID_TEEMO);
-        body.put("pv_id", pvId);
-        body.put("scene", 1);
-        body.put("app_id", 20);
-        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(body), null, "SilkwormFusion", "FusionService.GetMeiTuanPromotions");
-        checkResult(resBody);
-        JSONObject jsonObject = JSONObject.parseObject(resBody);
-        XcMeituanshangjinPageVO xcMeituanshangjinPageVO = new XcMeituanshangjinPageVO();
-        xcMeituanshangjinPageVO.setPagePvId(jsonObject.getString("pv_id"));
-        xcMeituanshangjinPageVO.setMeituanPvId(jsonObject.getString("mt_pv_id"));
-        List<StoreInfo> storeInfos = parseMeituanListBody(jsonObject.getJSONArray("list"));
-        xcMeituanshangjinPageVO.setStoreInfos(storeInfos);
-        return xcMeituanshangjinPageVO;
-    }
-
-    /**
-     * 搜索小蚕美团赏金数据
-     * @param longitude
-     * @param latitude
-     * @param keyword
-     * @return
-     */
-    public static XcMeituanshangjinPageVO searchMeituanList(String longitude, String latitude, String keyword, String pvId){
-        Map<String, Object> body = new HashMap<>();
-        body.put("lat", new BigDecimal(latitude));
-        body.put("lng", new BigDecimal(longitude));
-        body.put("silk_id", SILK_ID_TEEMO);
-        body.put("pv_id", pvId);
-        body.put("sort_type", 3);
-        body.put("search_word", keyword);
-        body.put("app_id", 20);
-        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(body), null, "SilkwormRcs", "SilkwormRcsService.MeituanShangjinGetPoiList");
-        checkResult(resBody);
-        JSONObject jsonObject = JSONObject.parseObject(resBody);
-        XcMeituanshangjinPageVO xcMeituanshangjinPageVO = new XcMeituanshangjinPageVO();
-        xcMeituanshangjinPageVO.setPagePvId(jsonObject.getString("page_pv_id"));
-        xcMeituanshangjinPageVO.setMeituanPvId(jsonObject.getString("meituan_pv_id"));
-        List<StoreInfo> storeInfos = parseMeituanListBody(jsonObject.getJSONArray("poi_list"));
-        xcMeituanshangjinPageVO.setStoreInfos(storeInfos);
-        return xcMeituanshangjinPageVO;
-    }
-
-
-    private static List<StoreInfo> parseMeituanListBody(JSONArray poiList) {
-        if (poiList == null) {
-            return Collections.emptyList();
-        }
-        List<StoreInfo> storeInfos = new ArrayList<>();
-        for (int i = 0; i < poiList.size(); i++) {
-            JSONObject poi = poiList.getJSONObject(i);
-            storeInfos.addAll(parseMeituanStoreActivities(poi));
-        }
-        return storeInfos;
-
-    }
 
     private static List<StoreInfo> parseMeituanStoreActivities(JSONObject poi) {
         List<StoreInfo> storeInfos = new ArrayList<>();
@@ -151,6 +96,8 @@ public class XiaochanHttp {
             item.setStartTime("00:00");
             item.setEndTime("24:00");
             item.setStoreTypeEnum(StoreTypeEnum.XC_MTSJ);
+            item.setMtPvId(poi.getString("mt_pv_id"));
+            item.setPagePvId(poi.getString("page_pv_id"));
             storeInfos.add(item);
         }
         return storeInfos;
@@ -343,11 +290,11 @@ public class XiaochanHttp {
         return uuid.substring(0, 4) + SILK_ID_TEEMO + uuid.substring(4, 20 - String.valueOf(SILK_ID_TEEMO).length() - 4);
     }
 
-    private static String getBody(String longitude, String latitude, int offset, String pagePvId, Integer rebateType) {
+    private static String getBody(String longitude, String latitude, int offset, String pagePvId, Integer rebateType, int pageSize) {
         Map<String, Object> body = new HashMap<>();
         body.put("lat", new BigDecimal(latitude));
         body.put("lon", new BigDecimal(longitude));
-        body.put("number", PAGE_SIZE);
+        body.put("number", pageSize);
         body.put("silk_id", SILK_ID_TEEMO);
         body.put("sort", 1);
         body.put("offset", offset);
