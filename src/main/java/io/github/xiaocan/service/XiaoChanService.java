@@ -67,5 +67,5 @@ public interface XiaoChanService {
      * @param dto
      * @return
      */
-    XcMeituanshangjinPageVO getXcMeituanshangjinPageVO(XcMeituanshangjinDTO dto);
+    XcMeituanshangjinPageVO getRebateList(XcMeituanshangjinDTO dto);
 }

@@ -7,7 +7,6 @@ import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.service.XiaoChanService;
 import jakarta.annotation.Resource;
-import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,7 +38,7 @@ public class XiaoChanController {
      */
     @PostMapping(value = "/mtsj")
     public BaseResult<XcMeituanshangjinPageVO> getXcMeituanshangjinPageVO(@RequestBody @Validated XcMeituanshangjinDTO dto) {
-        return BaseResult.ok(xiaoChanService.getXcMeituanshangjinPageVO(dto));
+        return BaseResult.ok(xiaoChanService.getRebateList(dto));
     }
 
 

@@ -166,7 +166,7 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
                 dto.setLatitude(latitude);
                 dto.setName(name);
                 dto.setPvId("");
-                storeInfos = xiaoChanService.getXcMeituanshangjinPageVO(dto).getStoreInfos();
+                storeInfos = xiaoChanService.getRebateList(dto).getStoreInfos();
             }else if (StoreTypeEnum.WM_MANJIAN.equals(storeType) || StoreTypeEnum.WM_MTSJ.equals(storeType)) {
                 WmmtShopListDTO dto = new WmmtShopListDTO();
                 dto.setName(name);

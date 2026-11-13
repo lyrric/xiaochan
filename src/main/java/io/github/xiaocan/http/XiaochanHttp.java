@@ -32,7 +32,6 @@ public class XiaochanHttp {
     private static final String METHOD_NAME = "FusionService.GetFeedPromotions";
 
 
-    private static final int PAGE_SIZE = 20;
     private static final int SILK_ID_TEEMO = ThreadLocalRandom.current().nextInt(890_000_000, 900_000_000);
     private static final int USER_ID = 5103123;//ThreadLocalRandom.current().nextInt(5_100_000, 5_200_000);
 
@@ -46,22 +45,6 @@ public class XiaochanHttp {
         return MD5.create().digestHex(x + timeMillis + nami);
     }
 
-
-    public static List<StoreInfo> getRebateList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId) {
-        return getRebateList(cityCode, longitude, latitude, offset, pagePvId, PAGE_SIZE);
-    }
-
-    public static List<StoreInfo> getRebateList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, int pageSize) {
-        return getList(XiaochanListDTO.builder()
-                .cityCode(cityCode)
-                .longitude(longitude)
-                .latitude(latitude)
-                .offset(offset)
-                .pagePvId(pagePvId)
-                .rebateType(2)
-                .pageSize(pageSize)
-                .build());
-    }
 
     /**
      * 获取小蚕活动列表。

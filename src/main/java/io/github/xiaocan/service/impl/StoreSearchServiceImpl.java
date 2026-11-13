@@ -51,7 +51,7 @@ public class StoreSearchServiceImpl implements StoreSearchService {
                 mtsjDto.setName(dto.getName());
                 mtsjDto.setLatitude(dto.getLatitude());
                 mtsjDto.setLongitude(dto.getLongitude());
-                XcMeituanshangjinPageVO pageVO = xiaoChanService.getXcMeituanshangjinPageVO(mtsjDto);
+                XcMeituanshangjinPageVO pageVO = xiaoChanService.getRebateList(mtsjDto);
                 if (pageVO.getStoreInfos() != null) {
                     result.addAll(pageVO.getStoreInfos());
                 }

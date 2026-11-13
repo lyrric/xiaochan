@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -87,11 +86,9 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             throw new BusinessException("请先配置推送 SPT");
         }
 
-        List<StoreInfo> manjianStores = fetchManjianStores(location).stream()
-                .filter(store -> Integer.valueOf(StorePlatformEnum.MEITUAN.type).equals(store.getType()))
-                .toList();
+        List<StoreInfo> manjianStores = fetchManjianStores(location).stream().toList();
         log.info("美团满减门店数：{}", manjianStores.size());
-        List<StoreInfo> bountyStores = fetchBountyStores(location);
+        List<StoreInfo> bountyStores = fetchRebateStores(location);
         log.info("美团比例门店数：{}", bountyStores.size());
         Set<String> manjianNames = manjianStores.stream().map(StoreInfo::getName)
                 .filter(StringUtils::isNotBlank).collect(Collectors.toSet());
@@ -132,14 +129,14 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         return stores;
     }
 
-    private List<StoreInfo> fetchBountyStores(LocationEntity location) {
+    private List<StoreInfo> fetchRebateStores(LocationEntity location) {
         List<StoreInfo> stores = new ArrayList<>();
         XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
         dto.setCityCode(location.getCityCode());
         dto.setLongitude(location.getLongitude());
         dto.setLatitude(location.getLatitude());
         while (stores.size() < 100) {
-            XcMeituanshangjinPageVO page = getXcMeituanshangjinPageVO(dto);
+            XcMeituanshangjinPageVO page = getRebateList(dto);
             if (page.getStoreInfos() == null || page.getStoreInfos().isEmpty()) {
                 break;
             }
@@ -311,10 +308,19 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
 
     @Override
-    public XcMeituanshangjinPageVO getXcMeituanshangjinPageVO(XcMeituanshangjinDTO dto) {
+    public XcMeituanshangjinPageVO getRebateList(XcMeituanshangjinDTO dto) {
         XcMeituanshangjinPageVO vo = new XcMeituanshangjinPageVO();
         int offset = (dto.getPageNum() - 1) * dto.getPageSize();
-        List<StoreInfo> list = XiaochanHttp.getRebateList(dto.getCityCode(), dto.getLongitude(), dto.getLatitude(), offset, dto.getPvId(), dto.getPageSize());
+        List<StoreInfo> list = XiaochanHttp.getList(XiaochanListDTO.builder()
+                .cityCode(dto.getCityCode())
+                .longitude(dto.getLongitude())
+                .latitude(dto.getLatitude())
+                .offset(offset)
+                .pagePvId(dto.getPvId())
+                .rebateType(2)
+                .storePlatforms(Collections.singletonList(StorePlatformEnum.MEITUAN))
+                .pageSize(dto.getPageSize())
+                .build());
         // 填充收藏ID
         if (dto.getLocationId() != null) {
             Integer userId = userService.getByCurrentRequest().getId();
