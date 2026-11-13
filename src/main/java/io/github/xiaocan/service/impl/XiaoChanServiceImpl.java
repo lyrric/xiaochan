@@ -8,7 +8,6 @@ import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
 import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
@@ -113,9 +112,14 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     private List<StoreInfo> fetchManjianStores(LocationEntity location) {
         List<StoreInfo> stores = new ArrayList<>();
-        for (int offset = 0; stores.size() < 200;) {
-            List<StoreInfo> page = getListByOffset(location.getCityCode(),
-                    location.getLongitude(), location.getLatitude(), offset, List.of(StorePlatformEnum.MEITUAN));
+        for (int pageNum = 1; stores.size() < 200; pageNum++) {
+            List<StoreInfo> page = getListByOffset(XiaochanListDTO.builder()
+                    .cityCode(location.getCityCode())
+                    .longitude(location.getLongitude())
+                    .latitude(location.getLatitude())
+                    .pageNum(pageNum)
+                    .storePlatforms(List.of(StorePlatformEnum.MEITUAN))
+                    .build());
             if (page.isEmpty()) {
                 break;
             }
@@ -123,15 +127,13 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (!hasNext(page)) {
                 break;
             }
-
-            offset += page.size();
         }
         return stores;
     }
 
     private List<StoreInfo> fetchRebateStores(LocationEntity location) {
         List<StoreInfo> stores = new ArrayList<>();
-        XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
+        XiaochanListDTO dto = new XiaochanListDTO();
         dto.setCityCode(location.getCityCode());
         dto.setLongitude(location.getLongitude());
         dto.setLatitude(location.getLatitude());
@@ -143,7 +145,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             List<StoreInfo> items = page.getStoreInfos();
             stores.addAll(items);
             String cursor = page.getPagePvId();
-            dto.setPvId(cursor);
+            dto.setPagePvId(cursor);
             dto.setPageNum(dto.getPageNum() + 1);
         }
         return stores;
@@ -193,17 +195,23 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     public List<StoreInfo> query(QueryListVO queryListVO) {
         List<StoreInfo> result;
         Integer pageNum = queryListVO.getPageNum();
-        pageNum = pageNum == null ? 0 : pageNum - 1;
+        pageNum = pageNum == null ? 1 : pageNum;
 
         if (StringUtils.isNotBlank(queryListVO.getName())) {
             //搜索走专门的接口
-            if (pageNum > 0) {
+            if (pageNum > 1) {
                 return Collections.emptyList();
             }
             result = searchList(queryListVO.getName(), queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude());
         }else{
             //走官方分页接口
-            result = getListByOffset(queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude(), queryListVO.getPageSize() * pageNum);
+            result = getListByOffset(XiaochanListDTO.builder()
+                    .cityCode(queryListVO.getCityCode())
+                    .longitude(queryListVO.getLongitude())
+                    .latitude(queryListVO.getLatitude())
+                    .pageNum(pageNum)
+                    .pageSize(queryListVO.getPageSize())
+                    .build());
         }
         // 填充收藏ID
         if (queryListVO.getLocationId() != null) {
@@ -224,10 +232,15 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     @Override
     public List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int maxSize){
         log.info("请求小产列表，城市: {}, 经度: {}, 纬度: {}, 最大数量: {}", cityCode, longitude, latitude, maxSize);
-        int offset = 0;
         List<StoreInfo> result = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            List<StoreInfo> list = getListByOffset(cityCode, longitude, latitude, offset);
+        for (int pageNum = 1; pageNum <= 100; pageNum++) {
+            List<StoreInfo> list = getListByOffset(XiaochanListDTO.builder()
+                    .cityCode(cityCode)
+                    .longitude(longitude)
+                    .latitude(latitude)
+                    .pageNum(pageNum)
+                    .pageSize(StoreConstant.DEFAULT_PAGE_SIZE)
+                    .build());
             result.addAll(list);
             if (result.size() >= maxSize) {
                 break;
@@ -235,38 +248,22 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (!hasNext(list)) {
                 break;
             }
-            offset += StoreConstant.DEFAULT_PAGE_SIZE;
         }
         storeInventoryHistoryService.insertBatch(result);
         return result;
     }
 
-    @Override
-    public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
-        return getListByOffset(cityCode, longitude, latitude, offset, null);
-    }
-
     /**
      * 按平台筛选分页查询活动，直连和代理请求使用相同的平台条件。
      *
-     * @param cityCode 城市编码
-     * @param longitude 经度
-     * @param latitude 纬度
-     * @param offset 分页偏移量
-     * @param storePlatforms 平台列表，不传或空列表表示全部平台
+     * @param dto 列表查询参数，平台列表不传或为空表示全部平台
      * @return 活动列表
      */
-    private List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset,
-                                          List<StorePlatformEnum> storePlatforms) {
+    @Override
+    public List<StoreInfo> getListByOffset(XiaochanListDTO dto) {
         if (!isBlocked()) {
             try {
-                return XiaochanHttp.getList(XiaochanListDTO.builder()
-                        .cityCode(cityCode)
-                        .longitude(longitude)
-                        .latitude(latitude)
-                        .offset(offset)
-                        .storePlatforms(storePlatforms)
-                        .build());
+                return XiaochanHttp.getList(dto);
             }catch (Exception e){
                 if (e.getMessage().contains("状态码错误: 403")) {
                     blockedTime = System.currentTimeMillis();
@@ -282,14 +279,8 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             try {
                 proxyInfo = proxyService.getOne();
                 log.info("使用代理 {} 请求小产列表", proxyInfo);
-                return XiaochanHttp.getList(XiaochanListDTO.builder()
-                        .cityCode(cityCode)
-                        .longitude(longitude)
-                        .latitude(latitude)
-                        .offset(offset)
-                        .storePlatforms(storePlatforms)
-                        .httpProxyInfo(proxyInfo)
-                        .build());
+                dto.setHttpProxyInfo(proxyInfo);
+                return XiaochanHttp.getList(dto);
             }catch (IORuntimeException | BusinessException e){
                 log.error("proxy 获取小产列表时发生错误 {} {}", proxyInfo, e.getMessage());
                 if (proxyInfo != null) {
@@ -300,6 +291,8 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 if (proxyInfo != null) {
                     proxyService.removeProxy(proxyInfo);
                 }
+            }finally {
+                dto.setHttpProxyInfo(null);
             }
         }
 
@@ -308,19 +301,11 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
 
     @Override
-    public XcMeituanshangjinPageVO getRebateList(XcMeituanshangjinDTO dto) {
+    public XcMeituanshangjinPageVO getRebateList(XiaochanListDTO dto) {
         XcMeituanshangjinPageVO vo = new XcMeituanshangjinPageVO();
-        int offset = (dto.getPageNum() - 1) * dto.getPageSize();
-        List<StoreInfo> list = XiaochanHttp.getList(XiaochanListDTO.builder()
-                .cityCode(dto.getCityCode())
-                .longitude(dto.getLongitude())
-                .latitude(dto.getLatitude())
-                .offset(offset)
-                .pagePvId(dto.getPvId())
-                .rebateType(2)
-                .storePlatforms(Collections.singletonList(StorePlatformEnum.MEITUAN))
-                .pageSize(dto.getPageSize())
-                .build());
+        dto.setRebateType(2);
+        dto.setStorePlatforms(Collections.singletonList(StorePlatformEnum.MEITUAN));
+        List<StoreInfo> list = getListByOffset(dto);
         // 填充收藏ID
         if (dto.getLocationId() != null) {
             Integer userId = userService.getByCurrentRequest().getId();

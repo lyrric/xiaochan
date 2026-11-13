@@ -3,7 +3,7 @@ package io.github.xiaocan.service.impl;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.StoreSearchDTO;
 import io.github.xiaocan.model.dto.WmmtShopListDTO;
-import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.WmPageVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
@@ -46,7 +46,7 @@ public class StoreSearchServiceImpl implements StoreSearchService {
         //小蚕比例返搜索，来源是小蚕比例返时跳过
         if (dto.getStoreTypeEnum() != StoreTypeEnum.XC_MTSJ) {
             try {
-                XcMeituanshangjinDTO mtsjDto = new XcMeituanshangjinDTO();
+                XiaochanListDTO mtsjDto = new XiaochanListDTO();
                 mtsjDto.setCityCode(dto.getCityCode());
                 mtsjDto.setName(dto.getName());
                 mtsjDto.setLatitude(dto.getLatitude());

@@ -2,7 +2,7 @@ package io.github.xiaocan.controller;
 
 import io.github.xiaocan.model.BaseResult;
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.service.XiaoChanService;
@@ -37,7 +37,7 @@ public class XiaoChanController {
      * @return
      */
     @PostMapping(value = "/mtsj")
-    public BaseResult<XcMeituanshangjinPageVO> getXcMeituanshangjinPageVO(@RequestBody @Validated XcMeituanshangjinDTO dto) {
+    public BaseResult<XcMeituanshangjinPageVO> getXcMeituanshangjinPageVO(@RequestBody @Validated XiaochanListDTO dto) {
         return BaseResult.ok(xiaoChanService.getRebateList(dto));
     }
 

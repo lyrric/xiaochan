@@ -1,7 +1,7 @@
 package io.github.xiaocan.service;
 
 import io.github.xiaocan.model.StoreInfo;
-import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.vo.QueryListVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 
@@ -33,13 +33,10 @@ public interface XiaoChanService {
     /**
      * 获取列表、分页方式
      *
-     * @param cityCode cityCode
-     * @param longitude 经度
-     * @param latitude 纬度
-     * @param offset  offset
+     * @param dto 列表查询参数，包含位置、分页及平台筛选条件
      * @return 列表
      */
-    List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset);
+    List<StoreInfo> getListByOffset(XiaochanListDTO dto);
 
     /**
      * 获取列表
@@ -64,8 +61,8 @@ public interface XiaoChanService {
 
     /**
      * 获取比例返页面数据
-     * @param dto
-     * @return
+     * @param dto 列表查询参数，包含位置、页码、分页游标及收藏位置ID
+     * @return 比例返列表及下一页游标
      */
-    XcMeituanshangjinPageVO getRebateList(XcMeituanshangjinDTO dto);
+    XcMeituanshangjinPageVO getRebateList(XiaochanListDTO dto);
 }

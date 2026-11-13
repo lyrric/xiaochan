@@ -160,12 +160,12 @@ public class FavoriteStoreServiceImpl extends ServiceImpl<FavoriteStoreMapper, F
             if (StoreTypeEnum.XC_MANJIAN.equals(storeType)) {
                 storeInfos = xiaoChanService.searchList(name, location.getCityCode(), longitude, latitude);
             } else if (StoreTypeEnum.XC_MTSJ.equals(storeType)) {
-                XcMeituanshangjinDTO dto = new XcMeituanshangjinDTO();
+                XiaochanListDTO dto = new XiaochanListDTO();
                 dto.setCityCode(location.getCityCode());
                 dto.setLongitude(longitude);
                 dto.setLatitude(latitude);
                 dto.setName(name);
-                dto.setPvId("");
+                dto.setPagePvId("");
                 storeInfos = xiaoChanService.getRebateList(dto).getStoreInfos();
             }else if (StoreTypeEnum.WM_MANJIAN.equals(storeType) || StoreTypeEnum.WM_MTSJ.equals(storeType)) {
                 WmmtShopListDTO dto = new WmmtShopListDTO();

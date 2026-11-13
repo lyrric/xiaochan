@@ -285,7 +285,7 @@ public class XiaochanHttp {
         body.put("number", dto.getPageSize());
         body.put("silk_id", SILK_ID_TEEMO);
         body.put("sort", 1);
-        body.put("offset", dto.getOffset());
+        body.put("offset", (dto.getPageNum() - 1) * dto.getPageSize());
         body.put("app_id", APP_ID);
         body.put("scene", 1);
         body.put("is_show_mt", true);
