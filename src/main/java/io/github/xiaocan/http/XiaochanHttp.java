@@ -7,6 +7,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaocan.config.BusinessException;
+import io.github.xiaocan.constant.StorePlatformEnum;
 import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XiaochanListDTO;
@@ -65,7 +66,7 @@ public class XiaochanHttp {
     /**
      * 获取小蚕活动列表。
      *
-     * @param dto 列表请求参数，包含位置、分页、返利类型和代理信息
+     * @param dto 列表请求参数，包含位置、分页、返利类型、平台筛选和代理信息
      * @return 活动列表
      */
     public static List<StoreInfo> getList(XiaochanListDTO dto) {
@@ -307,6 +308,16 @@ public class XiaochanHttp {
         body.put("is_show_mt", true);
         body.put("page_pv_id", dto.getPagePvId());
         body.put("rebate_type", dto.getRebateType());//1满减，2比例返
+        List<StorePlatformEnum> storePlatforms = dto.getStorePlatforms();
+        if (storePlatforms != null && !storePlatforms.isEmpty()) {
+            if (storePlatforms.stream().anyMatch(platform -> platform == null || platform == StorePlatformEnum.UNKNOWN)) {
+                throw new BusinessException("平台筛选仅支持美团、饿了么和京东");
+            }
+            body.put("store_platforms", storePlatforms.stream()
+                    .map(platform -> platform.type)
+                    .distinct()
+                    .toList());
+        }
         return JSONObject.toJSONString(body);
     }
 

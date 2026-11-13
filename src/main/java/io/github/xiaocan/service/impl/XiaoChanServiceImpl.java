@@ -114,9 +114,9 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     private List<StoreInfo> fetchManjianStores(LocationEntity location) {
         List<StoreInfo> stores = new ArrayList<>();
-        for (int offset = 0; stores.size() < 500;) {
+        for (int offset = 0; stores.size() < 200;) {
             List<StoreInfo> page = getListByOffset(location.getCityCode(),
-                    location.getLongitude(), location.getLatitude(), offset);
+                    location.getLongitude(), location.getLatitude(), offset, List.of(StorePlatformEnum.MEITUAN));
             if (page.isEmpty()) {
                 break;
             }
@@ -137,7 +137,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         dto.setLongitude(location.getLongitude());
         dto.setLatitude(location.getLatitude());
         Set<String> visitedCursors = new HashSet<>();
-        while (stores.size() < 50) {
+        while (stores.size() < 100) {
             XcMeituanshangjinPageVO page = getXcMeituanshangjinPageVO(dto);
             if (page == null || page.getStoreInfos() == null || page.getStoreInfos().isEmpty()) {
                 break;
@@ -248,6 +248,21 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
+        return getListByOffset(cityCode, longitude, latitude, offset, null);
+    }
+
+    /**
+     * 按平台筛选分页查询活动，直连和代理请求使用相同的平台条件。
+     *
+     * @param cityCode 城市编码
+     * @param longitude 经度
+     * @param latitude 纬度
+     * @param offset 分页偏移量
+     * @param storePlatforms 平台列表，不传或空列表表示全部平台
+     * @return 活动列表
+     */
+    private List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset,
+                                          List<StorePlatformEnum> storePlatforms) {
         if (!isBlocked()) {
             try {
                 return XiaochanHttp.getList(XiaochanListDTO.builder()
@@ -255,6 +270,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                         .longitude(longitude)
                         .latitude(latitude)
                         .offset(offset)
+                        .storePlatforms(storePlatforms)
                         .build());
             }catch (Exception e){
                 if (e.getMessage().contains("状态码错误: 403")) {
@@ -276,6 +292,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                         .longitude(longitude)
                         .latitude(latitude)
                         .offset(offset)
+                        .storePlatforms(storePlatforms)
                         .httpProxyInfo(proxyInfo)
                         .build());
             }catch (IORuntimeException | BusinessException e){
@@ -312,7 +329,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     }
 
     private boolean hasNext(List<StoreInfo> list){
-        if (list.size() < StoreConstant.DEFAULT_PAGE_SIZE) {
+        if (list.isEmpty()) {
             return false;
         }
         long overDistanceCount = list.stream()
