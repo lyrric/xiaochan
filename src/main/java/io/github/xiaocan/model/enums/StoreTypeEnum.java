@@ -16,9 +16,9 @@ public enum StoreTypeEnum {
      */
     XC_MANJIAN("小蚕满减"),
     /**
-     * 小蚕美团赏金
+     * 小蚕比例返
      */
-    XC_MTSJ("小蚕美团赏金"),
+    XC_MTSJ("小蚕比例返"),
 
     /**
      * 歪卖-满减
@@ -26,9 +26,9 @@ public enum StoreTypeEnum {
     WM_MANJIAN("歪卖满减"),
 
     /**
-     * 歪卖-美团赏金
+     * 歪卖-比例返
      */
-    WM_MTSJ("歪卖美团赏金"),
+    WM_MTSJ("歪卖比例返"),
     ;
 
     private final String description;

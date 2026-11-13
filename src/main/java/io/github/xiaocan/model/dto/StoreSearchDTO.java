@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * 通用门店搜索请求参数
  * <p>
- * 聚合小蚕满减、小蚕美团赏金、歪麦三个平台的搜索结果
+ * 聚合小蚕满减、小蚕比例返、歪麦三个平台的搜索结果
  */
 @Data
 public class StoreSearchDTO {
@@ -37,7 +37,7 @@ public class StoreSearchDTO {
 
     /**
      * 来源门店类型
-     * XC_MANJIAN 时不调用小蚕满减搜索，XC_MTSJ 时不调用小蚕美团赏金搜索
+     * XC_MANJIAN 时不调用小蚕满减搜索，XC_MTSJ 时不调用小蚕比例返搜索
      * 同时用于与 uniqId 一起过滤掉来源门店自身
      */
     private StoreTypeEnum storeTypeEnum;

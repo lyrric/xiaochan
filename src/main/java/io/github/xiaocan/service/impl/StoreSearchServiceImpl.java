@@ -43,7 +43,7 @@ public class StoreSearchServiceImpl implements StoreSearchService {
             }
         }
 
-        //小蚕美团赏金搜索，来源是小蚕美团赏金时跳过
+        //小蚕比例返搜索，来源是小蚕比例返时跳过
         if (dto.getStoreTypeEnum() != StoreTypeEnum.XC_MTSJ) {
             try {
                 XcMeituanshangjinDTO mtsjDto = new XcMeituanshangjinDTO();
@@ -56,7 +56,7 @@ public class StoreSearchServiceImpl implements StoreSearchService {
                     result.addAll(pageVO.getStoreInfos());
                 }
             } catch (Exception e) {
-                log.error("小蚕美团赏金搜索失败", e);
+                log.error("小蚕比例返搜索失败", e);
             }
         }
 

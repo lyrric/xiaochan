@@ -19,9 +19,8 @@ public class ProxyTest {
 
     @Test
     public void testProxy() throws IOException {
-        List<StoreInfo> list1 = XiaochanHttp.getList(510116, "104.063049", "30.569082", 0);
-        List<StoreInfo> list2 = XiaochanHttp.getList(510116, "104.063049", "30.569082", 20);
-        list1.stream().filter(data1 -> list2.stream().anyMatch(data2 -> Objects.equals(data1.getUniqId(), data2.getUniqId()))).forEach(System.out::println);
+        List<StoreInfo> list1 = XiaochanHttp.searchList("老妈兔头",510116, "104.063049", "30.569082", 0,20);
+        log.info("list1: {}", list1);
 
 
 

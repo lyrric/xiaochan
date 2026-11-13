@@ -32,7 +32,7 @@ public class MonitorController {
     private XiaoChanService xiaoChanService;
 
     /**
-     * 手动查询并立即推送小蚕满减与美团赏金的同名门店活动。
+     * 手动查询并立即推送小蚕满减与比例返的同名门店活动。
      */
     @PostMapping("/config/push-same-name")
     public BaseResult<Integer> pushSameNameStores(@RequestParam Integer configId) {

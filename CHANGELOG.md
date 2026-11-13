@@ -13,7 +13,7 @@
 - 2026年8月6日
   - 美化了spt推送的内容样式
 - 2026年7月29日
-  - 门店推送历史（store_pushed_history）字段对齐 StoreInfo：storeId 改为 uniqId（字符串），兼容美团赏金无 storeId 的场景；promotionId 改为字符串
+  - 门店推送历史（store_pushed_history）字段对齐 StoreInfo：storeId 改为 uniqId（字符串），兼容比例返无 storeId 的场景；promotionId 改为字符串
   - 移除 ifNew、openHours 字段，新增 storeTypeEnum、distanceStr、rebateRatio、rebateMax 字段，推送历史支持记录赏金类活动信息
   - 去重查询改为按 notifyConfigId + uniqId 匹配（findByNotifyIdAndUniqIdToday/All）
   - 存量库需执行 ddl.sql 末尾 2026年7月29日的 ALTER 语句迁移表结构
@@ -24,8 +24,8 @@
   - 增加了库存折线图
 - 2026年7月15日
  - 同门店活动折叠显示
- - 可快速搜索美团赏金的活动信息
- - 增加了小蚕-美团赏金的活动信息
+ - 可快速搜索比例返的活动信息
+ - 增加了小蚕-比例返的活动信息
 - 2026年7月10日 支持corn表达式（未测试）
 - 2026年7月7日 
   - 运行了一段时间，未发现恶性BUG

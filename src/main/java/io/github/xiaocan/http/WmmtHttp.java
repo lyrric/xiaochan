@@ -350,7 +350,7 @@ public class WmmtHttp {
                     }
                     //meituanVipRatio：会员返现比例
                     skuStoreinfo.setRebateMax(sku.getBigDecimal("maxReturnMoney"));
-                    //美团赏金的没返，暂时用uniqId来替代
+                    //比例返的没返，暂时用uniqId来替代
                     skuStoreinfo.setPromotionId(skuStoreinfo.getUniqId());
                 }
                 //品鉴要求放到好评条件字段，与小蚕卡片展示位置保持一致，distanceStr 保留真实距离

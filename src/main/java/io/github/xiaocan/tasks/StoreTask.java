@@ -143,7 +143,7 @@ public class StoreTask extends BaseTask {
             StoreExtNotifyConfig storeExtNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), StoreExtNotifyConfig.class);
             return storeInfos
                     .stream()
-                    //同一个门店（按 uniqId 匹配，兼容美团赏金无 storeId 的情况）
+                    //同一个门店（按 uniqId 匹配，兼容比例返无 storeId 的情况）
                     .filter(storeInfo -> storeExtNotifyConfig.getStoreInfo().getUniqId().equals(storeInfo.getUniqId()))
                     .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
                     .toList();

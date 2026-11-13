@@ -34,7 +34,7 @@ public class SimpleStoreInfo {
     /**
      * 距离
      * 单位米（小蚕满减）
-     * 美团赏金自带单位
+     * 比例返自带单位
      */
     private String distance;
     /**

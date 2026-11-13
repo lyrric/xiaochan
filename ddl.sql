@@ -160,10 +160,10 @@ ALTER TABLE `store_pushed_history`
     MODIFY COLUMN `promotion_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '活动ID（同一个门店每日不同）',
     DROP COLUMN `if_new`,
     DROP COLUMN `open_hours`,
-    ADD COLUMN `store_type_enum` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '门店类型：XC_MANJIAN-小蚕满减, XC_MTSJ-小蚕美团赏金, WM_MANJIAN-歪卖满减, WM_MTSJ-歪卖美团赏金' AFTER `uniq_id`,
+    ADD COLUMN `store_type_enum` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '门店类型：XC_MANJIAN-小蚕满减, XC_MTSJ-小蚕比例返, WM_MANJIAN-歪卖满减, WM_MTSJ-歪卖比例返' AFTER `uniq_id`,
     ADD COLUMN `distance_str` varchar(32) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '距离自带单位，如 1.2km' AFTER `distance`,
-    ADD COLUMN `rebate_ratio` decimal(10, 2) NULL DEFAULT NULL COMMENT '返现百分比（仅美团赏金）' AFTER `rebate_price`,
-    ADD COLUMN `rebate_max` decimal(10, 2) NULL DEFAULT NULL COMMENT '返现最高返金额（仅美团赏金）' AFTER `rebate_ratio`,
+    ADD COLUMN `rebate_ratio` decimal(10, 2) NULL DEFAULT NULL COMMENT '返现百分比（仅比例返）' AFTER `rebate_price`,
+    ADD COLUMN `rebate_max` decimal(10, 2) NULL DEFAULT NULL COMMENT '返现最高返金额（仅比例返）' AFTER `rebate_ratio`,
     RENAME INDEX `idx_store_id` TO `idx_uniq_id`;
 
 -- 2026年7月29日 门店推送历史删除 distance 字段，统一使用 distance_str

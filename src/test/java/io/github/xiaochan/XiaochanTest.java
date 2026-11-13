@@ -16,7 +16,7 @@ class XiaochanTest {
     void testSendMergedCards() {
         String card1 = buildCard(
                 "http://p0.meituan.net/waimaipoi/c2a4d9f99a89ed502518bcc9ba31107c73955.jpg.webp",
-                "瑞幸咖啡(望京SOHO店)", "美团", "小蚕美团赏金",
+                "瑞幸咖啡(望京SOHO店)", "美团", "小蚕比例返",
                 "返5%最高3", 128, "08:00", "21:00", "1.2km", "无需评价", "公司");
         String card2 = buildCard(
                 "http://p0.meituan.net/business/73c692b83345450d20991c834ea75a4c1250604.png",
@@ -24,7 +24,7 @@ class XiaochanTest {
                 "满20返5", 56, "10:00", "22:00", "850m", "好评返现", "公司");
         String card3 = buildCard(
                 "http://p1.meituan.net/farmer/ae7e9c86082256b7156f0ebe8d174023302687.png",
-                "肯德基(望京店)", "美团", "小蚕美团赏金",
+                "肯德基(望京店)", "美团", "小蚕比例返",
                 "返8%最高5", 32, "09:00", "20:00", "2.5km", "需五星好评", "公司");
 
         String body = String.join("<br/><br/>", card1, card2, card3);

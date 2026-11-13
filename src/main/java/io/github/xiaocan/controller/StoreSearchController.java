@@ -24,7 +24,7 @@ public class StoreSearchController {
     private StoreSearchService storeSearchService;
 
     /**
-     * 聚合搜索小蚕满减、小蚕美团赏金、歪麦三个平台的门店，不分页
+     * 聚合搜索小蚕满减、小蚕比例返、歪麦三个平台的门店，不分页
      */
     @PostMapping(value = "/search")
     public BaseResult<List<StoreInfo>> search(@RequestBody @Validated StoreSearchDTO dto) {

@@ -258,7 +258,7 @@ public class MessageService {
 
 
     /**
-     * 构建返现规则文案，兼容满减和百分比返现（美团赏金）两类数据
+     * 构建返现规则文案，兼容满减和百分比返现（比例返）两类数据
      */
     private String buildRuleText(StoreInfo storeInfo) {
         if (storeInfo.getRebateRatio() != null) {

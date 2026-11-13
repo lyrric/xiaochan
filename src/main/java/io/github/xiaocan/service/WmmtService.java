@@ -22,7 +22,7 @@ public interface WmmtService {
     WmPageVO getShopList(WmmtShopListDTO dto);
 
     /**
-     * 获取歪麦门店活动信息，列表混合了满减和美团赏金，按门店类型过滤
+     * 获取歪麦门店活动信息，列表混合了满减和比例返，按门店类型过滤
      *
      * @param keyword 门店名模糊搜索，为空时拉取全量列表
      */

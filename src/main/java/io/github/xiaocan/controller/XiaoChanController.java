@@ -32,7 +32,7 @@ public class XiaoChanController {
     }
 
     /**
-     * 美团赏金
+     * 比例返
      *
      * @param dto
      * @return

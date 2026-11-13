@@ -79,11 +79,11 @@ public class StoreInfo {
      */
     private BigDecimal rebatePrice;
     /**
-     * 返现百分比（仅美团赏金）
+     * 返现百分比（仅比例返）
      */
     private BigDecimal rebateRatio;
     /**
-     * 返现百分比-最高返金额（仅美团赏金）
+     * 返现百分比-最高返金额（仅比例返）
      */
     private BigDecimal rebateMax;
     /**
@@ -107,12 +107,12 @@ public class StoreInfo {
     private Boolean exists;
 
     /**
-     * 美团pvId（仅美团赏金）
+     * 美团pvId（仅比例返）
      */
     private String mtPvId;
 
     /**
-     * 页面pvId（仅美团赏金）
+     * 页面pvId（仅比例返）
      */
     private String pagePvId;
 

@@ -66,7 +66,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
      * 手动推送不应用实付金额、库存、时间窗口及历史去重条件。
      *
      * @param configId 当前用户的最小实付、小蚕满减监控配置ID
-     * @return 匹配并提交推送的活动条数（包含两类活动）
+     * @return 匹配并提交推送的门店数，同名门店的多个活动只计一次
      */
     @Override
     public int pushSameNameStores(Integer configId) {
@@ -104,7 +104,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         matchedStores.sort(Comparator.comparing(StoreInfo::getName));
         String batchId = savePushedHistory(config, matchedStores);
         messageService.sendImmediately(config, matchedStores, location, batchId);
-        return matchedStores.size();
+        return matchedNames.size();
     }
 
     private List<StoreInfo> fetchManjianStores(LocationEntity location) {

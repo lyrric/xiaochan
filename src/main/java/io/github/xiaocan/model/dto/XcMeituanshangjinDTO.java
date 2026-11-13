@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
- * 小蚕-美团赏金
+ * 小蚕-比例返
  */
 @Data
 public class XcMeituanshangjinDTO {

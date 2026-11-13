@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 小蚕-美团赏金
+ * 小蚕-比例返
  * @author wangxiaodong
  * @date 2026/7/15
  */

@@ -81,11 +81,11 @@ public class StorePushedHistoryVO {
      */
     private BigDecimal rebatePrice;
     /**
-     * 返现百分比（仅美团赏金）
+     * 返现百分比（仅比例返）
      */
     private BigDecimal rebateRatio;
     /**
-     * 返现百分比-最高返金额（仅美团赏金）
+     * 返现百分比-最高返金额（仅比例返）
      */
     private BigDecimal rebateMax;
     /**
