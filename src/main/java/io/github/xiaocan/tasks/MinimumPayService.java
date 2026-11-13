@@ -48,7 +48,7 @@ public class MinimumPayService extends BaseTask {
         MinimumPayExtNotifyConfig extNotifyConfig = JSON.parseObject(notifyConfig.getExtConfig(), MinimumPayExtNotifyConfig.class);
         return storeInfos
                 .stream()
-                .filter(storeInfo -> storeInfo.getLeftNumber() > 0)
+                .filter(storeInfo -> storeInfo.getLeftNumber() != null && storeInfo.getLeftNumber() > 0)
                 .filter(storeInfo -> storeInfo.getPrice().subtract(storeInfo.getRebatePrice()).compareTo(extNotifyConfig.getMinimumPay()) <= 0)
                 .filter(storeInfo -> storePushedHistoryService.findByNotifyIdAndUniqIdAll(notifyConfig.getId(), storeInfo.getUniqId()) == null)
                 .toList();
