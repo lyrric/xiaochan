@@ -124,7 +124,7 @@ public class MessageService {
                     .map(storeInfo -> buildStoreMessage(storeInfo, locationEntity))
                     .collect(Collectors.toCollection(ArrayList::new));
             MessageBatch batch = new MessageBatch(spt, monitorType, locationEntity.getUserId(), token);
-            batch.add(parts, storeInfos.size(), batchId);
+            batch.add(parts, storeInfos, batchId);
             flushBatch(batch);
             return;
         }
@@ -135,7 +135,6 @@ public class MessageService {
         List<String> parts = storeInfos.stream()
                 .map(storeInfo -> buildStoreMessage(storeInfo, locationEntity))
                 .collect(Collectors.toCollection(ArrayList::new));
-        int count = storeInfos.size();
 
         boolean shouldSchedule;
         synchronized (pendingBatches) {
@@ -147,7 +146,7 @@ public class MessageService {
             } else {
                 shouldSchedule = false;
             }
-            batch.add(parts, count, batchId);
+            batch.add(parts, storeInfos, batchId);
         }
 
         if (shouldSchedule) {
@@ -166,7 +165,7 @@ public class MessageService {
         }
         List<String> parts = stores.stream().map(store -> buildStoreMessage(store, location)).toList();
         MessageBatch batch = new MessageBatch(user.getSpt(), config.getType(), user.getId(), user.getToken());
-        batch.add(parts, stores.size(), batchId);
+        batch.add(parts, stores, batchId);
         flushBatch(batch, true);
     }
 
@@ -211,7 +210,7 @@ public class MessageService {
 
         try {
             log.info("批量发送消息 spt:{}, monitorType:{}, 共{}个门店",
-                    batch.spt, batch.monitorType, batch.storeCount);
+                    batch.spt, batch.monitorType, batch.storeUniqIds.size());
             if (propagateFailure) {
                 sptService.sendMessageOrThrow(batch.spt, body, summary);
             } else {
@@ -232,7 +231,7 @@ public class MessageService {
     private String buildMergedSummary(MessageBatch batch) {
         return MERGED_SUMMARY_TEMPLATE
                 .replace("${类型}", batch.monitorType.getDescription())
-                .replace("${数量}", String.valueOf(batch.storeCount));
+                .replace("${数量}", String.valueOf(batch.storeUniqIds.size()));
     }
 
     /**
@@ -284,7 +283,8 @@ public class MessageService {
         final List<String> messageParts = new ArrayList<>();
         final Set<String> batchIds = new HashSet<>();
         final String token;
-        int storeCount = 0;
+        // 同一消息内按门店唯一ID计数，跨活动、跨批次去重。
+        final Set<String> storeUniqIds = new HashSet<>();
 
         MessageBatch(String spt, MonitorTypeEnums monitorType, Integer userId,String token) {
             this.spt = spt;
@@ -293,9 +293,9 @@ public class MessageService {
             this.token = token;
         }
 
-        void add(List<String> parts, int count, String batchId) {
+        void add(List<String> parts, List<StoreInfo> stores, String batchId) {
             messageParts.addAll(parts);
-            storeCount += count;
+            stores.forEach(store -> storeUniqIds.add(store.getUniqId()));
             if (batchId != null) {
                 batchIds.add(batchId);
             }

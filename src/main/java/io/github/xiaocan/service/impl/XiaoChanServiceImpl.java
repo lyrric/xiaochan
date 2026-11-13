@@ -90,7 +90,9 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         List<StoreInfo> manjianStores = fetchManjianStores(location).stream()
                 .filter(store -> Integer.valueOf(StorePlatformEnum.MEITUAN.type).equals(store.getType()))
                 .toList();
+        log.info("美团满减门店数：{}", manjianStores.size());
         List<StoreInfo> bountyStores = fetchBountyStores(location);
+        log.info("美团比例门店数：{}", bountyStores.size());
         Set<String> manjianNames = manjianStores.stream().map(StoreInfo::getName)
                 .filter(StringUtils::isNotBlank).collect(Collectors.toSet());
         Set<String> matchedNames = bountyStores.stream().map(StoreInfo::getName)
@@ -136,18 +138,14 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         dto.setCityCode(location.getCityCode());
         dto.setLongitude(location.getLongitude());
         dto.setLatitude(location.getLatitude());
-        Set<String> visitedCursors = new HashSet<>();
         while (stores.size() < 100) {
             XcMeituanshangjinPageVO page = getXcMeituanshangjinPageVO(dto);
-            if (page == null || page.getStoreInfos() == null || page.getStoreInfos().isEmpty()) {
+            if (page.getStoreInfos() == null || page.getStoreInfos().isEmpty()) {
                 break;
             }
             List<StoreInfo> items = page.getStoreInfos();
             stores.addAll(items);
             String cursor = page.getPagePvId();
-            if (StringUtils.isBlank(cursor) || !visitedCursors.add(cursor)) {
-                break;
-            }
             dto.setPvId(cursor);
             dto.setPageNum(dto.getPageNum() + 1);
         }
