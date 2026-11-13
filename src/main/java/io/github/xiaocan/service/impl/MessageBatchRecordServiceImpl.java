@@ -80,10 +80,11 @@ public class MessageBatchRecordServiceImpl extends ServiceImpl<MessageBatchRecor
                 .orderByDesc(StorePushedHistoryEntity::getId)
                 .list();
 
-        // 最小实付批次中包含小蚕赏金时，来自同名门店手动推送，恢复保存时的名称及活动顺序。
+        // 同名门店推送恢复保存时的名称及活动顺序，兼容旧批次沿用最小实付类型的数据。
         boolean sameNamePush = entities.stream().anyMatch(entity ->
-                entity.getNotifyType() == MonitorTypeEnums.MINIMUM_PAY
-                        && entity.getStoreTypeEnum() == StoreTypeEnum.XC_MTSJ);
+                entity.getNotifyType() == MonitorTypeEnums.SAME_NAME_STORE_ACTIVITY
+                        || (entity.getNotifyType() == MonitorTypeEnums.MINIMUM_PAY
+                        && entity.getStoreTypeEnum() == StoreTypeEnum.XC_MTSJ));
         if (sameNamePush) {
             entities.sort(Comparator.comparing(StorePushedHistoryEntity::getName)
                     .thenComparing(StorePushedHistoryEntity::getId));

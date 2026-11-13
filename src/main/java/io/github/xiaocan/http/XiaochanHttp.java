@@ -9,6 +9,7 @@ import com.alibaba.fastjson2.JSONObject;
 import io.github.xiaocan.config.BusinessException;
 import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
+import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.AddressVO;
 import lombok.extern.slf4j.Slf4j;
@@ -45,28 +46,31 @@ public class XiaochanHttp {
     }
 
 
-    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset){
-        return getList(cityCode, longitude, latitude, offset, null, 1,null);
-    }
-
     public static List<StoreInfo> getRebateList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId) {
         return getRebateList(cityCode, longitude, latitude, offset, pagePvId, PAGE_SIZE);
     }
 
     public static List<StoreInfo> getRebateList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, int pageSize) {
-        return getList(cityCode, longitude, latitude, offset, pagePvId, 2, null, pageSize);
-    }
-    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, HttpProxyInfo httpProxyInfo){
-        return getList(cityCode, longitude, latitude, offset, null, 1, httpProxyInfo);
+        return getList(XiaochanListDTO.builder()
+                .cityCode(cityCode)
+                .longitude(longitude)
+                .latitude(latitude)
+                .offset(offset)
+                .pagePvId(pagePvId)
+                .rebateType(2)
+                .pageSize(pageSize)
+                .build());
     }
 
-    public static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, Integer rebateType, HttpProxyInfo httpProxyInfo) {
-        return getList(cityCode, longitude, latitude, offset, pagePvId, rebateType, httpProxyInfo, PAGE_SIZE);
-    }
-
-    private static List<StoreInfo> getList(Integer cityCode, String longitude, String latitude, int offset, String pagePvId, Integer rebateType, HttpProxyInfo httpProxyInfo, int pageSize) {
-        String reqBody = getBody(longitude, latitude, offset, pagePvId, rebateType, pageSize);
-        String resBody = postWithRes(BASE_URL, reqBody, cityCode, SERVER_NAME, METHOD_NAME, httpProxyInfo);
+    /**
+     * 获取小蚕活动列表。
+     *
+     * @param dto 列表请求参数，包含位置、分页、返利类型和代理信息
+     * @return 活动列表
+     */
+    public static List<StoreInfo> getList(XiaochanListDTO dto) {
+        String reqBody = getBody(dto);
+        String resBody = postWithRes(BASE_URL, reqBody, dto.getCityCode(), SERVER_NAME, METHOD_NAME, dto.getHttpProxyInfo());
         return parseListBody(resBody);
     }
 
@@ -290,19 +294,19 @@ public class XiaochanHttp {
         return uuid.substring(0, 4) + SILK_ID_TEEMO + uuid.substring(4, 20 - String.valueOf(SILK_ID_TEEMO).length() - 4);
     }
 
-    private static String getBody(String longitude, String latitude, int offset, String pagePvId, Integer rebateType, int pageSize) {
+    private static String getBody(XiaochanListDTO dto) {
         Map<String, Object> body = new HashMap<>();
-        body.put("lat", new BigDecimal(latitude));
-        body.put("lon", new BigDecimal(longitude));
-        body.put("number", pageSize);
+        body.put("lat", new BigDecimal(dto.getLatitude()));
+        body.put("lon", new BigDecimal(dto.getLongitude()));
+        body.put("number", dto.getPageSize());
         body.put("silk_id", SILK_ID_TEEMO);
         body.put("sort", 1);
-        body.put("offset", offset);
+        body.put("offset", dto.getOffset());
         body.put("app_id", APP_ID);
         body.put("scene", 1);
         body.put("is_show_mt", true);
-        body.put("page_pv_id", pagePvId);
-        body.put("rebate_type", rebateType);//1满减，2比例返
+        body.put("page_pv_id", dto.getPagePvId());
+        body.put("rebate_type", dto.getRebateType());//1满减，2比例返
         return JSONObject.toJSONString(body);
     }
 

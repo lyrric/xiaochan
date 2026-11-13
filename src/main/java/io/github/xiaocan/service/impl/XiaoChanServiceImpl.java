@@ -9,6 +9,7 @@ import io.github.xiaocan.http.XiaochanHttp;
 import io.github.xiaocan.model.HttpProxyInfo;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XcMeituanshangjinDTO;
+import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.entity.LocationEntity;
 import io.github.xiaocan.model.entity.MonitorConfigEntity;
 import io.github.xiaocan.model.entity.StorePushedHistoryEntity;
@@ -102,8 +103,12 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         }
         // 稳定排序，使同一门店的满减活动与赏金活动相邻，满减在前、赏金在后。
         matchedStores.sort(Comparator.comparing(StoreInfo::getName));
-        String batchId = savePushedHistory(config, matchedStores);
-        messageService.sendImmediately(config, matchedStores, location, batchId);
+        // 仅为本次手动推送使用独立类型，原监控配置仍保留最小实付类型。
+        MonitorConfigEntity pushConfig = new MonitorConfigEntity();
+        BeanUtils.copyProperties(config, pushConfig);
+        pushConfig.setType(MonitorTypeEnums.SAME_NAME_STORE_ACTIVITY);
+        String batchId = savePushedHistory(pushConfig, matchedStores);
+        messageService.sendImmediately(pushConfig, matchedStores, location, batchId);
         return matchedNames.size();
     }
 
@@ -245,7 +250,12 @@ public class XiaoChanServiceImpl implements XiaoChanService {
     public List<StoreInfo> getListByOffset(Integer cityCode, String longitude, String latitude, int offset) {
         if (!isBlocked()) {
             try {
-                return XiaochanHttp.getList(cityCode, longitude, latitude, offset);
+                return XiaochanHttp.getList(XiaochanListDTO.builder()
+                        .cityCode(cityCode)
+                        .longitude(longitude)
+                        .latitude(latitude)
+                        .offset(offset)
+                        .build());
             }catch (Exception e){
                 if (e.getMessage().contains("状态码错误: 403")) {
                     blockedTime = System.currentTimeMillis();
@@ -261,7 +271,13 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             try {
                 proxyInfo = proxyService.getOne();
                 log.info("使用代理 {} 请求小产列表", proxyInfo);
-                return XiaochanHttp.getList(cityCode, longitude, latitude, offset, proxyInfo);
+                return XiaochanHttp.getList(XiaochanListDTO.builder()
+                        .cityCode(cityCode)
+                        .longitude(longitude)
+                        .latitude(latitude)
+                        .offset(offset)
+                        .httpProxyInfo(proxyInfo)
+                        .build());
             }catch (IORuntimeException | BusinessException e){
                 log.error("proxy 获取小产列表时发生错误 {} {}", proxyInfo, e.getMessage());
                 if (proxyInfo != null) {

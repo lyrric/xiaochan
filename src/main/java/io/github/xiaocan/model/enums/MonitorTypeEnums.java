@@ -13,7 +13,8 @@ public enum MonitorTypeEnums {
 
     STORE_ACTIVITY( "指定门店"),
     MINIMUM_PAY( "最小实付"),
-    STORE_KEYWORD( "门店关键字");
+    STORE_KEYWORD( "门店关键字"),
+    SAME_NAME_STORE_ACTIVITY("同名门店活动");
 
     private final String description;
 
