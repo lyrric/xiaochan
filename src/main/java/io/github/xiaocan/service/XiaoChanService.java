@@ -3,6 +3,7 @@ package io.github.xiaocan.service;
 import io.github.xiaocan.model.StoreInfo;
 import io.github.xiaocan.model.dto.XiaochanListDTO;
 import io.github.xiaocan.model.vo.QueryListVO;
+import io.github.xiaocan.model.vo.SameNameStorePushResultVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 
 import java.util.List;
@@ -14,9 +15,9 @@ public interface XiaoChanService {
      * 查询当前用户监控位置的小蚕美团满减和赏金活动，按同名门店匹配、排序并立即推送。
      *
      * @param configId 当前用户的最小实付、小蚕满减监控配置ID
-     * @return 推送的门店数，同名门店的多个活动只计一次
+     * @return 两类门店的获取数量及推送门店数，同名门店的多个活动只计一次
      */
-    int pushSameNameStores(Integer configId);
+    SameNameStorePushResultVO pushSameNameStores(Integer configId);
 
 
     /**

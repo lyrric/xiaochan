@@ -16,6 +16,7 @@ import io.github.xiaocan.model.entity.UserEntity;
 import io.github.xiaocan.model.enums.MonitorTypeEnums;
 import io.github.xiaocan.model.enums.StoreTypeEnum;
 import io.github.xiaocan.model.vo.QueryListVO;
+import io.github.xiaocan.model.vo.SameNameStorePushResultVO;
 import io.github.xiaocan.model.vo.XcMeituanshangjinPageVO;
 import io.github.xiaocan.service.*;
 import jakarta.annotation.Resource;
@@ -65,10 +66,10 @@ public class XiaoChanServiceImpl implements XiaoChanService {
      * 手动推送不应用实付金额、库存、时间窗口及历史去重条件。
      *
      * @param configId 当前用户的最小实付、小蚕满减监控配置ID
-     * @return 匹配并提交推送的门店数，同名门店的多个活动只计一次
+     * @return 两类门店的获取数量及成功推送门店数，同名门店的多个活动只计一次
      */
     @Override
-    public int pushSameNameStores(Integer configId) {
+    public SameNameStorePushResultVO pushSameNameStores(Integer configId) {
         UserEntity user = userService.getByCurrentRequest();
         MonitorConfigEntity config = monitoryConfigService.getById(configId);
         if (config == null || !user.getId().equals(config.getUserId())) {
@@ -88,7 +89,9 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         List<StoreInfo> manjianStores = fetchManjianStores(location).stream().toList();
         log.info("美团满减门店数：{}", manjianStores.size());
         List<StoreInfo> bountyStores = fetchRebateStores(location);
-        log.info("美团比例门店数：{}", bountyStores.size());
+        log.info("美团比例返门店数：{}", bountyStores.size());
+        SameNameStorePushResultVO result = new SameNameStorePushResultVO(
+                manjianStores.size(), bountyStores.size(), 0);
         Set<String> manjianNames = manjianStores.stream().map(StoreInfo::getName)
                 .filter(StringUtils::isNotBlank).collect(Collectors.toSet());
         Set<String> matchedNames = bountyStores.stream().map(StoreInfo::getName)
@@ -97,7 +100,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         manjianStores.stream().filter(store -> matchedNames.contains(store.getName())).forEach(matchedStores::add);
         bountyStores.stream().filter(store -> matchedNames.contains(store.getName())).forEach(matchedStores::add);
         if (matchedStores.isEmpty()) {
-            return 0;
+            return result;
         }
         // 稳定排序，使同一门店的满减活动与赏金活动相邻，满减在前、赏金在后。
         matchedStores.sort(Comparator.comparing(StoreInfo::getName));
@@ -107,7 +110,8 @@ public class XiaoChanServiceImpl implements XiaoChanService {
         pushConfig.setType(MonitorTypeEnums.SAME_NAME_STORE_ACTIVITY);
         String batchId = savePushedHistory(pushConfig, matchedStores);
         messageService.sendImmediately(pushConfig, matchedStores, location, batchId);
-        return matchedNames.size();
+        result.setPushedStoreCount(matchedNames.size());
+        return result;
     }
 
     private List<StoreInfo> fetchManjianStores(LocationEntity location) {
