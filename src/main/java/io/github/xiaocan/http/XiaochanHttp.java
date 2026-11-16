@@ -33,7 +33,7 @@ public class XiaochanHttp {
 
 
     private static final int SILK_ID_TEEMO = ThreadLocalRandom.current().nextInt(890_000_000, 900_000_000);
-    private static final int USER_ID = 5103123;//ThreadLocalRandom.current().nextInt(5_100_000, 5_200_000);
+    private static final int USER_ID = 5103124;//ThreadLocalRandom.current().nextInt(5_100_000, 5_200_000);
 
     /**
      * 获取Ashe
@@ -324,7 +324,8 @@ public class XiaochanHttp {
         headers.put("X-App-Sr", APP_ID);
         headers.put("Content-Type", "application/json");
         headers.put("User-Agent", getRandomUserAgent());
-        headers.put("Referer", "https://servicewechat.com/wx52ae84595214/965/page-frame.html");
+        headers.put("Referer", String.format("https://servicewechat.com/wx52ae%08x/965/page-frame.html",
+                ThreadLocalRandom.current().nextLong(0x1_0000_0000L)));
         return headers;
     }
 
