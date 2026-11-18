@@ -23,6 +23,12 @@ import java.util.List;
 @AllArgsConstructor
 public class XiaochanListDTO {
 
+    /** 只看可抢，对应官方 quick_filters 的1。 */
+    private Boolean onlyAvailable;
+
+    /** 门店子品类：4小吃、10饮品、3面包甜点，空列表表示全部。 */
+    private List<Integer> storeSubCategories;
+
     /** 门店名称，模糊搜索。 */
     private String name;
 

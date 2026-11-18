@@ -206,7 +206,10 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (pageNum > 1) {
                 return Collections.emptyList();
             }
-            result = searchList(queryListVO.getName(), queryListVO.getCityCode(), queryListVO.getLongitude(), queryListVO.getLatitude());
+            result = XiaochanHttp.searchList(queryListVO.getName(), queryListVO.getCityCode(),
+                    queryListVO.getLongitude(), queryListVO.getLatitude(), 0, 15,
+                    queryListVO.getStorePlatforms(), queryListVO.getStoreSubCategories(), queryListVO.getOnlyAvailable());
+            storeInventoryHistoryService.insertBatch(result);
         }else{
             //走官方分页接口
             result = getListByOffset(XiaochanListDTO.builder()
@@ -215,6 +218,9 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                     .latitude(queryListVO.getLatitude())
                     .pageNum(pageNum)
                     .pageSize(queryListVO.getPageSize())
+                    .storePlatforms(queryListVO.getStorePlatforms())
+                    .storeSubCategories(queryListVO.getStoreSubCategories())
+                    .onlyAvailable(queryListVO.getOnlyAvailable())
                     .build());
         }
         // 填充收藏ID

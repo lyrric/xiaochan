@@ -93,6 +93,12 @@ public class XiaochanHttp {
 
 
     public static List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude, int offset, Integer number) {
+        return searchList(keyword, cityCode, longitude, latitude, offset, number, null, null, null);
+    }
+
+    public static List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude,
+                                            int offset, Integer number, List<StorePlatformEnum> platforms,
+                                            List<Integer> categories, Boolean onlyAvailable) {
         HashMap<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("silk_id", SILK_ID_TEEMO);
         bodyMap.put("latitude", new BigDecimal(latitude));
@@ -105,6 +111,7 @@ public class XiaochanHttp {
         bodyMap.put("keyword", keyword);
         bodyMap.put("promotion_category", 0);
         bodyMap.put("app_id",20);
+        putFilters(bodyMap, platforms, categories, onlyAvailable);
         String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(bodyMap), cityCode, "SilkwormRec", "RecService.SearchStorePromotionList");
         return parseListBodyOld(resBody);
 
@@ -291,19 +298,29 @@ public class XiaochanHttp {
         body.put("is_show_mt", true);
         body.put("page_pv_id", dto.getPagePvId());
         body.put("rebate_type", dto.getRebateType());//1满减，2比例返
-        List<StorePlatformEnum> storePlatforms = dto.getStorePlatforms();
-        if (storePlatforms != null && !storePlatforms.isEmpty()) {
-            if (storePlatforms.stream().anyMatch(platform -> platform == null || platform == StorePlatformEnum.UNKNOWN)) {
-                throw new BusinessException("平台筛选仅支持美团、饿了么和京东");
-            }
-            body.put("store_platforms", storePlatforms.stream()
-                    .map(platform -> platform.type)
-                    .distinct()
-                    .toList());
-        }
+        putFilters(body, dto.getStorePlatforms(), dto.getStoreSubCategories(), dto.getOnlyAvailable());
         return JSONObject.toJSONString(body);
     }
 
+
+    private static void putFilters(Map<String, Object> body, List<StorePlatformEnum> platforms,
+                                   List<Integer> categories, Boolean onlyAvailable) {
+        if (platforms != null && !platforms.isEmpty()) {
+            if (platforms.stream().anyMatch(platform -> platform == null || platform == StorePlatformEnum.UNKNOWN)) {
+                throw new BusinessException("平台筛选仅支持美团、淘宝和京东");
+            }
+            body.put("store_platforms", platforms.stream().map(platform -> platform.type).distinct().toList());
+        }
+        if (categories != null && !categories.isEmpty()) {
+            if (categories.stream().anyMatch(category -> category == null || !List.of(4, 10, 3).contains(category))) {
+                throw new BusinessException("品类筛选仅支持小吃、饮品和面包甜点");
+            }
+            body.put("store_sub_categories", categories.stream().distinct().toList());
+        }
+        if (Boolean.TRUE.equals(onlyAvailable)) {
+            body.put("quick_filters", List.of(1));
+        }
+    }
 
     private static Map<String, String> getHeaders(Long timeMillis, String ashe, Integer cityCode, String serverName, String methodName, String nami){
         Map<String, String> headers = new HashMap<>();

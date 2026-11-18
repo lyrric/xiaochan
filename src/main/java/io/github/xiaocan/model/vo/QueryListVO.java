@@ -4,9 +4,17 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import java.util.List;
+import io.github.xiaocan.constant.StorePlatformEnum;
 
 @Data
 public class QueryListVO {
+
+    /** 平台筛选，空列表表示全部。 */
+    private List<StorePlatformEnum> storePlatforms;
+
+    /** 门店子品类：4小吃、10饮品、3面包甜点，空列表表示全部。 */
+    private List<Integer> storeSubCategories;
 
     /**
      * 门店名称，模糊搜索
