@@ -2,6 +2,7 @@ package io.github.xiaocan.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import io.github.xiaocan.constant.StorePlatformEnum;
+import io.github.xiaocan.constant.StoreConstant;
 import io.github.xiaocan.model.HttpProxyInfo;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -57,12 +58,12 @@ public class XiaochanListDTO {
     /** HTTP代理信息，不传则直连。 */
     private HttpProxyInfo httpProxyInfo;
 
-    /** 每页数量，默认20条。 */
+    /** 每页数量，默认30条。 */
     @NotNull(message = "pageSize不能为空")
     @Min(value = 10, message = "pageSize不能小于10")
     @Max(value = 30, message = "pageSize不能大于30")
     @Builder.Default
-    private Integer pageSize = 20;
+    private Integer pageSize = StoreConstant.DEFAULT_PAGE_SIZE;
 
     /** 位置ID，用于查询收藏状态。 */
     private Long locationId;
