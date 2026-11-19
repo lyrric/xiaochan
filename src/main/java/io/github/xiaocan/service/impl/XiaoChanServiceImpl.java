@@ -273,8 +273,13 @@ public class XiaoChanServiceImpl implements XiaoChanService {
                 log.info("使用代理 {} 搜索小蚕门店", proxyInfo);
                 return XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15,
                         platforms, categories, onlyAvailable, proxyInfo);
-            } catch (Exception e) {
-                log.error("proxy 搜索小蚕门店时发生错误 {}", proxyInfo, e);
+            }catch (IORuntimeException | BusinessException e){
+                log.error("proxy 搜索小蚕门店发生错误 {} {}", proxyInfo, e.getMessage());
+                if (proxyInfo != null) {
+                    proxyService.removeProxy(proxyInfo);
+                }
+            }catch (Exception e){
+                log.error("proxy 搜索小蚕门店时发生错误 {} {}", proxyInfo, e.getMessage());
                 if (proxyInfo != null) {
                     proxyService.removeProxy(proxyInfo);
                 }

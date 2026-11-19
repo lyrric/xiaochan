@@ -207,7 +207,12 @@ public class XiaochanHttp {
         HttpResponse response = httpRequest
                 .execute();
         if (!response.isOk()) {
-            log.error("状态码错误: {}, body: {}", response.getStatus(), response.body());
+            String body1 = response.body();
+            if (body1.contains("Web应用防护服务检测您当前访问存在Web安全风险或访问不合规")) {
+                log.error("Web应用防护服务检测到风险: {}", response.getStatus());
+            }else{
+                log.error("状态码错误: {}, body: {}", response.getStatus(), body1);
+            }
             throw new BusinessException("状态码错误:" + response.getStatus());
         }
         String resBody = response.body();
