@@ -99,6 +99,12 @@ public class XiaochanHttp {
     public static List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude,
                                             int offset, Integer number, List<StorePlatformEnum> platforms,
                                             List<Integer> categories, Boolean onlyAvailable) {
+        return searchList(keyword, cityCode, longitude, latitude, offset, number, platforms, categories, onlyAvailable, null);
+    }
+
+    public static List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude,
+                                            int offset, Integer number, List<StorePlatformEnum> platforms,
+                                            List<Integer> categories, Boolean onlyAvailable, HttpProxyInfo httpProxyInfo) {
         HashMap<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("silk_id", SILK_ID_TEEMO);
         bodyMap.put("latitude", new BigDecimal(latitude));
@@ -112,7 +118,7 @@ public class XiaochanHttp {
         bodyMap.put("promotion_category", 0);
         bodyMap.put("app_id",20);
         putFilters(bodyMap, platforms, categories, onlyAvailable);
-        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(bodyMap), cityCode, "SilkwormRec", "RecService.SearchStorePromotionList");
+        String resBody = postWithRes(BASE_URL, JSONObject.toJSONString(bodyMap), cityCode, "SilkwormRec", "RecService.SearchStorePromotionList", httpProxyInfo);
         return parseListBodyOld(resBody);
 
     }

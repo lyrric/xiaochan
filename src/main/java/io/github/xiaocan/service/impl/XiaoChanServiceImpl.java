@@ -206,8 +206,8 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             if (pageNum > 1) {
                 return Collections.emptyList();
             }
-            result = XiaochanHttp.searchList(queryListVO.getName(), queryListVO.getCityCode(),
-                    queryListVO.getLongitude(), queryListVO.getLatitude(), 0, 15,
+            result = searchList(queryListVO.getName(), queryListVO.getCityCode(),
+                    queryListVO.getLongitude(), queryListVO.getLatitude(),
                     queryListVO.getStorePlatforms(), queryListVO.getStoreSubCategories(), queryListVO.getOnlyAvailable());
             storeInventoryHistoryService.insertBatch(result);
         }else{
@@ -233,9 +233,54 @@ public class XiaoChanServiceImpl implements XiaoChanService {
 
     @Override
     public List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude) {
-        List<StoreInfo> storeInfos = XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15);
+        List<StoreInfo> storeInfos = searchList(keyword, cityCode, longitude, latitude, null, null, null);
         storeInventoryHistoryService.insertBatch(storeInfos);
         return storeInfos;
+    }
+
+    /**
+     * 搜索门店，直连失败后使用代理重试，并与列表查询共享封禁冷却状态。
+     *
+     * @param keyword 搜索关键词
+     * @param cityCode 城市编码
+     * @param longitude 经度
+     * @param latitude 纬度
+     * @param platforms 平台筛选
+     * @param categories 门店子品类筛选
+     * @param onlyAvailable 是否只看可抢
+     * @return 门店列表，请求失败且无可用代理时返回空列表
+     */
+    private List<StoreInfo> searchList(String keyword, Integer cityCode, String longitude, String latitude,
+                                       List<StorePlatformEnum> platforms, List<Integer> categories, Boolean onlyAvailable) {
+        if (!isBlocked()) {
+            try {
+                return XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15,
+                        platforms, categories, onlyAvailable);
+            } catch (Exception e) {
+                if (StringUtils.contains(StringUtils.deleteWhitespace(e.getMessage()), "状态码错误:403")) {
+                    blockedTime = System.currentTimeMillis();
+                }
+                log.error("搜索小蚕门店时发生错误 {}", e.getMessage());
+            }
+        }
+        if (!Boolean.TRUE.equals(xieQuProxyConfig.getEnable())) {
+            return Collections.emptyList();
+        }
+        for (int i = 0; i < 10; i++) {
+            HttpProxyInfo proxyInfo = null;
+            try {
+                proxyInfo = proxyService.getOne();
+                log.info("使用代理 {} 搜索小蚕门店", proxyInfo);
+                return XiaochanHttp.searchList(keyword, cityCode, longitude, latitude, 0, 15,
+                        platforms, categories, onlyAvailable, proxyInfo);
+            } catch (Exception e) {
+                log.error("proxy 搜索小蚕门店时发生错误 {}", proxyInfo, e);
+                if (proxyInfo != null) {
+                    proxyService.removeProxy(proxyInfo);
+                }
+            }
+        }
+        return Collections.emptyList();
     }
 
 
@@ -275,7 +320,7 @@ public class XiaoChanServiceImpl implements XiaoChanService {
             try {
                 return XiaochanHttp.getList(dto);
             }catch (Exception e){
-                if (e.getMessage().contains("状态码错误: 403")) {
+                if (StringUtils.contains(StringUtils.deleteWhitespace(e.getMessage()), "状态码错误:403")) {
                     blockedTime = System.currentTimeMillis();
                 }
                 log.error("请求小产列表时发生错误 {}",e.getMessage());
