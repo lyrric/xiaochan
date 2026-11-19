@@ -31,4 +31,9 @@ public class HttpProxyInfo {
     private String scheme;
 
     private RateLimiter rateLimiter = RateLimiter.create(10);
+
+    @Override
+    public String toString() {
+        return ip + ":" + port;
+    }
 }
